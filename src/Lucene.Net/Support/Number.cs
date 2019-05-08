@@ -244,19 +244,41 @@ namespace Lucene.Net.Support
                 return 32;
 
             uint unum = (uint)num;
-            int count = 0;
-            int i;
+            uint y;
+            uint n = 64;
+            y = unum >> 16;
 
-            for (i = 0; i < 32; ++i)
+            if (y != 0)
             {
-                if ((unum & 0x80000000) == 0x80000000)
-                    break;
-
-                count++;
-                unum <<= 1;
+                n = n - 16;
+                unum = y;
             }
+            y = unum >> 8;
 
-            return count;
+            if (y != 0)
+            {
+                n = n - 8;
+                unum = y;
+            }
+            y = unum >> 4;
+
+            if (y != 0)
+            {
+                n = n - 4;
+                unum = y;
+            }
+            y = unum >> 2;
+
+            if (y != 0)
+            {
+                n = n - 2;
+                unum = y;
+            }
+            y = unum >> 1;
+
+            if (y != 0)
+                return (int)n - 2;
+            return (int)(n - unum);
         }
 
         public static int NumberOfLeadingZeros(long num)
@@ -265,19 +287,48 @@ namespace Lucene.Net.Support
                 return 64;
 
             ulong unum = (ulong)num;
-            int count = 0;
-            int i;
+            ulong y;
+            ulong n = 64;
+            y = unum >> 32;
 
-            for (i = 0; i < 64; ++i)
+            if (y != 0)
             {
-                if ((unum & 0x8000000000000000L) == 0x8000000000000000L)
-                    break;
-
-                count++;
-                unum <<= 1;
+                n = n - 32;
+                unum = y;
             }
+            y = unum >> 16;
 
-            return count;
+            if (y != 0)
+            {
+                n = n - 16;
+                unum = y;
+            }
+            y = unum >> 8;
+
+            if (y != 0)
+            {
+                n = n - 8;
+                unum = y;
+            }
+            y = unum >> 4;
+
+            if (y != 0)
+            {
+                n = n - 4;
+                unum = y;
+            }
+            y = unum >> 2;
+
+            if (y != 0)
+            {
+                n = n - 2;
+                unum = y;
+            }
+            y = unum >> 1;
+
+            if (y != 0)
+                return (int)n - 2;
+            return (int)(n - unum);
         }
 
         public static int NumberOfTrailingZeros(int num)
@@ -490,5 +541,9 @@ namespace Lucene.Net.Support
                    || value is double
                    || value is decimal;
         }
+
+
+
+
     }
 }
