@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
+# Visual Studio Version 16
 
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -18,7 +18,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # specific language governing permissions and limitations
 # under the License.
 
-VisualStudioVersion = 15.0.26730.8
+VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 15.0.26730.8
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-templates", "azure-templates", "{05CE3A39-40D4-452D-AFE0-E57E536A08C6}"
 	ProjectSection(SolutionItems) = preProject
@@ -26,12 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-templates", "azure-te
 		build\azure-templates\publish-test-results-for-target-frameworks.yml = build\azure-templates\publish-test-results-for-target-frameworks.yml
 		build\azure-templates\publish-test-results-for-test-projects.yml = build\azure-templates\publish-test-results-for-test-projects.yml
 		build\azure-templates\publish-test-results.yml = build\azure-templates\publish-test-results.yml
-		build\azure-templates\run-tests-on-os.yml = build\azure-templates\run-tests-on-os.yml
-		build\azure-templates\show-all-environment-variables.yml = build\azure-templates\show-all-environment-variables.yml
-		build\azure-templates\show-all-files.yml = build\azure-templates\show-all-files.yml
-		build\azure-templates\publish-test-results.yml = build\azure-templates\publish-test-results.yml
-		build\azure-templates\publish-test-results-for-target-frameworks.yml = build\azure-templates\publish-test-results-for-target-frameworks.yml
-		build\azure-templates\publish-test-results-for-test-projects.yml = build\azure-templates\publish-test-results-for-test-projects.yml
 		build\azure-templates\run-tests-on-os.yml = build\azure-templates\run-tests-on-os.yml
 		build\azure-templates\show-all-environment-variables.yml = build\azure-templates\show-all-environment-variables.yml
 		build\azure-templates\show-all-files.yml = build\azure-templates\show-all-files.yml
@@ -182,9 +176,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Cli", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._A-I", "src\Lucene.Net.Tests._A-I\Lucene.Net.Tests._A-I.csproj", "{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-S", "src\Lucene.Net.Tests._J-U\Lucene.Net.Tests._J-U.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-U", "src\Lucene.Net.Tests._J-U\Lucene.Net.Tests._J-U.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JavaDocToMarkdownConverter", "src\dotnet\tools\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter.csproj", "{874179E7-FDA4-4E5B-9F86-54917BB6F74F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuceneDocsPlugins", "src\docs\LuceneDocsPlugins\LuceneDocsPlugins\LuceneDocsPlugins.csproj", "{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -408,6 +406,14 @@ Global
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
