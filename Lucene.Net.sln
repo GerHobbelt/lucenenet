@@ -162,10 +162,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-U", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JavaDocToMarkdownConverter", "src\dotnet\tools\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter.csproj", "{874179E7-FDA4-4E5B-9F86-54917BB6F74F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuceneDocsPlugins", "src\docs\LuceneDocsPlugins\LuceneDocsPlugins\LuceneDocsPlugins.csproj", "{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiqqaDummy", "src\QiqqaDummy\QiqqaDummy.csproj", "{2D526481-5972-4DEF-B859-9AE5953262EB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B91B0E5E-AF3A-4373-934E-91AEE02C5FA1} = {B91B0E5E-AF3A-4373-934E-91AEE02C5FA1}
@@ -396,14 +392,6 @@ Global
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{874179E7-FDA4-4E5B-9F86-54917BB6F74F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
