@@ -341,8 +341,23 @@ namespace Lucene.Net.Index
 
         /// <summary>
         /// Returns <c>true</c> if an index likely exists at
-        /// the specified directory.  Note that if a corrupt index
-        /// exists, or if an index in the process of committing </summary>
+        /// the specified directory.  
+        /// 
+        /// Note that if a corrupt index
+        /// exists, or if an index in the process of committing 
+        /// exists, this logic will
+        /// return <c>true</c> in cases that should arguably be <c>false</c>,
+        /// but it's too deadly to make
+        /// this logic "smarter" and risk accidentally returning
+        /// <c>false</c> due to various cases like file description
+        /// exhaustion, access denied, etc., because in that
+        /// case <see cref="IndexWriter"/> may delete the entire index.  It's
+        /// safer to err towards "index exists" than try to be
+        /// smart about detecting not-yet-fully-committed or
+        /// corrupt indices.  This means that <see cref="IndexWriter"/> will
+        /// throw an exception on such indices and the app must
+        /// resolve the situation manually.
+        /// </summary>
         /// <param name="directory"> the directory to check for an index </param>
         /// <returns> <c>true</c> if an index exists; <c>false</c> otherwise </returns>
         public static bool IndexExists(Directory directory)
