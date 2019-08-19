@@ -183,6 +183,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JavaDocToMarkdownConverter", "src\dotnet\tools\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter\JavaDocToMarkdownConverter.csproj", "{874179E7-FDA4-4E5B-9F86-54917BB6F74F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuceneDocsPlugins", "src\docs\LuceneDocsPlugins\LuceneDocsPlugins\LuceneDocsPlugins.csproj", "{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiqqaDummy", "src\QiqqaDummy\QiqqaDummy.csproj", "{2D526481-5972-4DEF-B859-9AE5953262EB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B91B0E5E-AF3A-4373-934E-91AEE02C5FA1} = {B91B0E5E-AF3A-4373-934E-91AEE02C5FA1}
+		{3A0AA37E-2B7B-4416-B528-DA4E0E6A6706} = {3A0AA37E-2B7B-4416-B528-DA4E0E6A6706}
+		{3D0366A8-515D-44F0-835F-4118853CFA14} = {3D0366A8-515D-44F0-835F-4118853CFA14}
+		{01CD8DE8-274F-476F-8419-7B3F018C749D} = {01CD8DE8-274F-476F-8419-7B3F018C749D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -414,6 +421,10 @@ Global
 		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5D1C256-4A5A-4C57-949D-E9A1FFB6A5D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D526481-5972-4DEF-B859-9AE5953262EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D526481-5972-4DEF-B859-9AE5953262EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D526481-5972-4DEF-B859-9AE5953262EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D526481-5972-4DEF-B859-9AE5953262EB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
