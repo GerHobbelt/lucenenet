@@ -189,7 +189,7 @@ namespace Lucene.Net.Index
         }
 
         /// <summary>
-        /// Expert: If there changes (committed or not) in the
+        /// Expert: If there are changes (committed or not) in the
         /// <see cref="IndexWriter"/> versus what the provided reader is
         /// searching, then open and return a new
         /// <see cref="IndexReader"/> searching both committed and uncommitted
