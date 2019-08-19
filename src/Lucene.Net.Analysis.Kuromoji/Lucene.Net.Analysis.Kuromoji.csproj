@@ -21,6 +21,7 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="$(SolutionDir)Version.proj" />
   <Import Project="$(SolutionDir)build/NuGet.props" />
   
   <PropertyGroup>
@@ -39,6 +40,9 @@
 
   <ItemGroup>
     <Compile Include="..\CommonAssemblyKeys.cs" Link="Properties\CommonAssemblyKeys.cs" />
+  </PropertyGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="stoptags.txt;stopwords.txt;Dict\CharacterDefinition.dat;Dict\ConnectionCosts.dat;Dict\TokenInfoDictionary$buffer.dat;Dict\TokenInfoDictionary$fst.dat;Dict\TokenInfoDictionary$posDict.dat;Dict\TokenInfoDictionary$targetMap.dat;Dict\UnknownDictionary$buffer.dat;Dict\UnknownDictionary$posDict.dat;Dict\UnknownDictionary$targetMap.dat" />
   </ItemGroup>
 

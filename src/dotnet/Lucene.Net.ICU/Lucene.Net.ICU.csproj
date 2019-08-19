@@ -23,6 +23,9 @@
 
   <Import Project="$(SolutionDir)build/NuGet.props" />
 
+  <Import Project="$(SolutionDir)Version.proj" />
+  <Import Project="$(SolutionDir)build/NuGet.props" />
+  
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>

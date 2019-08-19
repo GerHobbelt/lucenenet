@@ -183,6 +183,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-U", "src\Lucene.Net.Tests._J-U\Lucene.Net.Tests._J-U.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4DF0A2A1-B9C7-4EE5-BAF0-BEEF53E34220}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

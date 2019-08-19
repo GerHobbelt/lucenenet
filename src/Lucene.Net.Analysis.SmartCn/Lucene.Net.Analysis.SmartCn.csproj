@@ -21,6 +21,7 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="$(SolutionDir)Version.proj" />
   <Import Project="$(SolutionDir)build/NuGet.props" />
   
   <PropertyGroup>
@@ -54,6 +55,7 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="icu.net" Version="$(IcuNetPackageVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesPackageVersion)" />
   </ItemGroup>
 
