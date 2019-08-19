@@ -41,7 +41,6 @@
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
   
   <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
-  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <PackageReference Include="System.Net.Primitives" Version="$(SystemNetPrimitivesPackageVersion)" />
   </ItemGroup>-->
 
