@@ -361,7 +361,7 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 function Get-Package-Version() {
 	Write-Host $parameters.packageVersion -ForegroundColor Red
 
-	#If $packageVersion is not passed in (as a parameter or environment variable), get it from Version.proj
+	#If $packageVersion is not passed in (as a parameter or environment variable), get it from Directory.Build.props
 	if (![string]::IsNullOrWhiteSpace($parameters.packageVersion) -and $parameters.packageVersion -ne "0.0.0") {
 		return $parameters.packageVersion
 	} elseif (![string]::IsNullOrWhiteSpace($env:PackageVersion) -and $env:PackageVersion -ne "0.0.0") {

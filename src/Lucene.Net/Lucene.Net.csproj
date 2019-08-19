@@ -21,16 +21,11 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="$(SolutionDir)Version.proj" />
   <Import Project="$(SolutionDir)build/NuGet.props" />
   
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
-  <!--<Import Project="..\..\Version.proj" />-->
-	
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard1.6;net46</TargetFrameworks>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
     <AssemblyTitle>Lucene.Net</AssemblyTitle>
@@ -47,13 +42,11 @@
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.CSharp" Version="$(MicrosoftCSharpPackageVersion)" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
   </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
     <PackageReference Include="Microsoft.CSharp" Version="$(MicrosoftCSharpPackageVersion)" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="$(MicrosoftExtensionsDependencyModelPackageVersion)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="$(MicrosoftExtensionsDependencyModel)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPackageVersion)" />
     <PackageReference Include="System.Collections.NonGeneric" Version="$(SystemCollectionsNonGenericPackageVersion)" />
     <PackageReference Include="System.Collections.Specialized" Version="$(SystemCollectionsSpecializedPackageVersion)" />
@@ -77,19 +70,14 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net46' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <DefineConstants>$(DefineConstants);FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_THREADPOOL_UNSAFEQUEUEWORKITEM;FEATURE_FILESTREAM_LOCK;FEATURE_SERIALIZABLE;FEATURE_SERIALIZABLE_EXCEPTIONS</DefineConstants>
     <DebugType>full</DebugType>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 
 </Project>

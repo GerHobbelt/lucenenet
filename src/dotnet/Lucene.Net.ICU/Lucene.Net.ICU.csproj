@@ -23,9 +23,6 @@
 
   <Import Project="$(SolutionDir)build/NuGet.props" />
 
-  <Import Project="$(SolutionDir)Version.proj" />
-  <Import Project="$(SolutionDir)build/NuGet.props" />
-  
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
@@ -71,7 +68,6 @@
     <PackageReference Include="ICU4N.LanguageData" Version="$(ICU4NLanguageDataPackageVersion)" />
     <PackageReference Include="ICU4N.RegionData" Version="$(ICU4NRegionDataPackageVersion)" />
     <PackageReference Include="ICU4N.Transliterator" Version="$(ICU4NTransliteratorPackageVersion)" />
-    <PackageReference Include="icu.net" Version="$(IcuNetPackageVersion)" />
   </ItemGroup>
 
   <!-- NOTE: Microsoft's recommendation is not to use the ICloneable interface. We put in a FEATURE_CLONEABLE constant in case anyone wants to add it to the build -->

@@ -21,7 +21,6 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="$(SolutionDir)Version.proj" />
   <!-- This package is currently not being deployed to NuGet because it only works with NUnit and has many quality issues -->
   <!--<Import Project="$(SolutionDir)build/NuGet.props" />-->
   
@@ -56,7 +55,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="icu.net" Version="$(IcuNetPackageVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitPackageVersion)" />
   </ItemGroup>
 

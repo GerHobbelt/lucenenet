@@ -21,16 +21,11 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="$(SolutionDir)Version.proj" />
   <Import Project="$(SolutionDir)build/NuGet.props" />
   
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
-  <!--<Import Project="..\..\Version.proj" />-->
-  
-  <PropertyGroup>
-    <TargetFrameworks>netstandard1.6;net46</TargetFrameworks>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
     <AssemblyTitle>Lucene.Net.Queries</AssemblyTitle>
@@ -54,12 +49,12 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net46' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <DefineConstants>$(DefineConstants);FEATURE_SERIALIZABLE_EXCEPTIONS</DefineConstants>
     <DebugType>full</DebugType>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>

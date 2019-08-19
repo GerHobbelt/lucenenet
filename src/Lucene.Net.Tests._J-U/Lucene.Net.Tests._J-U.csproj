@@ -23,9 +23,6 @@
 
   <Import Project="$(SolutionDir)TestTargetFramework.props" />
   
-  <Import Project="$(SolutionDir)TestTargetFramework.proj" />
-  <Import Project="$(SolutionDir)Version.proj" />
-
   <PropertyGroup>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
@@ -64,10 +61,6 @@
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
   
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
-
-  <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD;FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE</DefineConstants>
     <DebugType>portable</DebugType>
   </PropertyGroup>

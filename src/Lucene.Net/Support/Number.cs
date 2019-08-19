@@ -541,9 +541,5 @@ namespace Lucene.Net.Support
                    || value is double
                    || value is decimal;
         }
-
-
-
-
     }
 }

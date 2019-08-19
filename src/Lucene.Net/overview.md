@@ -25,8 +25,8 @@ Apache Lucene is a high-performance, full-featured text search engine library. H
 <!-- =   Java2Html Converter 5.0 [2006-03-04] by Markus Gebhard  markus@jave.de   = -->
 
         Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
-    
-    // Store the index in memory:
+
+        // Store the index in memory:
         Directory directory = new RAMDirectory();
         // To store an index on disk, use this instead:
         //Directory directory = FSDirectory.open("/tmp/testindex");

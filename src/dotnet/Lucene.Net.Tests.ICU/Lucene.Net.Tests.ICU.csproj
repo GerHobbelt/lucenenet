@@ -22,8 +22,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="$(SolutionDir)TestTargetFramework.props" />
-  <Import Project="$(SolutionDir)TestTargetFramework.proj" />
-  <Import Project="$(SolutionDir)Version.proj" />
 
   <PropertyGroup>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
@@ -70,11 +68,6 @@
     <PackageReference Include="ICU4N.LanguageData" Version="$(ICU4NLanguageDataPackageVersion)" />
     <PackageReference Include="ICU4N.RegionData" Version="$(ICU4NRegionDataPackageVersion)" />
     <PackageReference Include="ICU4N.Transliterator" Version="$(ICU4NTransliteratorPackageVersion)" />
-    <PackageReference Include="icu.net" Version="$(IcuNetPackageVersion)" />
-  </ItemGroup>
-
-  <ItemGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
-    <PackageReference Include="Icu4c.Win.Full.Lib" Version="$(Icu4cWinFullLibPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">

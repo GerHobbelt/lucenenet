@@ -196,7 +196,7 @@ To build the source, clone or download and unzip the repository. From the reposi
 	<tr>
 		<td>&#8209;pv</td>
 		<td>&#8209;&#8209;PackageVersion</td>
-		<td>The NuGet package version. If not supplied, will use the version from the Version.proj file.</td>
+		<td>The NuGet package version. If not supplied, will use the version from the Directory.Build.props file.</td>
 		<td>build&nbsp;&#8209;pv:4.8.0&#8209;beta00001</td>
 	</tr>
 	<tr>

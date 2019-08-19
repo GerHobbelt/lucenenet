@@ -29,10 +29,10 @@ Fragmenter, fragment Scorer, and Formatter classes.
       IndexSearcher searcher = new IndexSearcher(directory);
       QueryParser parser = new QueryParser("notv", analyzer);
       Query query = parser.parse("million");
-    
-  TopDocs hits = searcher.search(query, 10);
-    
-  SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
+
+      TopDocs hits = searcher.search(query, 10);
+
+      SimpleHTMLFormatter htmlFormatter = new SimpleHTMLFormatter();
       Highlighter highlighter = new Highlighter(htmlFormatter, new QueryScorer(query));
       for (int i = 0; i < 10;="" i++)="" {="" int="" id="hits.scoreDocs[i].doc;" document="" doc="searcher.doc(id);" string="" text="doc.get(" notv");"="" tokenstream="" tokenstream="TokenSources.getAnyTokenStream(searcher.getIndexReader()," id,="" "notv",="" analyzer);="" textfragment[]="" frag="highlighter.getBestTextFragments(tokenStream," text,="" false,="" 10);//highlighter.getbestfragments(tokenstream,="" text,="" 3,="" "...");="" for="" (int="" j="0;" j="">< frag.length;="" j++)="" {="" if="" ((frag[j]="" !="null)" &&="" (frag[j].getscore()=""> 0)) {
             System.out.println((frag[j].toString()));
