@@ -299,7 +299,7 @@ namespace Lucene.Net.Search
         /// document.
         /// </summary>
         /// <param name="query"> To match documents </param>
-        /// <param name="filter"> Ef non-null, used to permit documents to be collected. </param>
+        /// <param name="filter"> If non-null, used to permit documents to be collected. </param>
         /// <param name="results"> To receive hits </param>
         /// <exception cref="BooleanQuery.TooManyClausesException"> If a query would exceed
         ///         <see cref="BooleanQuery.MaxClauseCount"/> clauses. </exception>

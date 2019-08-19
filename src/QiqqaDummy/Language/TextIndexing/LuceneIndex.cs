@@ -8,7 +8,6 @@ using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.QueryParsers;
-using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
 using Utilities.BibTex.Parsing;
 using Utilities.Files;
@@ -18,12 +17,79 @@ namespace Utilities.Language.TextIndexing
 {
     public class LuceneIndex : IDisposable
     {
-        static readonly string INDEX_VERSION = "4.0";
-        string LIBRARY_INDEX_BASE_PATH;
+        static readonly string INDEX_VERSION = "81.0";  // old Qiqqa indexes were 4.0; this will nuke thm and rebuild. Reverting to oldr Qiqqa will do the same to *us*: delete + rebuild.
+        readonly string LIBRARY_INDEX_BASE_PATH;
+        Lucene.Net.Store.FSDirectory LIBRARY_INDEX_DIRECTORY;
 
         Analyzer analyzer;
         object index_writer_lock = new object();
         IndexWriter index_writer = null;
+
+        // Note on IndexWriter --> IndexReader:
+        //
+        /// 
+        /// Expert: returns a readonly reader, covering all
+        /// committed as well as un-committed changes to the index.
+        /// this provides "near real-time" searching, in that
+        /// changes made during an <see cref="IndexWriter"/> session can be
+        /// quickly made available for searching without closing
+        /// the writer nor calling <see cref="Commit()"/>.
+        ///
+        /// <para>Note that this is functionally equivalent to calling
+        /// Flush() and then opening a new reader.  But the turnaround time of this
+        /// method should be faster since it avoids the potentially
+        /// costly <see cref="Commit()"/>.</para>
+        ///
+        /// <para>You must close the <see cref="IndexReader"/> returned by
+        /// this method once you are done using it.</para>
+        ///
+        /// <para>It's <i>near</i> real-time because there is no hard
+        /// guarantee on how quickly you can get a new reader after
+        /// making changes with <see cref="IndexWriter"/>.  You'll have to
+        /// experiment in your situation to determine if it's
+        /// fast enough.  As this is a new and experimental
+        /// feature, please report back on your findings so we can
+        /// learn, improve and iterate.</para>
+        ///
+        /// <para>The resulting reader supports
+        /// <see cref="DirectoryReader.DoOpenIfChanged()"/>, but that call will simply forward
+        /// back to this method (though this may change in the
+        /// future).</para>
+        ///
+        /// <para>The very first time this method is called, this
+        /// writer instance will make every effort to pool the
+        /// readers that it opens for doing merges, applying
+        /// deletes, etc.  This means additional resources (RAM,
+        /// file descriptors, CPU time) will be consumed.</para>
+        ///
+        /// <para>For lower latency on reopening a reader, you should
+        /// set <see cref="LiveIndexWriterConfig.MergedSegmentWarmer"/> to
+        /// pre-warm a newly merged segment before it's committed
+        /// to the index.  This is important for minimizing
+        /// index-to-search delay after a large merge.  </para>
+        ///
+        /// <para>If an AddIndexes* call is running in another thread,
+        /// then this reader will only search those segments from
+        /// the foreign index that have been successfully copied
+        /// over, so far.</para>
+        ///
+        /// <para><b>NOTE</b>: Once the writer is disposed, any
+        /// outstanding readers may continue to be used.  However,
+        /// if you attempt to reopen any of those readers, you'll
+        /// hit an <see cref="ObjectDisposedException"/>.</para>
+        ///
+        /// @lucene.experimental
+        /// 
+        /// <returns> <see cref="IndexReader"/> that covers entire index plus all
+        /// changes made so far by this <see cref="IndexWriter"/> instance
+        /// </returns>
+        /// <exception cref="IOException"> If there is a low-level I/O error </exception>
+        //
+        //public virtual DirectoryReader GetReader(bool applyAllDeletes)
+
+
+        protected static FieldType STORE_NO_INDEX_ANALYZED = Field.TranslateFieldType(Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED, TermVector.NO);
+        protected static FieldType STORE_YES_INDEX_NO_NORMS = Field.TranslateFieldType(Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS, TermVector.NO);
 
         public LuceneIndex(string LIBRARY_INDEX_BASE_PATH)
         {
@@ -43,7 +109,9 @@ namespace Utilities.Language.TextIndexing
             }
 
             // Create our common parts
-            analyzer = new Lucene.Net.Analysis.Standard.StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_29, new Hashtable());            
+            analyzer = new Lucene.Net.Analysis.Standard.StandardAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_29, new Hashtable());
+
+            LIBRARY_INDEX_DIRECTORY = Lucene.Net.Store.FSDirectory.Open(LIBRARY_INDEX_BASE_PATH);
         }
 
         ~LuceneIndex()
@@ -91,8 +159,8 @@ namespace Utilities.Language.TextIndexing
             if (null != index_writer)
             {
                 index_writer.Commit();
-                index_writer.Optimize();
-                index_writer.Close();
+                //index_writer.Optimize();
+                //index_writer.Close();
                 index_writer.Dispose();
                 index_writer = null;
             }
@@ -105,24 +173,24 @@ namespace Utilities.Language.TextIndexing
             {
                 sb.AppendLine(field_value);
 
-                document.Add(new Lucene.Net.Documents.Field(field_name, field_value, Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED));
+                document.Add(new Lucene.Net.Documents.Field(field_name, field_value, STORE_NO_INDEX_ANALYZED));
             }
         }
 
-        private static void AddDocumentMetadata_BibTex(Document document, BibTexItem bibtex_item)
+        private static void AddDocumentMetadata_BibTex(Document document, Utilities.BibTex.Parsing.BibTexItem bibtex_item)
         {
             if (null == bibtex_item) return;
 
-            document.Add(new Lucene.Net.Documents.Field("type", bibtex_item.Type, Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED));
-            document.Add(new Lucene.Net.Documents.Field("key", bibtex_item.Key, Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED));
+            document.Add(new Lucene.Net.Documents.Field("type", bibtex_item.Type, STORE_NO_INDEX_ANALYZED));
+            document.Add(new Lucene.Net.Documents.Field("key", bibtex_item.Key, STORE_NO_INDEX_ANALYZED));
 
-            foreach (var pair in bibtex_item.EnumerateFields())
+            foreach (KeyValuePair<string, string> pair in bibtex_item.EnumerateFields())
             {
-                document.Add(new Lucene.Net.Documents.Field(pair.Key, pair.Value, Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED));
+                document.Add(new Lucene.Net.Documents.Field(pair.Key, pair.Value, STORE_NO_INDEX_ANALYZED));
             }
         }
 
-        public void AddDocumentMetadata(bool is_deleted, string fingerprint, string title, string author, string year, string comment, string tag, string annotation, string bibtex, BibTexItem bibtex_item)
+        public void AddDocumentMetadata(bool is_deleted, string fingerprint, string title, string author, string year, string comment, string tag, string annotation, string bibtex, Utilities.BibTex.Parsing.BibTexItem bibtex_item)
         {
             Lucene.Net.Documents.Document document = null;
 
@@ -130,8 +198,8 @@ namespace Utilities.Language.TextIndexing
             if (!is_deleted)
             {
                 document = new Lucene.Net.Documents.Document();
-                document.Add(new Field("fingerprint", fingerprint, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-                document.Add(new Field("page", "0", Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+                document.Add(new Field("fingerprint", fingerprint, STORE_YES_INDEX_NO_NORMS));
+                document.Add(new Field("page", "0", STORE_YES_INDEX_NO_NORMS));
 
                 StringBuilder content_sb = new StringBuilder();
 
@@ -146,7 +214,7 @@ namespace Utilities.Language.TextIndexing
                 AddDocumentMetadata_BibTex(document, bibtex_item);
 
                 string content = content_sb.ToString();
-                document.Add(new Field("content", content, Field.Store.NO, Field.Index.ANALYZED));
+                document.Add(new Field("content", content, STORE_NO_INDEX_ANALYZED));
             }
             
             AddDocumentPage_INTERNAL(fingerprint, 0, document);
@@ -160,9 +228,9 @@ namespace Utilities.Language.TextIndexing
             if (!is_deleted)
             {
                 document = new Lucene.Net.Documents.Document();
-                document.Add(new Field("fingerprint", fingerprint, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-                document.Add(new Field("page", Convert.ToString(page), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-                document.Add(new Field("content", content, Field.Store.NO, Field.Index.ANALYZED));
+                document.Add(new Field("fingerprint", fingerprint, STORE_YES_INDEX_NO_NORMS));
+                document.Add(new Field("page", Convert.ToString(page), STORE_YES_INDEX_NO_NORMS));
+                document.Add(new Field("content", content, STORE_NO_INDEX_ANALYZED));
             }
 
             AddDocumentPage_INTERNAL(fingerprint, page, document);
@@ -176,14 +244,26 @@ namespace Utilities.Language.TextIndexing
                 if (null == index_writer)
                 {
                     Logging.Info("+Creating a new lucene IndexWriter");
-                    index_writer = new Lucene.Net.Index.IndexWriter(LIBRARY_INDEX_BASE_PATH, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+                    /// Creates a new config that with defaults that match the specified
+                    /// <see cref="LuceneVersion"/> as well as the default 
+                    /// <see cref="Analyzer"/>. If <paramref name="matchVersion"/> is &gt;= 
+                    /// <see cref="LuceneVersion.LUCENE_32"/>, <see cref="TieredMergePolicy"/> is used
+                    /// for merging; else <see cref="LogByteSizeMergePolicy"/>.
+                    /// Note that <see cref="TieredMergePolicy"/> is free to select
+                    /// non-contiguous merges, which means docIDs may not
+                    /// remain monotonic over time.  If this is a problem you
+                    /// should switch to <see cref="LogByteSizeMergePolicy"/> or
+                    /// <see cref="LogDocMergePolicy"/>.
+                    IndexWriterConfig config = new IndexWriterConfig(Lucene.Net.Util.LuceneVersion.LUCENE_CURRENT, analyzer);
+                    // ??? MaxFieldLength.UNLIMITED
+                    index_writer = new Lucene.Net.Index.IndexWriter(LIBRARY_INDEX_DIRECTORY, config);
                     Logging.Info("-Creating a new lucene IndexWriter");
                 }
 
                 // Delete the document if it already exists
                 Lucene.Net.Search.BooleanQuery bq = new Lucene.Net.Search.BooleanQuery();
-                bq.Add(new Lucene.Net.Search.TermQuery(new Lucene.Net.Index.Term("fingerprint", fingerprint)), Lucene.Net.Search.BooleanClause.Occur.MUST);
-                bq.Add(new Lucene.Net.Search.TermQuery(new Lucene.Net.Index.Term("page", System.Convert.ToString(page))), Lucene.Net.Search.BooleanClause.Occur.MUST);
+                bq.Add(new Lucene.Net.Search.TermQuery(new Lucene.Net.Index.Term("fingerprint", fingerprint)), Lucene.Net.Search.Occur.MUST);
+                bq.Add(new Lucene.Net.Search.TermQuery(new Lucene.Net.Index.Term("page", System.Convert.ToString(page))), Lucene.Net.Search.Occur.MUST);
                 index_writer.DeleteDocuments(bq);
 
                 // Add the new document
@@ -211,11 +291,38 @@ namespace Utilities.Language.TextIndexing
 
             try
             {
-                using (Lucene.Net.Index.IndexReader index_reader = Lucene.Net.Index.IndexReader.Open(LIBRARY_INDEX_BASE_PATH, true))
+                using (DirectoryReader index_reader = DirectoryReader.OpenIfChanged(LIBRARY_INDEX_DIRECTORY))
                 {
-                    using (Lucene.Net.Search.Searcher index_searcher = new Lucene.Net.Search.IndexSearcher(index_reader))
+                    /// IndexSearcher:
+                    /// 
+                    /// Implements search over a single <see cref="Index.IndexReader"/>.
+                    ///
+                    /// <para/>Applications usually need only call the inherited
+                    /// <see cref="Search(Query,int)"/>
+                    /// or <see cref="Search(Query,Filter,int)"/> methods. For
+                    /// performance reasons, if your index is unchanging, you
+                    /// should share a single <see cref="IndexSearcher"/> instance across
+                    /// multiple searches instead of creating a new one
+                    /// per-search.  If your index has changed and you wish to
+                    /// see the changes reflected in searching, you should
+                    /// use <see cref="Index.DirectoryReader.OpenIfChanged(Index.DirectoryReader)"/>
+                    /// to obtain a new reader and
+                    /// then create a new <see cref="IndexSearcher"/> from that.  Also, for
+                    /// low-latency turnaround it's best to use a near-real-time
+                    /// reader (<see cref="Index.DirectoryReader.Open(Index.IndexWriter,bool)"/>).
+                    /// Once you have a new <see cref="Index.IndexReader"/>, it's relatively
+                    /// cheap to create a new <see cref="IndexSearcher"/> from it.
+                    ///
+                    /// <para/><a name="thread-safety"></a><p><b>NOTE</b>: 
+                    /// <see cref="IndexSearcher"/> instances are completely
+                    /// thread safe, meaning multiple threads can call any of its
+                    /// methods, concurrently.  If your application requires
+                    /// external synchronization, you should <b>not</b>
+                    /// synchronize on the <see cref="IndexSearcher"/> instance;
+                    /// use your own (non-Lucene) objects instead.</p>
+                    Lucene.Net.Search.IndexSearcher index_searcher = new Lucene.Net.Search.IndexSearcher(index_reader);
                     {
-                        Lucene.Net.QueryParsers.QueryParser query_parser = new Lucene.Net.QueryParsers.QueryParser(Version.LUCENE_29, "content", analyzer);
+                        Lucene.Net.QueryParsers.QueryParser query_parser = new Lucene.Net.QueryParsers.QueryParser(Lucene.Net.Util.LuceneVersion.LUCENE_29, "content", analyzer);
 
                         Lucene.Net.Search.Query query_object = query_parser.Parse(query);
                         Lucene.Net.Search.Hits hits = index_searcher.Search(query_object);
@@ -235,9 +342,6 @@ namespace Utilities.Language.TextIndexing
                                 fingerprints.Add(index_result);
                             }
                         }
-
-                        // Close the index
-                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }
@@ -257,11 +361,11 @@ namespace Utilities.Language.TextIndexing
 
             try
             {
-                using (IndexReader index_reader = IndexReader.Open(LIBRARY_INDEX_BASE_PATH, true))
+                using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                 {
-                    using (Searcher index_searcher = new IndexSearcher(index_reader))
+                    IndexSearcher index_searcher = new IndexSearcher(index_reader);
                     {
-                        QueryParser query_parser = new QueryParser(Version.LUCENE_29, "content", analyzer);
+                        QueryParser query_parser = new QueryParser(Lucene.Net.Util.LuceneVersion.LUCENE_29, "content", analyzer);
 
                         Query query_object = query_parser.Parse(query);
                         Lucene.Net.Search.Hits hits = index_searcher.Search(query_object);
@@ -292,9 +396,6 @@ namespace Utilities.Language.TextIndexing
                                 result.page_results.Add(new PageResult { page = page, score = score });
                             }
                         }
-
-                        // Close the index
-                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }
@@ -325,9 +426,9 @@ namespace Utilities.Language.TextIndexing
                     //    return fingerprints;
                     //}
 
-                    using (IndexReader index_reader = IndexReader.Open(LIBRARY_INDEX_BASE_PATH, true))
+                    using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                     {
-                        using (Searcher index_searcher = new IndexSearcher(index_reader))
+                        IndexSearcher index_searcher = new IndexSearcher(index_reader);
                         {
                             TermQuery term_query = new TermQuery(new Term("content", keyword));
                             Hits hits = index_searcher.Search(term_query);
@@ -339,9 +440,6 @@ namespace Utilities.Language.TextIndexing
                                 string fingerprint = hit.Get("fingerprint");
                                 fingerprints.Add(fingerprint);
                             }
-
-                            // Close the index
-                            index_searcher.Close();
                         }
                         index_reader.Close();
                     }
@@ -361,9 +459,9 @@ namespace Utilities.Language.TextIndexing
 
             try
             {
-                using (IndexReader index_reader = IndexReader.Open(LIBRARY_INDEX_BASE_PATH, true))
+                using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                 {
-                    using (Searcher index_searcher = new IndexSearcher(index_reader))
+                    IndexSearcher index_searcher = new IndexSearcher(index_reader);
                     {
                         LuceneMoreLikeThis mlt = new LuceneMoreLikeThis(index_reader);
                         mlt.SetFieldNames(new string[] { "content" });
@@ -378,9 +476,6 @@ namespace Utilities.Language.TextIndexing
                             string fingerprint = hit.Get("fingerprint");
                             fingerprints.Add(fingerprint);
                         }
-
-                        // Close the index
-                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }

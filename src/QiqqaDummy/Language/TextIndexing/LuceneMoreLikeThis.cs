@@ -262,7 +262,7 @@ namespace Utilities.Language.TextIndexing
         private int maxQueryTerms = DEFAULT_MAX_QUERY_TERMS;
 		
         /// <summary> For idf() calculations.</summary>
-        private Lucene.Net.Search.Similarity similarity = new Lucene.Net.Search.DefaultSimilarity();
+        private Similarity similarity = new DefaultSimilarity();
 		
         /// <summary> IndexReader to use</summary>
         private Lucene.Net.Index.IndexReader ir;
@@ -576,16 +576,16 @@ namespace Utilities.Language.TextIndexing
         }
 		
         /// <summary> Create the More like query from a PriorityQueue</summary>
-        private Query CreateQuery(Lucene.Net.Util.PriorityQueue q)
+        private Query CreateQuery(Lucene.Net.Util.PriorityQueue<PQRecord> q)
         {
             Lucene.Net.Search.BooleanQuery query = new Lucene.Net.Search.BooleanQuery();
-            Object cur;
+            PQRecord cur;
             int qterms = 0;
             float bestScore = 0;
 			
             while (((cur = q.Pop()) != null))
             {
-                PQRecord ar = (PQRecord) cur;
+                PQRecord ar = cur;
                 Lucene.Net.Search.TermQuery tq = new Lucene.Net.Search.TermQuery(new Term(ar.topField, ar.word));
 				
                 if (boost)
@@ -623,7 +623,7 @@ namespace Utilities.Language.TextIndexing
         /// </summary>
         /// <param name="words">a map of words keyed on the word(String) with Int objects as the values.
         /// </param>
-        private PriorityQueue CreateQueue(IDictionary words)
+        private PriorityQueue<PQRecord> CreateQueue(IDictionary words)
         {
             // have collected all words in doc and their freqs
             int numDocs = ir.NumDocs();
@@ -673,7 +673,7 @@ namespace Utilities.Language.TextIndexing
                     docFreq,
                     tf
                 );
-                res.Insert(pqr);
+                res.InsertWithOverflow(pqr);
             }
             return res;
         }
@@ -776,7 +776,7 @@ namespace Utilities.Language.TextIndexing
         /// </summary>
         /// <param name="docNum">the id of the lucene document from which to find terms
         /// </param>
-        private PriorityQueue RetrieveTerms(int docNum)
+        private PriorityQueue<PQRecord> RetrieveTerms(int docNum)
         {
             IDictionary termFreqMap = new Hashtable();
             for (int i = 0; i < fieldNames.Length; i++)
@@ -927,7 +927,7 @@ namespace Utilities.Language.TextIndexing
         /// </returns>
         /// <seealso cref="#retrieveInterestingTerms">
         /// </seealso>
-        public Lucene.Net.Util.PriorityQueue RetrieveTerms(StreamReader r)
+        public Lucene.Net.Util.PriorityQueue<PQRecord> RetrieveTerms(StreamReader r)
         {
             IDictionary words = new Hashtable();
             for (int i = 0; i < fieldNames.Length; i++)
@@ -953,13 +953,13 @@ namespace Utilities.Language.TextIndexing
         public String[] RetrieveInterestingTerms(StreamReader r)
         {
             ArrayList al = new ArrayList(maxQueryTerms);
-            Lucene.Net.Util.PriorityQueue pq = RetrieveTerms(r);
-            Object cur;
+            Lucene.Net.Util.PriorityQueue<PQRecord> pq = RetrieveTerms(r);
+            PQRecord cur;
             int lim = maxQueryTerms; // have to be careful, retrieveTerms returns all words but that's probably not useful to our caller...
             // we just want to return the top words
             while (((cur = pq.Pop()) != null) && lim-- > 0)
             {
-                PQRecord ar = (PQRecord) cur;
+                PQRecord ar = cur;
                 al.Add(ar.word); // the 1st entry is the interesting word
             }
             String[] res = new String[al.Count];
@@ -968,19 +968,16 @@ namespace Utilities.Language.TextIndexing
         }
 		
         /// <summary> PriorityQueue that orders words by score.</summary>
-        private class FreqQ : Lucene.Net.Util.PriorityQueue
+        private class FreqQ : Lucene.Net.Util.PriorityQueue<PQRecord>
         {
-            internal FreqQ(int s)
+            internal FreqQ(int s) : base(s)
             {
-                Initialize(s);
             }
 			
-            override public bool LessThan(Object a, Object b)
+            override protected bool LessThan(PQRecord a, PQRecord b)
             {
-                PQRecord aa = (PQRecord) a;
-                PQRecord bb = (PQRecord) b;
-                float fa = aa.score;
-                float fb = bb.score;
+                float fa = a.score;
+                float fb = b.score;
                 return fa > fb;
             }
         }
