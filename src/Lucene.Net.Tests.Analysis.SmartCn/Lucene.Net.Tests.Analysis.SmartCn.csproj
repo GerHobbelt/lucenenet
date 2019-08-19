@@ -29,6 +29,8 @@
     <AssemblyTitle>Lucene.Net.Tests.Analysis.SmartCn</AssemblyTitle>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
+
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,6 +41,7 @@
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
   
   <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
+  <!--<ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <PackageReference Include="System.Net.Primitives" Version="$(SystemNetPrimitivesPackageVersion)" />
   </ItemGroup>-->
 

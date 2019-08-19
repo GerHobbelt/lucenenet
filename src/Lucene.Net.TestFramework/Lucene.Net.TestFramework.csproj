@@ -36,6 +36,8 @@
       remove all of the warnings this line produces. -->
     <!--<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>-->
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
+
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -53,6 +55,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="icu.net" Version="$(IcuNetPackageVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitPackageVersion)" />
   </ItemGroup>
 

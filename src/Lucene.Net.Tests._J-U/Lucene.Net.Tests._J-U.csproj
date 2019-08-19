@@ -29,6 +29,8 @@
     <AssemblyTitle>Lucene.Net.Tests._J-U</AssemblyTitle>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
+
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
   
   <ItemGroup>
@@ -55,6 +57,10 @@
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
   
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
+
+  <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD;FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE</DefineConstants>
     <DebugType>portable</DebugType>
   </PropertyGroup>
