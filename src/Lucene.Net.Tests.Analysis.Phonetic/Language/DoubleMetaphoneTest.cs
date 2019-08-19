@@ -49,7 +49,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             "abouy", "about" }, new string[] {
             "absorbtion", "absorption" }, new string[] {
             "accidently", "accidentally" }, new string[] {
-            "accomodate", "accommodate" }, new string[] {
+            "accommodate", "accommodate" }, new string[] {
             "acommadate", "accommodate" }, new string[] {
             "acord", "accord" }, new string[] {
             "adultry", "adultery" }, new string[] {
@@ -166,7 +166,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             "defence", "defense" }, new string[] {
             "defenly", "defiantly" }, new string[] {
             "definate", "definite" }, new string[] {
-            "definately", "definitely" }, new string[] {
+            "definitely", "definitely" }, new string[] {
             "dependeble", "dependable" }, new string[] {
             "descrption", "description" }, new string[] {
             "descrptn", "description" }, new string[] {
@@ -467,7 +467,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             "ramplily", "rampantly" }, new string[] {
             "reccomend", "recommend" }, new string[] {
             "reccona", "raccoon" }, new string[] {
-            "recieve", "receive" }, new string[] {
+            "receive", "receive" }, new string[] {
             "reconise", "recognize" }, new string[] {
             "rectangeles", "rectangle" }, new string[] {
             "redign", "redesign" }, new string[] {
@@ -493,7 +493,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             "seferal", "several" }, new string[] {
             "segements", "segments" }, new string[] {
             "sence", "sense" }, new string[] {
-            "seperate", "separate" }, new string[] {
+            "separate", "separate" }, new string[] {
             "sherbert", "sherbet" }, new string[] {
             "sicolagest", "psychologist" }, new string[] {
             "sieze", "seize" }, new string[] {
