@@ -21,9 +21,8 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- This package is currently not being deployed to NuGet because it only works with NUnit and has many quality issues -->
-  <!--<Import Project="$(SolutionDir)build/NuGet.props" />-->
-  
+  <Import Project="$(SolutionDir)build/NuGet.props" />
+
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
@@ -38,16 +37,26 @@
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
 
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <AssemblyTitle>Lucene.Net.TestFramework.NUnit</AssemblyTitle>
     <RootNamespace>Lucene.Net</RootNamespace>
+    <Description>Framework for testing third-party code that uses the Lucene.Net API using NUnit.</Description>
+    <PackageTags>$(PackageTags);testframework;test;framework;nunit</PackageTags>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573</NoWarn>
+
+    <DefineConstants>$(DefineConstants);TESTFRAMEWORK_NUNIT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Util\AbstractBeforeAfterRule.cs;Util\CloseableDirectory.cs;Util\FailureMarker.cs;Util\QuickPatchThreadsFilter.cs;Util\RemoveUponClose.cs;Util\RunListenerPrintReproduceInfo.cs;Util\TestRuleAssertionsRequired.cs;Util\TestRuleDelegate.cs;Util\TestRuleFieldCacheSanity.cs;Util\TestRuleIgnoreAfterMaxFailures.cs;Util\TestRuleIgnoreTestSuites.cs;Util\TestRuleMarkFailure.cs;Util\TestRuleSetupAndRestoreInstanceEnv.cs;Util\TestRuleSetupTeardownChained.cs;Util\TestRuleStoreClassName.cs;Util\TestRuleThreadAndTestName.cs;Util\TestSecurityManager.cs" />
+    <Compile Include="..\Lucene.Net.TestFramework\**\*.cs" />
+    <Compile Remove="..\Lucene.Net.TestFramework\obj\**\*;..\Lucene.Net.TestFramework\bin\**\*" />
+    <Compile Remove="..\Lucene.Net.TestFramework\Properties\*.cs" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <None Remove="Util\europarl.lines.txt.gz" />
-    <EmbeddedResource Include="Util\europarl.lines.txt.gz" />
+    <None Remove="..\Lucene.Net.TestFramework\Util\europarl.lines.txt.gz" />
+    <EmbeddedResource Include="..\Lucene.Net.TestFramework\Util\europarl.lines.txt.gz" Link="Util\europarl.lines.txt.gz" />
+    <None Include="..\Lucene.Net.TestFramework\*.txt" />
   </ItemGroup>
 
   <ItemGroup>

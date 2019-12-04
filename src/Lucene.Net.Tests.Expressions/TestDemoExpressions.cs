@@ -42,7 +42,11 @@ namespace Lucene.Net.Expressions
 		{
 			base.SetUp();
 			dir = NewDirectory();
-			var iw = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+			var iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 			var doc = new Document
 			{
 			    NewStringField("id", "1", Field.Store.YES),
@@ -115,7 +119,7 @@ namespace Lucene.Net.Expressions
 				FieldDoc d = (FieldDoc)td.ScoreDocs[i];
 				float expected = (float)Math.Sqrt(d.Score);
 				float actual = (float)((double)d.Fields[0]);
-				AreEqual(expected, actual, CheckHits.ExplainToleranceDelta(expected, actual));
+                Assert.AreEqual(expected, actual, CheckHits.ExplainToleranceDelta(expected, actual));
 			}
 		}
 
@@ -134,7 +138,7 @@ namespace Lucene.Net.Expressions
 				FieldDoc d = (FieldDoc)td.ScoreDocs[i];
 				float expected = 2 * d.Score;
 				float actual = (float)((double)d.Fields[0]);
-				AreEqual(expected, actual, CheckHits.ExplainToleranceDelta
+                Assert.AreEqual(expected, actual, CheckHits.ExplainToleranceDelta
 					(expected, actual));
 			}
 		}
@@ -156,7 +160,7 @@ namespace Lucene.Net.Expressions
 				FieldDoc d = (FieldDoc)td.ScoreDocs[i];
 				float expected = 2 * d.Score;
 				float actual = (float)((double)d.Fields[0]);
-				AreEqual(expected, actual, CheckHits.ExplainToleranceDelta
+                Assert.AreEqual(expected, actual, CheckHits.ExplainToleranceDelta
 					(expected, actual));
 			}
 		}
@@ -195,7 +199,7 @@ namespace Lucene.Net.Expressions
 				FieldDoc d = (FieldDoc)td.ScoreDocs[i_1];
 				float expected = n * d.Score;
 				float actual = (float)((double)d.Fields[0]);
-				AreEqual(expected, actual, CheckHits.ExplainToleranceDelta(expected, actual));
+                Assert.AreEqual(expected, actual, CheckHits.ExplainToleranceDelta(expected, actual));
 			}
 		}
 
@@ -209,11 +213,11 @@ namespace Lucene.Net.Expressions
 			Sort sort = new Sort(distance.GetSortField(bindings, false));
 			TopFieldDocs td = searcher.Search(new MatchAllDocsQuery(), null, 3, sort);
 			FieldDoc d = (FieldDoc)td.ScoreDocs[0];
-			AreEqual(0.4619D, (double)d.Fields[0], 1E-4);
+            Assert.AreEqual(0.4619D, (double)d.Fields[0], 1E-4);
 			d = (FieldDoc)td.ScoreDocs[1];
-			AreEqual(1.0546D, (double)d.Fields[0], 1E-4);
+            Assert.AreEqual(1.0546D, (double)d.Fields[0], 1E-4);
 			d = (FieldDoc)td.ScoreDocs[2];
-			AreEqual(5.2842D, (double)d.Fields[0], 1E-4);
+            Assert.AreEqual(5.2842D, (double)d.Fields[0], 1E-4);
 		}
 	}
 }

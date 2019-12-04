@@ -1,5 +1,4 @@
 using Lucene.Net.Support;
-using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +7,7 @@ using System.Linq;
 using System.Text;
 using Console = Lucene.Net.Support.SystemConsole;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using Assert = Lucene.Net.TestFramework.Assert;
 
 namespace Lucene.Net.Util.Fst
 {

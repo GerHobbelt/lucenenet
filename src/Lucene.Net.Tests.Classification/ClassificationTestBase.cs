@@ -57,7 +57,11 @@ namespace Lucene.Net.Classification
         {
             base.SetUp();
             dir = NewDirectory();
-            indexWriter = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            indexWriter = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             textFieldName = "text";
             categoryFieldName = "cat";
             booleanFieldName = "bool";
@@ -89,9 +93,9 @@ namespace Lucene.Net.Classification
                 atomicReader = SlowCompositeReaderWrapper.Wrap(indexWriter.GetReader());
                 classifier.Train(atomicReader, textFieldName, classFieldName, analyzer, query);
                 ClassificationResult<T> classificationResult = classifier.AssignClass(inputDoc);
-                NotNull(classificationResult.AssignedClass);
-                AreEqual(expectedResult, classificationResult.AssignedClass, "got an assigned class of " + classificationResult.AssignedClass);
-                IsTrue(classificationResult.Score > 0, "got a not positive score " + classificationResult.Score);
+                Assert.NotNull(classificationResult.AssignedClass);
+                Assert.AreEqual(expectedResult, classificationResult.AssignedClass, "got an assigned class of " + classificationResult.AssignedClass);
+                Assert.IsTrue(classificationResult.Score > 0, "got a not positive score " + classificationResult.Score);
             }
             finally
             {
@@ -113,9 +117,9 @@ namespace Lucene.Net.Classification
                 atomicReader = SlowCompositeReaderWrapper.Wrap(indexWriter.GetReader());
                 classifier.Train(atomicReader, textFieldName, classFieldName, analyzer, query);
                 ClassificationResult<T> classificationResult = classifier.AssignClass(inputDoc);
-                NotNull(classificationResult.AssignedClass);
-                AreEqual(expectedResult, classificationResult.AssignedClass, "got an assigned class of " + classificationResult.AssignedClass);
-                IsTrue(classificationResult.Score > 0, "got a not positive score " + classificationResult.Score);
+                Assert.NotNull(classificationResult.AssignedClass);
+                Assert.AreEqual(expectedResult, classificationResult.AssignedClass, "got an assigned class of " + classificationResult.AssignedClass);
+                Assert.IsTrue(classificationResult.Score > 0, "got a not positive score " + classificationResult.Score);
                 UpdateSampleIndex(analyzer);
                 ClassificationResult<T> secondClassificationResult = classifier.AssignClass(inputDoc);
                 Equals(classificationResult.AssignedClass, secondClassificationResult.AssignedClass);
@@ -218,7 +222,7 @@ namespace Lucene.Net.Classification
                 classifier.Train(atomicReader, textFieldName, classFieldName, analyzer);
                 stopwatch.Stop();
                 long trainTime = stopwatch.ElapsedMilliseconds;
-                IsTrue(trainTime < 120000, "training took more than 2 mins : " + trainTime / 1000 + "s");
+                Assert.IsTrue(trainTime < 120000, "training took more than 2 mins : " + trainTime / 1000 + "s");
             }
             finally
             {

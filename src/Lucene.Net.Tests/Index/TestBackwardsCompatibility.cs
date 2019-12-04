@@ -204,7 +204,7 @@ namespace Lucene.Net.Index
         {
             base.BeforeClass();
 
-            Assert.IsFalse(OLD_FORMAT_IMPERSONATION_IS_ACTIVE, "test infra is broken!");
+            Assert.IsFalse(OldFormatImpersonationIsActive, "test infra is broken!");
             IList<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
             names.AddRange(Arrays.AsList(OldNames));
             names.AddRange(Arrays.AsList(OldSingleSegmentNames));
@@ -823,7 +823,11 @@ namespace Lucene.Net.Index
         {
             // first create a little index with the current code and get the version
             Directory currentDir = NewDirectory();
-            RandomIndexWriter riw = new RandomIndexWriter(Random, currentDir, Similarity, TimeZone);
+            RandomIndexWriter riw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, currentDir);
             riw.AddDocument(new Document());
             riw.Dispose();
             DirectoryReader ir = DirectoryReader.Open(currentDir);

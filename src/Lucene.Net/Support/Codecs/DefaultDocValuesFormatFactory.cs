@@ -28,17 +28,18 @@ namespace Lucene.Net.Codecs
     /// <para/>
     /// The most common use cases are:
     /// <list type="bullet">
-    ///     <item><description>subclass <see cref="DefaultDocValuesFormatFactory"/> and override
+    ///     <item><description>Initialize <see cref="DefaultDocValuesFormatFactory"/> with a set of <see cref="CustomDocValuesFormatTypes"/>.</description></item>
+    ///     <item><description>Subclass <see cref="DefaultDocValuesFormatFactory"/> and override
     ///         <see cref="DefaultDocValuesFormatFactory.GetDocValuesFormat(Type)"/> so an external dependency injection
     ///         container can be used to supply the instances (lifetime should be singleton). Note that you could 
     ///         alternately use the "named type" feature that many DI containers have to supply the type based on name by 
     ///         overriding <see cref="GetDocValuesFormat(string)"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultDocValuesFormatFactory"/> and override
+    ///     <item><description>Subclass <see cref="DefaultDocValuesFormatFactory"/> and override
     ///         <see cref="DefaultDocValuesFormatFactory.GetDocValuesFormatType(string)"/> so a type new type can be
     ///         supplied that is not in the <see cref="DefaultDocValuesFormatFactory.docValuesFormatNameToTypeMap"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultDocValuesFormatFactory"/> to add new or override the default <see cref="DocValuesFormat"/> 
+    ///     <item><description>Subclass <see cref="DefaultDocValuesFormatFactory"/> to add new or override the default <see cref="DocValuesFormat"/> 
     ///         types by overriding <see cref="Initialize()"/> and calling <see cref="PutDocValuesFormatType(Type)"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultDocValuesFormatFactory"/> to scan additional assemblies for <see cref="DocValuesFormat"/>
+    ///     <item><description>Subclass <see cref="DefaultDocValuesFormatFactory"/> to scan additional assemblies for <see cref="DocValuesFormat"/>
     ///         subclasses in by overriding <see cref="Initialize()"/> and calling <see cref="ScanForDocValuesFormats(Assembly)"/>. 
     ///         For performance reasons, the default behavior only loads Lucene.Net codecs.</description></item>
     /// </list>
@@ -47,7 +48,7 @@ namespace Lucene.Net.Codecs
     /// </summary>
     public class DefaultDocValuesFormatFactory : NamedServiceFactory<DocValuesFormat>, IDocValuesFormatFactory, IServiceListable
     {
-        private static Type[] localDocValuesFormatTypes = new Type[] {
+        private static readonly Type[] localDocValuesFormatTypes = new Type[] {
             typeof(Lucene45.Lucene45DocValuesFormat),
 #pragma warning disable 612, 618
             typeof(Lucene42.Lucene42DocValuesFormat),
@@ -57,9 +58,28 @@ namespace Lucene.Net.Codecs
 
         // NOTE: The following 2 dictionaries are static, since this instance is stored in a static
         // variable in the Codec class.
-        private readonly IDictionary<string, Type> docValuesFormatNameToTypeMap = new Dictionary<string, Type>();
-        private readonly IDictionary<Type, DocValuesFormat> docValuesFormatInstanceCache = new Dictionary<Type, DocValuesFormat>();
-        private object syncLock = new object();
+        private readonly IDictionary<string, Type> docValuesFormatNameToTypeMap;
+        private readonly IDictionary<Type, DocValuesFormat> docValuesFormatInstanceCache;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="DefaultDocValuesFormatFactory"/>.
+        /// </summary>
+        public DefaultDocValuesFormatFactory()
+        {
+            docValuesFormatNameToTypeMap = new Dictionary<string, Type>();
+            docValuesFormatInstanceCache = new Dictionary<Type, DocValuesFormat>();
+        }
+
+        /// <summary>
+        /// An array of custom <see cref="DocValuesFormat"/>-derived types to be registered. This property
+        /// can be initialized during construction of <see cref="DefaultDocValuesFormatFactory"/>
+        /// to make your custom codecs known to Lucene.
+        /// <para/>
+        /// These types will be registered after the default Lucene types, so if a custom type has the same
+        /// name as a Lucene <see cref="DocValuesFormat"/> (via <see cref="DocValuesFormatNameAttribute"/>) 
+        /// the custom type will replace the Lucene type with the same name.
+        /// </summary>
+        public IEnumerable<Type> CustomDocValuesFormatTypes { get; set; }
 
         /// <summary>
         /// Initializes the doc values type cache with the known <see cref="DocValuesFormat"/> types.
@@ -73,10 +93,13 @@ namespace Lucene.Net.Codecs
         protected override void Initialize()
         {
             foreach (var docValuesFormatType in localDocValuesFormatTypes)
-            {
                 PutDocValuesFormatTypeImpl(docValuesFormatType);
-            }
             ScanForDocValuesFormats(this.CodecsAssembly);
+            if (CustomDocValuesFormatTypes != null)
+            {
+                foreach (var docValuesFormatType in CustomDocValuesFormatTypes)
+                    PutDocValuesFormatType(docValuesFormatType);
+            }
         }
 
         /// <summary>
@@ -125,13 +148,9 @@ namespace Lucene.Net.Codecs
         protected virtual void PutDocValuesFormatType(Type docValuesFormat)
         {
             if (docValuesFormat == null)
-            {
-                throw new ArgumentNullException("docValuesFormat", "docValuesFormat may not be null");
-            }
+                throw new ArgumentNullException(nameof(docValuesFormat));
             if (!typeof(DocValuesFormat).GetTypeInfo().IsAssignableFrom(docValuesFormat))
-            {
-                throw new ArgumentException("The supplied docValuesFormat does not subclass DocValuesFormat.");
-            }
+                throw new ArgumentException($"The supplied type {docValuesFormat.AssemblyQualifiedName} does not subclass {nameof(DocValuesFormat)}.");
 
             PutDocValuesFormatTypeImpl(docValuesFormat);
         }
@@ -139,7 +158,10 @@ namespace Lucene.Net.Codecs
         private void PutDocValuesFormatTypeImpl(Type docValuesFormat)
         {
             string name = GetServiceName(docValuesFormat);
-            docValuesFormatNameToTypeMap[name] = docValuesFormat;
+            lock (m_initializationLock)
+            {
+                docValuesFormatNameToTypeMap[name] = docValuesFormat;
+            }
         }
 
         /// <summary>
@@ -150,8 +172,11 @@ namespace Lucene.Net.Codecs
         public virtual DocValuesFormat GetDocValuesFormat(string name)
         {
             EnsureInitialized(); // Safety in case a subclass doesn't call it
-            Type codecType = GetDocValuesFormatType(name);
-            return GetDocValuesFormat(codecType);
+            lock (m_initializationLock)
+            {
+                Type codecType = GetDocValuesFormatType(name);
+                return GetDocValuesFormat(codecType);
+            }
         }
 
         /// <summary>
@@ -161,14 +186,15 @@ namespace Lucene.Net.Codecs
         /// <returns>The <see cref="DocValuesFormat"/> instance.</returns>
         protected virtual DocValuesFormat GetDocValuesFormat(Type type)
         {
-            DocValuesFormat instance;
-            if (!docValuesFormatInstanceCache.TryGetValue(type, out instance))
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+            if (!docValuesFormatInstanceCache.TryGetValue(type, out DocValuesFormat instance))
             {
-                lock (syncLock)
+                lock (m_initializationLock)
                 {
                     if (!docValuesFormatInstanceCache.TryGetValue(type, out instance))
                     {
-                        instance = (DocValuesFormat)Activator.CreateInstance(type, IsFullyTrusted);
+                        instance = NewDocValuesFormat(type);
                         docValuesFormatInstanceCache[type] = instance;
                     }
                 }
@@ -178,15 +204,26 @@ namespace Lucene.Net.Codecs
         }
 
         /// <summary>
+        /// Instantiates a <see cref="DocValuesFormat"/> based on the provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> of <see cref="DocValuesFormat"/> to instantiate.</param>
+        /// <returns>The new instance.</returns>
+        protected virtual DocValuesFormat NewDocValuesFormat(Type type)
+        {
+            return (DocValuesFormat)Activator.CreateInstance(type, IsFullyTrusted);
+        }
+
+        /// <summary>
         /// Gets the <see cref="DocValuesFormat"/> <see cref="Type"/> from the provided <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the <see cref="DocValuesFormat"/> <see cref="Type"/> to retrieve.</param>
         /// <returns>The <see cref="DocValuesFormat"/> <see cref="Type"/>.</returns>
         protected virtual Type GetDocValuesFormatType(string name)
         {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
             EnsureInitialized();
-            Type codecType;
-            if (!docValuesFormatNameToTypeMap.TryGetValue(name, out codecType) && codecType == null)
+            if (!docValuesFormatNameToTypeMap.TryGetValue(name, out Type codecType) && codecType == null)
             {
                 throw new ArgumentException($"DocValuesFormat '{name}' cannot be loaded. If the format is not " +
                     $"in a Lucene.Net assembly, you must subclass {typeof(DefaultDocValuesFormatFactory).FullName}, " +
@@ -202,10 +239,13 @@ namespace Lucene.Net.Codecs
         /// Gets a list of the available <see cref="DocValuesFormat"/>s (by name).
         /// </summary>
         /// <returns>A <see cref="T:ICollection{string}"/> of <see cref="DocValuesFormat"/> names.</returns>
-        public virtual ICollection<string> AvailableServices()
+        public virtual ICollection<string> AvailableServices
         {
-            EnsureInitialized();
-            return docValuesFormatNameToTypeMap.Keys;
+            get
+            {
+                EnsureInitialized();
+                return docValuesFormatNameToTypeMap.Keys;
+            }
         }
     }
 }

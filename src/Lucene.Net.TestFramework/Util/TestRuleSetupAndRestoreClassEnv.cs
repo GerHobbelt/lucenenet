@@ -20,11 +20,11 @@ using Debug = Lucene.Net.Diagnostics.Debug;
 // in the XML documentation. Be sure to add a new option if a new test framework
 // is being supported.
 #if TESTFRAMEWORK_MSTEST
-
-#elif TESTFRAMEWORK_XUNIT
-
-#else // #elif TESTFRAMEWORK_NUNIT
+using AssumptionViolatedException = Microsoft.VisualStudio.TestTools.UnitTesting.AssertInconclusiveException;
+#elif TESTFRAMEWORK_NUNIT
 using AssumptionViolatedException = NUnit.Framework.InconclusiveException;
+#elif TESTFRAMEWORK_XUNIT
+using AssumptionViolatedException = Lucene.Net.TestFramework.SkipTestException;
 #endif
 
 namespace Lucene.Net.Util
@@ -133,13 +133,13 @@ namespace Lucene.Net.Util
             // if verbose: print some debugging stuff about which codecs are loaded.
             if (LuceneTestCase.VERBOSE)
             {
-                ICollection<string> codecs = Codec.AvailableCodecs();
+                ICollection<string> codecs = Codec.AvailableCodecs;
                 foreach (string codec in codecs)
                 {
                     Console.WriteLine("Loaded codec: '" + codec + "': " + Codec.ForName(codec).GetType().Name);
                 }
 
-                ICollection<string> postingsFormats = PostingsFormat.AvailablePostingsFormats();
+                ICollection<string> postingsFormats = PostingsFormat.AvailablePostingsFormats;
                 foreach (string postingsFormat in postingsFormats)
                 {
                     Console.WriteLine("Loaded postingsFormat: '" + postingsFormat + "': " + PostingsFormat.ForName(postingsFormat).GetType().Name);
@@ -158,7 +158,7 @@ namespace Lucene.Net.Util
                 InfoStream.Default = new NullInfoStream();
             }
 
-            Type targetClass = testInstance.GetType();
+            Type targetClass = testInstance?.GetType() ?? LuceneTestCase.GetTestClass();
             avoidCodecs = new HashSet<string>();
             var suppressCodecsAttribute = targetClass.GetTypeInfo().GetCustomAttribute<LuceneTestCase.SuppressCodecsAttribute>();
             if (suppressCodecsAttribute != null)
@@ -167,7 +167,7 @@ namespace Lucene.Net.Util
             }
 
             // set back to default
-            LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = false;
+            LuceneTestCase.OldFormatImpersonationIsActive = false;
 
             savedCodec = Codec.Default;
             int randomVal = random.Next(10);
@@ -179,7 +179,7 @@ namespace Lucene.Net.Util
             {
                 codec = Codec.ForName("Lucene3x");
                 Debug.Assert((codec is PreFlexRWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
             }
             else if ("Lucene40".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
                                                                     "random".Equals(LuceneTestCase.TEST_POSTINGSFORMAT, StringComparison.Ordinal) &&
@@ -187,7 +187,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene40"))) // 4.0 setup
             {
                 codec = Codec.ForName("Lucene40");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene40RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
                 Debug.Assert((PostingsFormat.ForName("Lucene40") is Lucene40RWPostingsFormat), "fix your IPostingsFormatFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
@@ -198,7 +198,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene41")))
             {
                 codec = Codec.ForName("Lucene41");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene41RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if ("Lucene42".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
@@ -208,7 +208,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene42")))
             {
                 codec = Codec.ForName("Lucene42");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene42RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if ("Lucene45".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
@@ -218,7 +218,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene45")))
             {
                 codec = Codec.ForName("Lucene45");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene45RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if (("random".Equals(LuceneTestCase.TEST_POSTINGSFORMAT, StringComparison.Ordinal) == false) 
@@ -305,7 +305,7 @@ namespace Lucene.Net.Util
             // TimeZone.getDefault will set user.timezone to the default timezone of the user's locale.
             // So store the original property value and restore it at end.
             restoreProperties["user.timezone"] = SystemProperties.GetProperty("user.timezone");
-            savedTimeZone = testInstance.TimeZone;
+            savedTimeZone = TimeZoneInfo.Local;
             TimeZoneInfo randomTimeZone = LuceneTestCase.RandomTimeZone(random);
             timeZone = testTimeZone.Equals("random", StringComparison.Ordinal) ? randomTimeZone : TimeZoneInfo.FindSystemTimeZoneById(testTimeZone);
             //TimeZone.Default = TimeZone; // LUCENENET NOTE: There doesn't seem to be an equivalent to this, but I don't think we need it.
@@ -359,7 +359,6 @@ namespace Lucene.Net.Util
         /// <exception cref="AssumptionViolatedException"> if the class does not work with a given codec. </exception>
         private void CheckCodecRestrictions(Codec codec)
         {
-            NUnit.Framework.Assume.That(true);
             LuceneTestCase.AssumeFalse("Class not allowed to use codec: " + codec.Name + ".", ShouldAvoidCodec(codec.Name));
 
             if (codec is RandomCodec && avoidCodecs.Count > 0)

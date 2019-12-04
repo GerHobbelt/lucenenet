@@ -72,7 +72,11 @@ namespace Lucene.Net.Facet.Taxonomy
             FacetsConfig config = new FacetsConfig();
             config.SetHierarchical("Publish Date", true);
 
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new FacetField("Author", "Bob"));
@@ -163,7 +167,11 @@ namespace Lucene.Net.Facet.Taxonomy
             // main index:
             var taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
 
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             FacetsConfig config = new FacetsConfig();
 
             Document doc = new Document();
@@ -225,7 +233,11 @@ namespace Lucene.Net.Facet.Taxonomy
 
             FacetsConfig config = new FacetsConfig();
             config.SetIndexFieldName("a", "$facets2");
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new FacetField("a", "foo1"));
@@ -263,7 +275,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 facets.GetSpecificValue("a");
-                Fail("should have hit exc");
+                fail("should have hit exc");
             }
             catch (System.ArgumentException)
             {
@@ -273,7 +285,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 facets.GetTopChildren(10, "a");
-                Fail("should have hit exc");
+                fail("should have hit exc");
             }
             catch (System.ArgumentException)
             {
@@ -329,7 +341,11 @@ namespace Lucene.Net.Facet.Taxonomy
             FacetsConfig config = new FacetsConfig();
             config.SetHierarchical("a", true);
             config.SetMultiValued("a", true);
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(NewTextField("field", "text", Field.Store.NO));
@@ -356,7 +372,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 facets.GetSpecificValue("a");
-                Fail("didn't hit expected exception");
+                fail("didn't hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -375,7 +391,11 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             var taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
 
             FacetsConfig config = new FacetsConfig();
@@ -410,7 +430,11 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             DirectoryTaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
 
             FacetsConfig config = new FacetsConfig();
@@ -448,7 +472,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 Assert.AreEqual(1, facets.GetSpecificValue("dim"));
-                Fail("didn't hit expected exception");
+                fail("didn't hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -521,7 +545,11 @@ namespace Lucene.Net.Facet.Taxonomy
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
             var taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
-            var writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            var writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             FacetsConfig config = new FacetsConfig();
 
             Document doc = new Document();
@@ -530,7 +558,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 config.Build(taxoWriter, doc);
-                Fail("did not hit expected exception");
+                fail("did not hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -547,7 +575,11 @@ namespace Lucene.Net.Facet.Taxonomy
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
             ITaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             FacetsConfig config = new FacetsConfig();
 
             Document doc = new Document();
@@ -557,7 +589,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 config.Build(taxoWriter, doc);
-                Fail("did not hit expected exception");
+                fail("did not hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -760,7 +792,11 @@ namespace Lucene.Net.Facet.Taxonomy
             Store.Directory indexDir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
 
-            RandomIndexWriter w = new RandomIndexWriter(Random, indexDir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, indexDir);
             var tw = new DirectoryTaxonomyWriter(taxoDir);
             FacetsConfig config = new FacetsConfig();
             int numDocs = AtLeast(1000);

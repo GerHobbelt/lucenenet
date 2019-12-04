@@ -7,6 +7,7 @@ using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
+using System.Globalization;
 
 namespace Lucene.Net.Expressions
 {
@@ -47,16 +48,20 @@ namespace Lucene.Net.Expressions
         {
             base.SetUp();
             dir = NewDirectory();
-            var iw = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            var iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             int numDocs = TestUtil.NextInt32(Random, 2049, 4000);
             for (int i = 0; i < numDocs; i++)
             {
                 var document = new Document
 				{
 				    NewTextField("english", English.Int32ToEnglish(i), Field.Store.NO),
-				    NewTextField("oddeven", (i%2 == 0) ? "even" : "odd", Field.Store.NO),
-				    NewStringField("byte", string.Empty + (unchecked((byte) Random.Next())), Field.Store.NO),
-				    NewStringField("short", string.Empty + ((short) Random.Next()), Field.Store.NO),
+				    NewTextField("oddeven", (i % 2 == 0) ? "even" : "odd", Field.Store.NO),
+				    NewStringField("byte", string.Empty + (unchecked((byte) Random.Next())).ToString(CultureInfo.InvariantCulture), Field.Store.NO),
+				    NewStringField("short", string.Empty + ((short) Random.Next()).ToString(CultureInfo.InvariantCulture), Field.Store.NO),
 				    new Int32Field("int", Random.Next(), Field.Store.NO),
 				    new Int64Field("long", Random.NextInt64(), Field.Store.NO),
 

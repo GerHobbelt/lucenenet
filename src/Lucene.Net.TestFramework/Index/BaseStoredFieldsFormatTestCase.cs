@@ -5,13 +5,22 @@ using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Support.Threading;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using Console = Lucene.Net.Support.SystemConsole;
+using Assert = Lucene.Net.TestFramework.Assert;
+using Lucene.Net.TestFramework;
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Index
 {
@@ -60,12 +69,21 @@ namespace Lucene.Net.Index
     /// <summary>
     /// Base class aiming at testing <see cref="Codecs.StoredFieldsFormat"/>.
     /// To test a new format, all you need is to register a new <see cref="Codec"/> which
-    /// uses it and extend this class and override <see cref="GetCodec()"/>.
+    /// uses it and extend this class and override <see cref="BaseIndexFileFormatTestCase.GetCodec()"/>.
     /// <para/>
     /// @lucene.experimental
     /// </summary>
     public abstract class BaseStoredFieldsFormatTestCase : BaseIndexFileFormatTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public BaseStoredFieldsFormatTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
         protected override void AddRandomFields(Document d)
         {
             int numValues = Random.Next(3);
@@ -279,7 +297,11 @@ namespace Lucene.Net.Index
                 {
                     var numDocs = AtLeast(500);
                     var answers = new object[numDocs];
-                    using (var w = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                    using (var w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, dir))
                     {
                         NumericType[] typeAnswers = new NumericType[numDocs];
                         for (int id = 0; id < numDocs; id++)
@@ -373,7 +395,11 @@ namespace Lucene.Net.Index
                 IndexReader r = null;
                 try
                 {
-                    using (RandomIndexWriter w = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                    using (RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, dir))
                     {
                         Document doc = new Document();
                         FieldType onlyStored = new FieldType();
@@ -822,7 +848,11 @@ namespace Lucene.Net.Index
                     }
                     w.Commit();
                     w.Dispose();
-                    w = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone);
+                    w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, dir);
                     w.ForceMerge(TestUtil.NextInt32(Random, 1, 3));
                     w.Commit();
                 }

@@ -26,28 +26,17 @@
   <PropertyGroup>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
-    <AssemblyTitle>Lucene.Net.Tests._J-U</AssemblyTitle>
+    <AssemblyTitle>Lucene.Net.Tests._A-D</AssemblyTitle>
+    <RootNamespace>Lucene.Net</RootNamespace>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
-
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Include="..\Lucene.Net.Tests\Index\TestIndexWriterReader.cs" Link="Index\TestIndexWriterReader.cs" />
-    <Compile Include="..\Lucene.Net.Tests\Search\**\*.cs" LinkBase="Search" />
-    <Compile Include="..\Lucene.Net.Tests\Store\**\*.cs" LinkBase="Store" />
-    <Compile Include="..\Lucene.Net.Tests\Support\**\*.cs" LinkBase="Support" />
-    <Compile Include="..\Lucene.Net.Tests\Util\*.cs" LinkBase="Util" />
-    <Compile Remove="..\Lucene.Net.Tests\Util\TestOfflineSorter.cs" Link="Util\TestOfflineSorter.cs" />
-    <Compile Remove="..\Lucene.Net.Tests\Util\JunitCompat\**\*;..\Lucene.Net.Tests\Util\TestMaxFailuresRule.cs" />
-    <EmbeddedResource Include="..\Lucene.Net.Tests\Store\LUCENENET521.zip" Link="Store\LUCENENET521.zip" />
-    <EmbeddedResource Include="..\Lucene.Net.Tests\Support\IO\ReadFully.txt" Link="Support\IO\ReadFully.txt" />
-    <EmbeddedResource Include="..\Lucene.Net.Tests\Support\hyts_PropertiesTest.properties" Link="Support\hyts_PropertiesTest.properties" />
-    <Compile Remove="Util\JunitCompat\**\*;Util\TestMaxFailuresRule.cs" />
-    <!--<Compile Exclude="Util\TestMaxFailuresRule.cs" />-->
-    <EmbeddedResource Include="Index\bogus24.upgraded.to.36.zip;Index\index.30.cfs.zip;Index\index.30.nocfs.zip;Index\index.31.cfs.zip;Index\index.31.nocfs.zip;Index\index.31.optimized.cfs.zip;Index\index.31.optimized.nocfs.zip;Index\index.32.cfs.zip;Index\index.32.nocfs.zip;Index\index.34.cfs.zip;Index\index.34.nocfs.zip;Index\index.36.surrogates.zip;Index\index.40.cfs.zip;Index\index.40.nocfs.zip;Index\index.40.optimized.cfs.zip;Index\index.40.optimized.nocfs.zip;Index\index.41.cfs.zip;Index\index.41.nocfs.zip;Index\index.42.cfs.zip;Index\index.42.nocfs.zip;Index\index.45.cfs.zip;Index\index.45.nocfs.zip;Index\index.461.cfs.zip;Index\index.461.nocfs.zip;Index\index.48.w-binary-doc-values.zip;Index\moreterms.40.zip;Index\taxo.48.w-binary-doc-values.zip;Index\unsupported.19.cfs.zip;Index\unsupported.19.nocfs.zip;Index\unsupported.20.cfs.zip;Index\unsupported.20.nocfs.zip;Index\unsupported.21.cfs.zip;Index\unsupported.21.nocfs.zip;Index\unsupported.22.cfs.zip;Index\unsupported.22.nocfs.zip;Index\unsupported.23.cfs.zip;Index\unsupported.23.nocfs.zip;Index\unsupported.24.cfs.zip;Index\unsupported.24.nocfs.zip;Index\unsupported.29.cfs.zip;Index\unsupported.29.nocfs.zip;Store\LUCENENET521.zip;Support\IO\ReadFully.txt;Support\hyts_PropertiesTest.properties" />
-    <None Include="App.config" />
+    <Compile Include="..\Lucene.Net.Tests\*.cs" />
+    <Compile Include="..\Lucene.Net.Tests\Analysis\**\*.cs" LinkBase="Analysis" />
+    <Compile Include="..\Lucene.Net.Tests\Codecs\**\*.cs" LinkBase="Codecs" />
+    <Compile Include="..\Lucene.Net.Tests\Document\**\*.cs" LinkBase="Document" />
   </ItemGroup>
   
   <ItemGroup>
@@ -55,10 +44,14 @@
     <ProjectReference Include="..\Lucene.Net.Facet\Lucene.Net.Facet.csproj" />
     <ProjectReference Include="..\Lucene.Net.Queries\Lucene.Net.Queries.csproj" />
     <ProjectReference Include="..\Lucene.Net.QueryParser\Lucene.Net.QueryParser.csproj" />
-    <ProjectReference Include="..\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj" />
+    <ProjectReference Include="..\Lucene.Net.TestFramework.NUnit\Lucene.Net.TestFramework.NUnit.csproj" />
   </ItemGroup>
   
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
+  
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);FEATURE_INDEXWRITER_TESTS</DefineConstants>
+  </PropertyGroup>
   
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD;FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE</DefineConstants>
@@ -74,10 +67,6 @@
     <DefineConstants>$(DefineConstants);FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE;FEATURE_SERIALIZABLE_EXCEPTIONS</DefineConstants>
     <DebugType>full</DebugType>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
-    <Compile Remove="..\Lucene.Net.Tests\Support\TestCase.cs" />
-  </ItemGroup>
   
   <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
     <Reference Include="System" />

@@ -2144,17 +2144,17 @@ loop2_break: ;
 		internal static readonly short[] DFA9_special = DFA.UnpackEncodedString(DFA9_specialS
 			);
 
-		internal static readonly short[][] DFA9_transition;
+		internal static readonly short[][] DFA9_transition = LoadDFA9Transition();
 
-		static JavascriptLexer()
-		{
-			
+		private static short[][] LoadDFA9Transition() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
+        {
 			int numStates = DFA9_transitionS.Length;
-			DFA9_transition = new short[numStates][];
+			var DFA9_transition = new short[numStates][];
 			for (int i = 0; i < numStates; i++)
 			{
 				DFA9_transition[i] = DFA.UnpackEncodedString(DFA9_transitionS[i]);
 			}
+            return DFA9_transition;
 		}
 
 		protected class DFA9 : DFA
@@ -2210,7 +2210,7 @@ loop2_break: ;
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-        public ParseException(SerializationInfo info, StreamingContext context)
+        protected ParseException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

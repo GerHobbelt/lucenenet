@@ -26,16 +26,13 @@
   <PropertyGroup>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
-    <AssemblyTitle>Lucene.Net.Tests._A-I</AssemblyTitle>
+    <AssemblyTitle>Lucene.Net.Tests._E-I</AssemblyTitle>
+    <RootNamespace>Lucene.Net</RootNamespace>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Include="..\Lucene.Net.Tests\*.cs" />
-    <Compile Include="..\Lucene.Net.Tests\Analysis\**\*.cs" LinkBase="Analysis" />
-    <Compile Include="..\Lucene.Net.Tests\Codecs\**\*.cs" LinkBase="Codecs" />
-    <Compile Include="..\Lucene.Net.Tests\Document\**\*.cs" LinkBase="Document" />
     <Compile Include="..\Lucene.Net.Tests\Index\**\*.cs" LinkBase="Index" />
     <EmbeddedResource Include="..\Lucene.Net.Tests\Index\*.zip" LinkBase="Index" />
   </ItemGroup>
@@ -45,7 +42,7 @@
     <ProjectReference Include="..\Lucene.Net.Facet\Lucene.Net.Facet.csproj" />
     <ProjectReference Include="..\Lucene.Net.Queries\Lucene.Net.Queries.csproj" />
     <ProjectReference Include="..\Lucene.Net.QueryParser\Lucene.Net.QueryParser.csproj" />
-    <ProjectReference Include="..\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj" />
+    <ProjectReference Include="..\Lucene.Net.TestFramework.NUnit\Lucene.Net.TestFramework.NUnit.csproj" />
   </ItemGroup>
   
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
@@ -76,10 +73,5 @@
   
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Update="NUnit" Version="3.12.0" />
-    <PackageReference Update="NUnit3TestAdapter" Version="3.14.0" />
   </ItemGroup>
 </Project>

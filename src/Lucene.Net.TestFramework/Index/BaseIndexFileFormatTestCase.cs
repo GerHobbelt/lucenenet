@@ -1,6 +1,14 @@
 using Lucene.Net.Support;
-using NUnit.Framework;
+using Lucene.Net.TestFramework;
 using System.Collections.Generic;
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Index
 {
@@ -32,18 +40,29 @@ namespace Lucene.Net.Index
     /// Common tests to all index formats.
     /// </summary>
     public abstract class BaseIndexFileFormatTestCase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
         // LUCENENET specific - this class was internal in Java, but we can't mark it that way
         // because it has public subclasses. So we are creating an internal constructor instead.
-        internal BaseIndexFileFormatTestCase() { }
+        internal BaseIndexFileFormatTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
 
+        // LUCENENET specific - this class was internal in Java, but we can't mark it that way
+        // because it has public subclasses. So we are creating an internal constructor instead.
+        internal BaseIndexFileFormatTestCase() { }
+#endif
         /// <summary>
         /// Returns the codec to run tests against </summary>
         protected abstract Codec GetCodec();
 
         private Codec savedCodec;
 
-        [SetUp]
+        //[SetUp]
         public override void SetUp()
         {
             base.SetUp();
@@ -52,7 +71,7 @@ namespace Lucene.Net.Index
             Codec.Default = GetCodec();
         }
 
-        [TearDown]
+        //[TearDown]
         public override void TearDown()
         {
             Codec.Default = savedCodec; // restore
@@ -65,14 +84,15 @@ namespace Lucene.Net.Index
 
         private IDictionary<string, long> BytesUsedByExtension(Directory d)
         {
-            IDictionary<string, long> bytesUsedByExtension = new Dictionary<string, long>();
+            IDictionary<string, long> bytesUsedByExtension = new HashMap<string, long>();
             foreach (string file in d.ListAll())
             {
-                string ext = IndexFileNames.GetExtension(file) ?? string.Empty;
+                string ext = IndexFileNames.GetExtension(file);
                 long previousLength = bytesUsedByExtension.ContainsKey(ext) ? bytesUsedByExtension[ext] : 0;
                 bytesUsedByExtension[ext] = previousLength + d.FileLength(file);
             }
-            foreach (string item in ExcludedExtensionsFromByteCounts()) {
+            foreach (string item in ExcludedExtensionsFromByteCounts)
+            {
                 bytesUsedByExtension.Remove(item);
             }
             return bytesUsedByExtension;
@@ -82,13 +102,19 @@ namespace Lucene.Net.Index
         /// Return the list of extensions that should be excluded from byte counts when
         /// comparing indices that store the same content.
         /// </summary>
-        protected virtual ICollection<string> ExcludedExtensionsFromByteCounts()
+        protected virtual ICollection<string> ExcludedExtensionsFromByteCounts
         {
-            return new HashSet<string>(Arrays.AsList(new string[] { "si", "lock" }));
-            // segment infos store various pieces of information that don't solely depend
-            // on the content of the index in the diagnostics (such as a timestamp) so we
-            // exclude this file from the bytes counts
-            // lock files are 0 bytes (one directory in the test could be RAMDir, the other FSDir)
+            get
+            {
+                return new string[] {
+                    // segment infos store various pieces of information that don't solely depend
+                    // on the content of the index in the diagnostics (such as a timestamp) so we
+                    // exclude this file from the bytes counts
+                        "si",
+                    // lock files are 0 bytes (one directory in the test could be RAMDir, the other FSDir)
+                        "lock"
+                };
+            }
         }
 
         /// <summary>
@@ -129,7 +155,9 @@ namespace Lucene.Net.Index
                             w.Commit();
                         }
 
-                        assertEquals(BytesUsedByExtension(dir), BytesUsedByExtension(dir2));
+                        // LUCENENET: We need to explicitly call Equals() and use HashMap in order to ensure our
+                        // equality check is done correctly. Calling Assert.AreEqual doesn't guarantee this is done.
+                        Assert.True(BytesUsedByExtension(dir).Equals(BytesUsedByExtension(dir2)));
 
                     } // dir2.Dispose();
                 } // reader.Dispose();

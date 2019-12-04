@@ -28,7 +28,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyDefaultAlias("Lucene.Net.TestFramework")]
+[assembly: AssemblyDefaultAlias("Lucene.Net.TestFramework.NUnit")]
 [assembly: AssemblyCulture("")]
 
 [assembly: CLSCompliant(true)]
@@ -47,8 +47,10 @@ using System.Runtime.InteropServices;
 // Note that some of the APIs we use to test Lucene.Net are internal because they are only meant to
 // make porting tests from Java easier. This means that every Lucene.Net test project requires
 // InternalsVisibleTo, now and in the future to keep these APIs from public view.
-[assembly: InternalsVisibleTo("Lucene.Net.Tests._A-I, PublicKey=" + AssemblyKeys.PublicKey)]
-[assembly: InternalsVisibleTo("Lucene.Net.Tests._J-U, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests._A-D, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests._E-I, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests._J-S, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests._T-U, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests._U-Z, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Analysis.Common, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Analysis.Kuromoji, PublicKey=" + AssemblyKeys.PublicKey)]
@@ -57,6 +59,7 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Analysis.Stempel, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Benchmark, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Classification, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests.Cli, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Codecs, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Demo, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Expressions, PublicKey=" + AssemblyKeys.PublicKey)]
@@ -74,3 +77,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Spatial, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.Suggest, PublicKey=" + AssemblyKeys.PublicKey)]
 [assembly: InternalsVisibleTo("Lucene.Net.Tests.TestFramework, PublicKey=" + AssemblyKeys.PublicKey)]
+[assembly: InternalsVisibleTo("Lucene.Net.Tests.TestFramework.NUnit, PublicKey=" + AssemblyKeys.PublicKey)]

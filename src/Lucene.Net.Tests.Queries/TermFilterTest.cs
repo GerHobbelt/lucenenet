@@ -49,7 +49,11 @@ namespace Lucene.Net.Tests.Queries
         {
             string fieldName = @"field1";
             Directory rd = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random, rd, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, rd);
             Document doc = new Document();
             doc.Add(NewStringField(fieldName, @"value1", Field.Store.NO));
             w.AddDocument(doc);
@@ -74,7 +78,11 @@ namespace Lucene.Net.Tests.Queries
         public void TestRandom()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             int num = AtLeast(100);
             var terms = new List<Term>();
             for (int i = 0; i < num; i++)
@@ -163,7 +171,7 @@ namespace Lucene.Net.Tests.Queries
             try
             {
                 new TermFilter(null);
-                Fail(@"must fail - no term!");
+                Assert.Fail(@"must fail - no term!");
             }
 #pragma warning disable 168
             catch (ArgumentException e)
@@ -174,7 +182,7 @@ namespace Lucene.Net.Tests.Queries
             try
             {
                 new TermFilter(new Term(null));
-                Fail(@"must fail - no field!");
+                Assert.Fail(@"must fail - no field!");
             }
 #pragma warning disable 168
             catch (ArgumentException e)

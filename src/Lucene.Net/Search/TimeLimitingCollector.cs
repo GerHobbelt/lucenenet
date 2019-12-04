@@ -2,6 +2,7 @@ using Lucene.Net.Support.Threading;
 using System;
 #if FEATURE_SERIALIZABLE_EXCEPTIONS
 using System.Runtime.Serialization;
+using System.Security.Permissions;
 #endif
 using System.Threading;
 
@@ -68,9 +69,21 @@ namespace Lucene.Net.Search
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public TimeExceededException(SerializationInfo info, StreamingContext context)
+            protected TimeExceededException(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
+                timeAllowed = info.GetInt64("timeAllowed");
+                timeElapsed = info.GetInt64("timeElapsed");
+                lastDocCollected = info.GetInt32("lastDocCollected");
+            }
+
+            [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+            public override void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                base.GetObjectData(info, context);
+                info.AddValue("timeAllowed", timeAllowed, typeof(long));
+                info.AddValue("timeElapsed", timeElapsed, typeof(long));
+                info.AddValue("lastDocCollected", lastDocCollected, typeof(int));
             }
 #endif
 
@@ -273,12 +286,13 @@ namespace Lucene.Net.Search
 
         private sealed class TimerThreadHolder
         {
-            internal static readonly TimerThread THREAD;
+            internal static readonly TimerThread THREAD = LoadTimerThread(); // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
 
-            static TimerThreadHolder()
+            private static TimerThread LoadTimerThread()
             {
-                THREAD = new TimerThread(Counter.NewCounter(true));
-                THREAD.Start();
+                var thread = new TimerThread(Counter.NewCounter(true));
+                thread.Start();
+                return thread;
             }
         }
 

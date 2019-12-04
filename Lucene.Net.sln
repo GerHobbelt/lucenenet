@@ -70,6 +70,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 		LICENSE.txt = LICENSE.txt
 		NOTICE.txt = NOTICE.txt
+		NuGet.config = NuGet.config
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -116,8 +117,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Spatial", "src\Lucene.Net.Spatial\Lucene.Net.Spatial.csproj", "{62FFF347-AE79-447A-B77F-F3C33F957342}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Suggest", "src\Lucene.Net.Suggest\Lucene.Net.Suggest.csproj", "{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework", "src\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj", "{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Analysis.Common", "src\Lucene.Net.Tests.Analysis.Common\Lucene.Net.Tests.Analysis.Common.csproj", "{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}"
 EndProject
@@ -175,9 +174,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.ICU", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Cli", "src\dotnet\tools\Lucene.Net.Tests.Cli\Lucene.Net.Tests.Cli.csproj", "{1F5574FE-19F7-4F10-9B88-76A938621F5B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._A-I", "src\Lucene.Net.Tests._A-I\Lucene.Net.Tests._A-I.csproj", "{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._A-D", "src\Lucene.Net.Tests._A-D\Lucene.Net.Tests._A-D.csproj", "{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-U", "src\Lucene.Net.Tests._J-U\Lucene.Net.Tests._J-U.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._E-I", "src\Lucene.Net.Tests._E-I\Lucene.Net.Tests._E-I.csproj", "{8251BB22-EDA9-4850-A9B7-259C5B171040}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-S", "src\Lucene.Net.Tests._J-S\Lucene.Net.Tests._J-S.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._T-U", "src\Lucene.Net.Tests._T-U\Lucene.Net.Tests._T-U.csproj", "{DF60E276-91AD-4386-A5B5-13EB24E335E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4DF0A2A1-B9C7-4EE5-BAF0-BEEF53E34220}"
@@ -185,7 +188,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.TestFramework", "src\Lucene.Net.Tests.TestFramework\Lucene.Net.Tests.TestFramework.csproj", "{881677D9-03FD-4984-82F1-CDD2B29D92E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework.NUnit", "src\Lucene.Net.TestFramework.NUnit\Lucene.Net.TestFramework.NUnit.csproj", "{845F8491-348C-4242-A58A-1979E8338B5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.TestFramework.NUnit", "src\Lucene.Net.Tests.TestFramework.NUnit\Lucene.Net.Tests.TestFramework.NUnit.csproj", "{3A761C02-C3B2-4672-92F9-B700C68E7EFA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework.xUnit", "src\Lucene.Net.TestFramework.xUnit\Lucene.Net.TestFramework.xUnit.csproj", "{1337D725-C90B-4F96-8FEE-29C3BB3FBE6D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.TestFramework.xUnit", "src\Lucene.Net.Tests.TestFramework.xUnit\Lucene.Net.Tests.TestFramework.xUnit.csproj", "{AF33069F-8639-4EA9-8C24-17484E6C94E9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework.MSTest", "src\Lucene.Net.TestFramework.MSTest\Lucene.Net.TestFramework.MSTest.csproj", "{48520313-3B78-40D9-AE34-4864BFADF747}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -281,10 +292,6 @@ Global
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -401,18 +408,42 @@ Global
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{881677D9-03FD-4984-82F1-CDD2B29D92E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{881677D9-03FD-4984-82F1-CDD2B29D92E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{881677D9-03FD-4984-82F1-CDD2B29D92E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{881677D9-03FD-4984-82F1-CDD2B29D92E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1337D725-C90B-4F96-8FEE-29C3BB3FBE6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1337D725-C90B-4F96-8FEE-29C3BB3FBE6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1337D725-C90B-4F96-8FEE-29C3BB3FBE6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1337D725-C90B-4F96-8FEE-29C3BB3FBE6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF33069F-8639-4EA9-8C24-17484E6C94E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF33069F-8639-4EA9-8C24-17484E6C94E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF33069F-8639-4EA9-8C24-17484E6C94E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF33069F-8639-4EA9-8C24-17484E6C94E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48520313-3B78-40D9-AE34-4864BFADF747}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48520313-3B78-40D9-AE34-4864BFADF747}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48520313-3B78-40D9-AE34-4864BFADF747}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48520313-3B78-40D9-AE34-4864BFADF747}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

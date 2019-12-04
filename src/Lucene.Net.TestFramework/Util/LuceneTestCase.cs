@@ -26,8 +26,8 @@ using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Support.IO;
 using Lucene.Net.Support.Threading;
+using Lucene.Net.TestFramework;
 using Lucene.Net.Util.Automaton;
-using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -38,23 +38,36 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Console = Lucene.Net.Support.SystemConsole;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
-using System.Text.RegularExpressions;
+using Assert = Lucene.Net.TestFramework.Assert;
+using System.Linq;
 
-// LUCENENET NOTE: These are primarily here because they are referred to
-// in the XML documentation. Be sure to add a new option if a new test framework
-// is being supported.
 #if TESTFRAMEWORK_MSTEST
-
-#elif TESTFRAMEWORK_XUNIT
-
-#else // #elif TESTFRAMEWORK_NUNIT
+using Before = Microsoft.VisualStudio.TestTools.UnitTesting.TestInitializeAttribute;
+using After = Microsoft.VisualStudio.TestTools.UnitTesting.TestCleanupAttribute;
+using OneTimeSetUp = Microsoft.VisualStudio.TestTools.UnitTesting.ClassInitializeAttribute;
+using OneTimeTearDown = Microsoft.VisualStudio.TestTools.UnitTesting.ClassCleanupAttribute;
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+using TestFixture = Microsoft.VisualStudio.TestTools.UnitTesting.TestClassAttribute;
+#elif TESTFRAMEWORK_NUNIT
 using Before = NUnit.Framework.SetUpAttribute;
 using After = NUnit.Framework.TearDownAttribute;
+using OneTimeSetUp = NUnit.Framework.OneTimeSetUpAttribute;
+using OneTimeTearDown = NUnit.Framework.OneTimeTearDownAttribute;
+using Test = NUnit.Framework.TestAttribute;
+using TestFixture = NUnit.Framework.TestFixtureAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Before = Lucene.Net.Attributes.NoOpAttribute;
+using After = Lucene.Net.Attributes.NoOpAttribute;
+using OneTimeSetUp = Lucene.Net.Attributes.NoOpAttribute;
+using OneTimeTearDown = Lucene.Net.Attributes.NoOpAttribute;
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+using TestFixture = Lucene.Net.Attributes.NoOpAttribute;
 #endif
-
 
 namespace Lucene.Net.Util
 {
@@ -122,47 +135,6 @@ namespace Lucene.Net.Util
     using TextField = TextField;
     using TieredMergePolicy = Lucene.Net.Index.TieredMergePolicy;
 
-    /*using After = org.junit.After;
-    using AfterClass = org.junit.AfterClass;
-    using Assert = org.junit.Assert;
-    using Before = org.junit.Before;
-    using BeforeClass = org.junit.BeforeClass;
-    using ClassRule = org.junit.ClassRule;
-    using Rule = org.junit.Rule;
-    using Test = org.junit.Test;
-    using RuleChain = org.junit.rules.RuleChain;
-    using TestRule = org.junit.rules.TestRule;
-    using RunWith = org.junit.runner.RunWith;
-
-    using JUnit4MethodProvider = com.carrotsearch.randomizedtesting.JUnit4MethodProvider;
-    using LifecycleScope = com.carrotsearch.randomizedtesting.LifecycleScope;
-    using MixWithSuiteName = com.carrotsearch.randomizedtesting.MixWithSuiteName;
-    using RandomizedContext = com.carrotsearch.randomizedtesting.RandomizedContext;
-    using RandomizedRunner = com.carrotsearch.randomizedtesting.RandomizedRunner;
-    using RandomizedTest = com.carrotsearch.randomizedtesting.RandomizedTest;
-    using Listeners = com.carrotsearch.randomizedtesting.annotations.Listeners;
-    using SeedDecorators = com.carrotsearch.randomizedtesting.annotations.SeedDecorators;
-    using TestGroup = com.carrotsearch.randomizedtesting.annotations.TestGroup;
-    using TestMethodProviders = com.carrotsearch.randomizedtesting.annotations.TestMethodProviders;
-    using ThreadLeakAction = com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction;
-    using Action = com.carrotsearch.randomizedtesting.annotations.ThreadLeakAction.Action;
-    using ThreadLeakFilters = com.carrotsearch.randomizedtesting.annotations.ThreadLeakFilters;
-    using ThreadLeakGroup = com.carrotsearch.randomizedtesting.annotations.ThreadLeakGroup;
-    using Group = com.carrotsearch.randomizedtesting.annotations.ThreadLeakGroup.Group;
-    using ThreadLeakLingering = com.carrotsearch.randomizedtesting.annotations.ThreadLeakLingering;
-    using ThreadLeakScope = com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope;
-    using Scope = com.carrotsearch.randomizedtesting.annotations.ThreadLeakScope.Scope;
-    using ThreadLeakZombies = com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies;
-    using Consequence = com.carrotsearch.randomizedtesting.annotations.ThreadLeakZombies.Consequence;
-    using TimeoutSuite = com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
-    using RandomPicks = com.carrotsearch.randomizedtesting.generators.RandomPicks;
-    using NoClassHooksShadowingRule = com.carrotsearch.randomizedtesting.rules.NoClassHooksShadowingRule;
-    using NoInstanceHooksOverridesRule = com.carrotsearch.randomizedtesting.rules.NoInstanceHooksOverridesRule;
-    using StaticFieldsInvariantRule = com.carrotsearch.randomizedtesting.rules.StaticFieldsInvariantRule;
-    using SystemPropertiesInvariantRule = com.carrotsearch.randomizedtesting.rules.SystemPropertiesInvariantRule;
-    using TestRuleAdapter = com.carrotsearch.randomizedtesting.rules.TestRuleAdapter;
-    */
-
     /// <summary>
     /// Base class for all Lucene.Net unit tests.
     ///
@@ -170,7 +142,7 @@ namespace Lucene.Net.Util
     ///
     /// <para>
     /// The preferred way to specify class (suite-level) setup/cleanup is to use
-    /// static methods annotated with <see cref="BeforeClass"/> and <see cref="AfterClass"/>. Any
+    /// static methods annotated with <see cref="OneTimeSetUp"/> and <see cref="OneTimeTearDown"/>. Any
     /// code in these methods is executed within the test framework's control and
     /// ensure proper setup has been made. <b>Try not to use static initializers
     /// (including complex final field initializers).</b> Static initializers are
@@ -188,49 +160,110 @@ namespace Lucene.Net.Util
     /// <h3>Specifying test cases</h3>
     ///
     /// <para>
-    /// Any test method annotated with <see cref="TestAttribute"/> is considered a test case.
-    /// </para>
-    ///
-    /// <h3>Randomized execution and test facilities</h3>
-    ///
-    /// <para>
-    /// <see cref="LuceneTestCase"/> uses <see cref="RandomizedRunner"/> to execute test cases.
-    /// <see cref="RandomizedRunner"/> has built-in support for tests randomization
-    /// including access to a repeatable <see cref="Random"/> instance. See
-    /// <see cref="Random()"/> method. Any test using <see cref="Random"/> acquired from
-    /// <see cref="Random()"/> should be fully reproducible (assuming no race conditions
-    /// between threads etc.). The initial seed for a test case is reported in many
-    /// ways:
-    /// <list type="bullet">
-    ///     <item>
-    ///         <description>
-    ///             as part of any exception thrown from its body (inserted as a dummy stack
-    ///             trace entry),
-    ///         </description>
-    ///     </item>
-    ///     <item>
-    ///         <description>
-    ///             as part of the main thread executing the test case (if your test hangs,
-    ///             just dump the stack trace of all threads and you'll see the seed),
-    ///         </description>
-    ///     </item>
-    ///     <item>
-    ///         <description>
-    ///             the master seed can also be accessed manually by getting the current
-    ///             context (<see cref="RandomizedContext.Current"/>) and then calling
-    ///             <see cref="RandomizedContext.RunnerSeed"/>.
-    ///         </description>
-    ///     </item>
-    /// </list>
+    /// Any test method annotated with <see cref="Test"/> is considered a test case.
     /// </para>
     /// </summary>
+
+    // LUCENENET TODO: Randomized seed
+    ///// <h3>Randomized execution and test facilities</h3>
+    /////
+    ///// <para>
+    ///// <see cref="LuceneTestCase"/> uses <see cref="RandomizedRunner"/> to execute test cases.
+    ///// <see cref="RandomizedRunner"/> has built-in support for tests randomization
+    ///// including access to a repeatable <see cref="Random"/> instance. See
+    ///// <see cref="Random"/> property. Any test using <see cref="Random"/> acquired from
+    ///// <see cref="Random"/> should be fully reproducible (assuming no race conditions
+    ///// between threads etc.). The initial seed for a test case is reported in many
+    ///// ways:
+    ///// <list type="bullet">
+    /////     <item>
+    /////         <description>
+    /////             as part of any exception thrown from its body (inserted as a dummy stack
+    /////             trace entry),
+    /////         </description>
+    /////     </item>
+    /////     <item>
+    /////         <description>
+    /////             as part of the main thread executing the test case (if your test hangs,
+    /////             just dump the stack trace of all threads and you'll see the seed),
+    /////         </description>
+    /////     </item>
+    /////     <item>
+    /////         <description>
+    /////             the master seed can also be accessed manually by getting the current
+    /////             context (<see cref="RandomizedContext.Current"/>) and then calling
+    /////             <see cref="RandomizedContext.RunnerSeed"/>.
+    /////         </description>
+    /////     </item>
+    ///// </list>
+    ///// </para>
+    ///// </summary>
     [TestFixture]
-    public abstract partial class LuceneTestCase : Assert // Wait long for leaked threads to complete before failure. zk needs this. -  See LUCENE-3995 for rationale.
+#if TESTFRAMEWORK_XUNIT
+    [Xunit.Collection("NonParallel")]
+#endif
+    public abstract partial class LuceneTestCase //: Assert // Wait long for leaked threads to complete before failure. zk needs this. -  See LUCENE-3995 for rationale.
+#if TESTFRAMEWORK_XUNIT
+        : IDisposable, Xunit.IClassFixture<BeforeAfterClass>
     {
+        private int isDisposed = 0;
+
+        public LuceneTestCase(BeforeAfterClass beforeAfter)
+        {
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+            ClassEnvRule = new TestRuleSetupAndRestoreClassEnv();
+#endif
+            beforeAfter.SetBeforeAfterClassActions(BeforeClass, AfterClass);
+            this.SetUp();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0)
+                this.TearDown();
+        }
+#elif TESTFRAMEWORK_MSTEST
+    {
+        //private static LuceneTestCase _currentTestInstance;
+        //private static int isInitialized = 0;
+
+
+        public LuceneTestCase()
+        {
+            lock (initalizationLock)
+            {
+                var thisType = this.GetType();
+                if (!initalizationLock.Contains(thisType.FullName))
+                    initalizationLock.Add(thisType.FullName);
+                else
+                    return; // Only allow this class to initialize once
+
+                //if (_currentTestInstance != null)
+                //    _currentTestInstance.AfterClass();
+                //_currentTestInstance = this;
+
+                _testClassName = thisType.FullName;
+                _testName = string.Empty;
+                _testClassType = thisType;
+
+                BeforeClass();
+            }
+        }
+#else
+    {
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         public LuceneTestCase()
         {
             ClassEnvRule = new TestRuleSetupAndRestoreClassEnv();
         }
+#endif
+#endif
 
         // --------------------------------------------------------------------
         // Test groups, system properties and other annotations modifying tests
@@ -329,7 +362,7 @@ namespace Lucene.Net.Util
         /// up after the suite is completed.
         /// </summary>
         /// <seealso cref="LuceneTestCase.CreateTempDir()"/>
-        /// <seealso cref= LuceneTestCase.CreateTempFile(String, String)"/>
+        /// <seealso cref="LuceneTestCase.CreateTempFile(String, String)"/>
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
         public class SuppressTempFileChecksAttribute : System.Attribute // LUCENENET: API looks better with this nested
         {
@@ -400,20 +433,20 @@ namespace Lucene.Net.Util
         /// The line file used by LineFileDocs </summary>
         public static readonly string TEST_LINE_DOCS_FILE = SystemProperties.GetProperty("tests.linedocsfile", DEFAULT_LINE_DOCS_FILE);
 
-        /// <summary>
-        /// Whether or not <see cref="Nightly"/> tests should run. </summary>
+        ///// <summary>
+        ///// Whether or not <see cref="Nightly"/> tests should run. </summary>
         internal static readonly bool TEST_NIGHTLY = SystemProperties.GetPropertyAsBoolean(SYSPROP_NIGHTLY, false); // LUCENENET specific - made internal, because not fully implemented
 
-        /// <summary>
-        /// Whether or not <see cref="Weekly"/> tests should run. </summary>
+        ///// <summary>
+        ///// Whether or not <see cref="Weekly"/> tests should run. </summary>
         internal static readonly bool TEST_WEEKLY = SystemProperties.GetPropertyAsBoolean(SYSPROP_WEEKLY, false); // LUCENENET specific - made internal, because not fully implemented
 
-        /// <summary>
-        /// Whether or not <see cref="AwaitsFix"/> tests should run. </summary>
+        ///// <summary>
+        ///// Whether or not <see cref="AwaitsFix"/> tests should run. </summary>
         internal static readonly bool TEST_AWAITSFIX = SystemProperties.GetPropertyAsBoolean(SYSPROP_AWAITSFIX, false); // LUCENENET specific - made internal, because not fully implemented
 
-        /// <summary>
-        /// Whether or not <see cref="Slow"/> tests should run. </summary>
+        ///// <summary>
+        ///// Whether or not <see cref="Slow"/> tests should run. </summary>
         internal static readonly bool TEST_SLOW = SystemProperties.GetPropertyAsBoolean(SYSPROP_SLOW, false); // LUCENENET specific - made internal, because not fully implemented
 
         /// <summary>
@@ -466,11 +499,11 @@ namespace Lucene.Net.Util
             };
         }
 
-        protected static readonly HashSet<string> m_doesntSupportOffsets = new HashSet<string>(Arrays.AsList(
-            "Lucene3x", 
-            "MockFixedIntBlock", 
-            "MockVariableIntBlock", 
-            "MockSep", 
+        protected static ICollection<string> DoesntSupportOffsets { get; } = new HashSet<string>(Arrays.AsList(
+            "Lucene3x",
+            "MockFixedIntBlock",
+            "MockVariableIntBlock",
+            "MockSep",
             "MockRandom"
         ));
 
@@ -485,23 +518,25 @@ namespace Lucene.Net.Util
         /// <para/>
         /// @lucene.internal
         /// </summary>
-        public static bool OLD_FORMAT_IMPERSONATION_IS_ACTIVE = false;
+        public static bool OldFormatImpersonationIsActive { get; set; } = false; // LUCENENET specific - made into a property, since this is intended for end users to set
 
         // -----------------------------------------------------------------
         // Class level (suite) rules.
         // -----------------------------------------------------------------
 
-        /// <summary>
-        /// Stores the currently class under test.
-        /// </summary>
+        ///// <summary>
+        ///// Stores the currently class under test.
+        ///// </summary>
         //private static TestRuleStoreClassName ClassNameRule;
 
         /// <summary>
         /// Class environment setup rule.
-        /// 
-        /// LUCENENET specific
-        /// Is non-static to remove inter-class dependencies on this variable
         /// </summary>
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        internal static TestRuleSetupAndRestoreClassEnv ClassEnvRule { get; } = new TestRuleSetupAndRestoreClassEnv();
+#else
+        // LUCENENET specific
+        // Is non-static to remove inter-class dependencies on this variable
         internal TestRuleSetupAndRestoreClassEnv ClassEnvRule { get; private set; }
 
         /// <summary>
@@ -521,6 +556,7 @@ namespace Lucene.Net.Util
         /// internal and this field is needed by other classes.
         /// </summary>
         public TimeZoneInfo TimeZone { get { return ClassEnvRule.timeZone; } }
+#endif
 
         // LUCENENET TODO
         /// <summary>
@@ -668,8 +704,10 @@ namespace Lucene.Net.Util
         /// <summary>
         /// For subclasses to override. Overrides must call <c>base.SetUp()</c>.
         /// </summary>
-        [SetUp]
+        [Before]
+#pragma warning disable xUnit1013
         public virtual void SetUp()
+#pragma warning restore xUnit1013
         {
             // LUCENENET TODO: Not sure how to convert these
             //ParentChainCallRule.SetupCalled = true;
@@ -678,38 +716,98 @@ namespace Lucene.Net.Util
             // of whether verbose is enabled (since we need it for debugging,
             // but the verbose output can crash tests).
             Console.Write("Culture: ");
-            Console.WriteLine(this.ClassEnvRule.locale.Name);
+            Console.WriteLine(ClassEnvRule.locale.Name);
 
             Console.Write("Time Zone: ");
-            Console.WriteLine(this.ClassEnvRule.timeZone.DisplayName);
+            Console.WriteLine(ClassEnvRule.timeZone.DisplayName);
 
             Console.Write("Default Codec: ");
-            Console.Write(this.ClassEnvRule.codec.Name);
+            Console.Write(ClassEnvRule.codec.Name);
             Console.Write(" (");
-            Console.Write(this.ClassEnvRule.codec.GetType().ToString());
+            Console.Write(ClassEnvRule.codec.GetType().ToString());
             Console.WriteLine(")");
 
             Console.Write("Default Similarity: ");
-            Console.WriteLine(this.ClassEnvRule.similarity.ToString());
+            Console.WriteLine(ClassEnvRule.similarity.ToString());
         }
 
         /// <summary>
         /// For subclasses to override. Overrides must call <c>base.TearDown()</c>.
         /// </summary>
-        [TearDown]
+        [After]
+#pragma warning disable xUnit1013
         public virtual void TearDown()
+#pragma warning restore xUnit1013
         {
             /* LUCENENET TODO: Not sure how to convert these
                 ParentChainCallRule.TeardownCalled = true;
                 */
         }
 
-        // LUCENENET TODO: API - make these settable by end users so additional codecs can be injected into tests
         // LUCENENET specific constants to scan the test framework for codecs/docvaluesformats/postingsformats only once
-        private static readonly TestCodecFactory TEST_CODEC_FACTORY = new TestCodecFactory();
-        private static readonly TestDocValuesFormatFactory TEST_DOCVALUES_FORMAT_FACTORY = new TestDocValuesFormatFactory();
-        private static readonly TestPostingsFormatFactory TEST_POSTINGS_FORMAT_FACTORY = new TestPostingsFormatFactory();
+        public static ICodecFactory CodecFactory { get; set; } = new TestCodecFactory();
+        public static IDocValuesFormatFactory DocValuesFormatFactory { get; set; } = new TestDocValuesFormatFactory();
+        public static IPostingsFormatFactory PostingsFormatFactory { get; set; } = new TestPostingsFormatFactory();
 
+
+#if TESTFRAMEWORK_MSTEST
+        private static readonly IList<string> initalizationLock = new List<string>();
+        private static string _testClassName = string.Empty;
+        private static string _testName = string.Empty;
+        private static Type _testClassType;
+#endif
+
+
+#if TESTFRAMEWORK_MSTEST
+        /// <summary>
+        /// Sets up dependency injection of codec factories for running the test class,
+        /// and also picks random defaults for culture, time zone, similarity, and default codec.
+        /// </summary>
+        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassInitialize(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+        public static void BeforeClass(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext context)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            lock (initalizationLock)
+            {
+                if (!initalizationLock.Contains(context.FullyQualifiedTestClassName))
+                    initalizationLock.Add(context.FullyQualifiedTestClassName);
+                else
+                    return; // Only allow this class to initialize once (MSTest bug)
+
+                _testClassName = context.FullyQualifiedTestClassName;
+                _testName = context.TestName;
+
+#if !NETSTANDARD1_6
+                var callingAssembly = Assembly.GetCallingAssembly();
+                _testClassType = callingAssembly.GetType(_testClassName);
+#else
+                _testClassType = Type.GetType(_testClassName);
+#endif
+            }
+
+            try
+            {
+                // Setup the factories
+                Codec.SetCodecFactory(CodecFactory);
+                DocValuesFormat.SetDocValuesFormatFactory(DocValuesFormatFactory);
+                PostingsFormat.SetPostingsFormatFactory(PostingsFormatFactory);
+
+                ClassEnvRule.Before(null);
+
+
+                // LUCENENET TODO: Scan for a custom attribute and setup ordering to
+                // initialize data from this class to the top class
+            }
+            catch (Exception ex)
+            {
+                // Write the stack trace so we have something to go on if an error occurs here.
+                throw new Exception($"An exception occurred during BeforeClass:\n{ex.ToString()}", ex);
+            }
+        }
+#endif
 
         /// <summary>
         /// Sets up dependency injection of codec factories for running the test class,
@@ -720,25 +818,46 @@ namespace Lucene.Net.Util
         /// </summary>
         // LUCENENET specific method for setting up dependency injection of test classes.
         [OneTimeSetUp]
+#pragma warning disable xUnit1013
         public virtual void BeforeClass()
+#pragma warning restore xUnit1013
         {
             try
             {
                 // Setup the factories
-                Codec.SetCodecFactory(TEST_CODEC_FACTORY);
-                DocValuesFormat.SetDocValuesFormatFactory(TEST_DOCVALUES_FORMAT_FACTORY);
-                PostingsFormat.SetPostingsFormatFactory(TEST_POSTINGS_FORMAT_FACTORY);
+                Codec.SetCodecFactory(CodecFactory);
+                DocValuesFormat.SetDocValuesFormatFactory(DocValuesFormatFactory);
+                PostingsFormat.SetPostingsFormatFactory(PostingsFormatFactory);
 
                 ClassEnvRule.Before(this);
             }
             catch (Exception ex)
             {
-                // Print the stack trace so we have something to go on if an error occurs here.
-                Console.Write("An exception occurred during BeforeClass: ");
-                Console.WriteLine(ex.ToString());
-                throw;
+                // Write the stack trace so we have something to go on if an error occurs here.
+                throw new Exception($"An exception occurred during BeforeClass:\n{ex.ToString()}", ex);
             }
         }
+
+#if TESTFRAMEWORK_MSTEST
+        /// <summary>
+        /// Tears down random defaults and cleans up temporary files.
+        /// </summary>
+        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassCleanup(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+        public static void ClassCleanup()
+        {
+            try
+            {
+                ClassEnvRule.After(null);
+                CleanupTemporaryFiles();
+            }
+            catch (Exception ex)
+            {
+                // Write the stack trace so we have something to go on if an error occurs here.
+                throw new Exception($"An exception occurred during AfterClass:\n{ex.ToString()}", ex);
+            }
+        }
+#endif
 
         /// <summary>
         /// Tears down random defaults and cleans up temporary files.
@@ -748,7 +867,9 @@ namespace Lucene.Net.Util
         /// </summary>
         // LUCENENET specific method for setting up dependency injection of test classes.
         [OneTimeTearDown]
+#pragma warning disable xUnit1013
         public virtual void AfterClass()
+#pragma warning restore xUnit1013
         {
             try
             {
@@ -757,10 +878,8 @@ namespace Lucene.Net.Util
             }
             catch (Exception ex)
             {
-                // Print the stack trace so we have something to go on if an error occurs here.
-                Console.Write("An exception occurred during AfterClass: ");
-                Console.WriteLine(ex.ToString());
-                throw;
+                // Write the stack trace so we have something to go on if an error occurs here.
+                throw new Exception($"An exception occurred during AfterClass:\n{ex.ToString()}", ex);
             }
         }
 
@@ -769,7 +888,7 @@ namespace Lucene.Net.Util
         // -----------------------------------------------------------------
 
         /// <summary>
-        /// Access to the current <see cref="RandomizedContext"/>'s Random instance. It is safe to use
+        /// Access to the current <see cref="System.Random"/> instance. It is safe to use
         /// this method from multiple threads, etc., but it should be called while within a runner's
         /// scope (so no static initializers). The returned <see cref="System.Random"/> instance will be
         /// <b>different</b> when this method is called inside a <see cref="BeforeClass()"/> hook (static
@@ -792,13 +911,19 @@ namespace Lucene.Net.Util
         {
             get
             {
+#if TESTFRAMEWORK_NUNIT
+                return NUnit.Framework.TestContext.CurrentContext.Random;
+#else
                 return _random ?? (_random = new Random(/* LUCENENET TODO seed */));
                 //return RandomizedContext.Current.Random;
+#endif
             }
         }
 
+#if !TESTFRAMEWORK_NUNIT
         [ThreadStatic]
         private static Random _random;
+#endif
 
         /////// <summary>
         /////// Registers a <see cref="IDisposable"/> resource that should be closed after the test
@@ -821,25 +946,52 @@ namespace Lucene.Net.Util
         ////}*/
 
         /// <summary>
-        /// Return the current class being tested.
+        /// Return the current type being tested.
         /// </summary>
-        public static Type TestClass //LUCENENET TODO: Either implement, or change the doc to indicate it is hard coded
+        public static Type GetTestClass()
         {
-            get
-            {
-                return typeof(LuceneTestCase); // LUCENENET TODO: return this.GetType();
-            }
+#if !TESTFRAMEWORK_XUNIT
+#if TESTFRAMEWORK_NUNIT || !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+#if TESTFRAMEWORK_NUNIT
+            string testClassName = NUnit.Framework.TestContext.CurrentContext.Test.ClassName;
+#else
+            if (_testClassType != null)
+                return _testClassType;
+            string testClassName = _testClassName;
+#endif
+
+            // 1st attempt - try resolving the type name directly
+            Type testClass = Type.GetType(testClassName);
+            if (testClass != null)
+                return testClass;
+
+            // 2nd attempt - try scanning the referenced assemblies to see if we can find the class by fullname
+            var referencedAssemblies = AssemblyUtils.GetReferencedAssemblies();
+            testClass = referencedAssemblies.SelectMany(a => a.GetTypes().Where(t => t.FullName == testClassName)).FirstOrDefault();
+            if (testClass != null)
+                return testClass;
+#endif
+#endif
+            // Default in case none of the above attempts worked.
+            return typeof(LuceneTestCase);
         }
+
 
         /// <summary>
         /// Return the name of the currently executing test case.
         /// </summary>
-        public string TestName //LUCENENET TODO: Either implement, or change the doc to indicate it is hard coded
+        public virtual string TestName
         {
             get
             {
+#if TESTFRAMEWORK_NUNIT
+                return NUnit.Framework.TestContext.CurrentContext.Test.MethodName;
+#elif TESTFRAMEWORK_MSTEST
+                return _testName;
+#else
                 //return ThreadAndTestNameRule.TestMethodName;
-                return "LuceneTestCase"; // LUCENENET TODO: return this.GetType().GetTypeInfo().Name
+                return this.GetType().GetTypeInfo().Name; // LUCENENET TODO: return the current test method name if the test framework supports such a thing.
+#endif
             }
         }
 
@@ -865,7 +1017,7 @@ namespace Lucene.Net.Util
         /// <para/>
         /// LUCENENET: Not Implemented - always returns true
         /// </summary>
-        public static bool IsTestThread
+        internal static bool IsTestThread // LUCENENET specific - changed from public to internal since there is no way to support it
         {
             get
             {
@@ -979,9 +1131,9 @@ namespace Lucene.Net.Util
             RandomizedTest.AssumeFalse(msg, condition);
         }
 
-        public static void AssumeNoException(string msg, Exception e) // LUCENENET TODO: Either implement or eliminate
+        public static void AssumeNoException(string msg, Exception e)
         {
-            //RandomizedTest.AssumeNoException(msg, e);
+            RandomizedTest.AssumeNoException(msg, e);
         }
 
         /// <summary>
@@ -1010,7 +1162,7 @@ namespace Lucene.Net.Util
             {
                 while (iter.MoveNext())
                 {
-                    stream.WriteLine(iter.Current.ToString()); // LUCENENET TODO: Call Collections.ToString()
+                    stream.WriteLine(Collections.ToString(iter.Current));
                 }
             }
             stream.WriteLine("*** END " + label + " ***");
@@ -1020,7 +1172,7 @@ namespace Lucene.Net.Util
         /// Convenience method for logging an array.  Wraps the array in an enumerator and delegates to <see cref="DumpEnumerator(string, IEnumerator, TextWriter)"/>
         /// </summary>
         /// <seealso cref="DumpEnumerator(string, IEnumerator, TextWriter)"/>
-        public static void DumpArray(string label, Object[] objs, TextWriter stream)
+        public static void DumpArray(string label, object[] objs, TextWriter stream)
         {
             IEnumerator iter = (null == objs) ? (IEnumerator)null : Arrays.AsList(objs).GetEnumerator();
             DumpEnumerator(label, iter, stream);
@@ -1029,38 +1181,68 @@ namespace Lucene.Net.Util
         /// <summary>
         /// Create a new <see cref="IndexWriterConfig"/> with random defaults.
         /// </summary>
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         // LUCENENET specific
         // Non-static so that we do not depend on any hidden static dependencies
         public IndexWriterConfig NewIndexWriterConfig(LuceneVersion v, Analyzer a)
+#else
+        public static IndexWriterConfig NewIndexWriterConfig(LuceneVersion v, Analyzer a)
+#endif
         {
             return NewIndexWriterConfig(Random, v, a);
+        }
+
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        /// <summary>
+        /// Create a new <see cref="IndexWriterConfig"/> with random defaults.
+        /// </summary>
+        // LUCENENET specific
+        // Pass LuceneTestCase so we can access instance properties similarity and timeZone
+        public static IndexWriterConfig NewIndexWriterConfig(LuceneTestCase luceneTestCase, LuceneVersion v, Analyzer a)
+        {
+            return NewIndexWriterConfig(luceneTestCase, Random, v, a);
         }
 
         /// <summary>
         /// Create a new <see cref="IndexWriterConfig"/> with random defaults using the specified <paramref name="random"/>.
         /// </summary>
-        // LUCENENET specific
-        // Non-static so that we do not depend on any hidden static dependencies
+        // LUCENENET specific - non-static overload so we don't have to explicitly
+        // pass LuceneTestCase
         public IndexWriterConfig NewIndexWriterConfig(Random random, LuceneVersion v, Analyzer a)
         {
-            return NewIndexWriterConfig(random, v, a, ClassEnvRule.similarity, ClassEnvRule.timeZone);
-        }
+            return NewIndexWriterConfig(this, random, v, a);
 
+        }
+#endif
+
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         /// <summary>
         /// Create a new <see cref="IndexWriterConfig"/> with random defaults using the specified <paramref name="random"/>.
         /// </summary>
         /// <param name="random">A random instance (usually <see cref="LuceneTestCase.Random"/>).</param>
         /// <param name="v"></param>
         /// <param name="a"></param>
-        /// <param name="similarity">Generally, this should always be <see cref="LuceneTestCase.Similarity"/>.</param>
-        /// <param name="timezone">Generally, this should always be <see cref="LuceneTestCase.TimeZone"/>.</param>
+        public static IndexWriterConfig NewIndexWriterConfig(Random random, LuceneVersion v, Analyzer a)
+#else
+        /// <summary>
+        /// Create a new <see cref="IndexWriterConfig"/> with random defaults using the specified <paramref name="random"/>.
+        /// </summary>
+        /// <param name="luceneTestCase">The current test instance.</param>
+        /// <param name="random">A random instance (usually <see cref="LuceneTestCase.Random"/>).</param>
+        /// <param name="v"></param>
+        /// <param name="a"></param>
         // LUCENENET specific
         // This is the only static ctor for IndexWriterConfig because it removes the dependency
         // on ClassEnvRule by using parameters Similarity and TimeZone.
-        public static IndexWriterConfig NewIndexWriterConfig(Random random, LuceneVersion v, Analyzer a, Similarity similarity, TimeZoneInfo timezone)
+        public static IndexWriterConfig NewIndexWriterConfig(LuceneTestCase luceneTestCase, Random random, LuceneVersion v, Analyzer a)
+#endif
         {
             IndexWriterConfig c = new IndexWriterConfig(v, a);
-            c.SetSimilarity(similarity);
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+            c.SetSimilarity(ClassEnvRule.similarity);
+#else
+            c.SetSimilarity(luceneTestCase.ClassEnvRule.similarity);
+#endif
             if (VERBOSE)
             {
                 // Even though TestRuleSetupAndRestoreClassEnv calls
@@ -1154,9 +1336,11 @@ namespace Lucene.Net.Util
                     c.SetMaxThreadStates(maxNumThreadStates);
                 }
             }
-
-            c.SetMergePolicy(NewMergePolicy(random, timezone));
-
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+            c.SetMergePolicy(NewMergePolicy(random));
+#else
+            c.SetMergePolicy(NewMergePolicy(random, luceneTestCase.ClassEnvRule.timeZone));
+#endif
             if (Rarely(random))
             {
                 c.SetMergedSegmentWarmer(new SimpleMergedSegmentWarmer(c.InfoStream));
@@ -1168,11 +1352,30 @@ namespace Lucene.Net.Util
             return c;
         }
 
-        /// <param name="timezone">
-        /// LUCENENET specific
-        /// Timezone added to remove dependency on the then-static <see cref="ClassEnvRule"/>
-        /// </param>
-        public static MergePolicy NewMergePolicy(Random r, TimeZoneInfo timezone)
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        // LUCENENET specific - non-static overload so we don't have to explicitly
+        // pass LuceneTestCase
+        public MergePolicy NewMergePolicy(Random r)
+        {
+            return NewMergePolicy(this, r);
+        }
+
+        // LUCENENET specific - non-static overload so we don't have to explicitly
+        // pass LuceneTestCase
+        public MergePolicy NewMergePolicy()
+        {
+            return NewMergePolicy(this);
+        }
+#endif
+
+
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        public static MergePolicy NewMergePolicy(Random r)
+#else
+        // LUCENENET specific
+        // LuceneTestCase added to remove dependency on the then-static <see cref="ClassEnvRule"/>
+        public static MergePolicy NewMergePolicy(LuceneTestCase luceneTestCase, Random r)
+#endif
         {
             if (Rarely(r))
             {
@@ -1184,20 +1387,30 @@ namespace Lucene.Net.Util
             }
             else if (r.Next(5) == 0)
             {
-                return NewAlcoholicMergePolicy(r);
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                return NewAlcoholicMergePolicy(r, ClassEnvRule.timeZone);
+#else
+                return NewAlcoholicMergePolicy(r, luceneTestCase.ClassEnvRule.timeZone);
+#endif
             }
             return NewLogMergePolicy(r);
         }
 
-
-        /// <param name="timezone">Generally, this should always be <see cref="LuceneTestCase.TimeZone"/>.</param>
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        public static MergePolicy NewMergePolicy()
+        {
+            return NewMergePolicy(Random);
+        }
+#else
+        /// <param name="luceneTestCase">The current test instance.</param>
         // LUCENENET specific
         // Timezone added to remove dependency on the then-static <see cref="ClassEnvRule"/>
         //
-        public static MergePolicy NewMergePolicy(TimeZoneInfo timezone)
+        public static MergePolicy NewMergePolicy(LuceneTestCase luceneTestCase)
         {
-            return NewMergePolicy(Random, timezone);
+            return NewMergePolicy(luceneTestCase, Random);
         }
+#endif
 
         public static LogMergePolicy NewLogMergePolicy()
         {
@@ -1209,47 +1422,54 @@ namespace Lucene.Net.Util
             return NewTieredMergePolicy(Random);
         }
 
+
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         public static AlcoholicMergePolicy NewAlcoholicMergePolicy()
         {
-            return NewAlcoholicMergePolicy(Random);
+            return NewAlcoholicMergePolicy(Random, ClassEnvRule.timeZone);
+#else
+        public static AlcoholicMergePolicy NewAlcoholicMergePolicy(TimeZoneInfo timeZone)
+        {
+            return NewAlcoholicMergePolicy(Random, timeZone);
+#endif
         }
 
-        public static AlcoholicMergePolicy NewAlcoholicMergePolicy(Random r)
+        public static AlcoholicMergePolicy NewAlcoholicMergePolicy(Random random, TimeZoneInfo timeZone)
         {
-            return new AlcoholicMergePolicy(new Random(r.Next()));
+            return new AlcoholicMergePolicy(timeZone, new Random(random.Next()));
         }
 
-        public static LogMergePolicy NewLogMergePolicy(Random r)
+        public static LogMergePolicy NewLogMergePolicy(Random random)
         {
-            LogMergePolicy logmp = r.NextBoolean() ? (LogMergePolicy)new LogDocMergePolicy() : new LogByteSizeMergePolicy();
+            LogMergePolicy logmp = random.NextBoolean() ? (LogMergePolicy)new LogDocMergePolicy() : new LogByteSizeMergePolicy();
 
-            logmp.CalibrateSizeByDeletes = r.NextBoolean();
-            if (Rarely(r))
+            logmp.CalibrateSizeByDeletes = random.NextBoolean();
+            if (Rarely(random))
             {
-                logmp.MergeFactor = TestUtil.NextInt32(r, 2, 9);
+                logmp.MergeFactor = TestUtil.NextInt32(random, 2, 9);
             }
             else
             {
-                logmp.MergeFactor = TestUtil.NextInt32(r, 10, 50);
+                logmp.MergeFactor = TestUtil.NextInt32(random, 10, 50);
             }
-            ConfigureRandom(r, logmp);
+            ConfigureRandom(random, logmp);
             return logmp;
         }
 
-        private static void ConfigureRandom(Random r, MergePolicy mergePolicy)
+        private static void ConfigureRandom(Random random, MergePolicy mergePolicy)
         {
-            if (r.NextBoolean())
+            if (random.NextBoolean())
             {
-                mergePolicy.NoCFSRatio = 0.1 + r.NextDouble() * 0.8;
+                mergePolicy.NoCFSRatio = 0.1 + random.NextDouble() * 0.8;
             }
             else
             {
-                mergePolicy.NoCFSRatio = r.NextBoolean() ? 1.0 : 0.0;
+                mergePolicy.NoCFSRatio = random.NextBoolean() ? 1.0 : 0.0;
             }
 
             if (Rarely())
             {
-                mergePolicy.MaxCFSSegmentSizeMB = 0.2 + r.NextDouble() * 2.0;
+                mergePolicy.MaxCFSSegmentSizeMB = 0.2 + random.NextDouble() * 2.0;
             }
             else
             {
@@ -1257,39 +1477,39 @@ namespace Lucene.Net.Util
             }
         }
 
-        public static TieredMergePolicy NewTieredMergePolicy(Random r)
+        public static TieredMergePolicy NewTieredMergePolicy(Random random)
         {
             TieredMergePolicy tmp = new TieredMergePolicy();
-            if (Rarely(r))
+            if (Rarely(random))
             {
-                tmp.MaxMergeAtOnce = TestUtil.NextInt32(r, 2, 9);
-                tmp.MaxMergeAtOnceExplicit = TestUtil.NextInt32(r, 2, 9);
+                tmp.MaxMergeAtOnce = TestUtil.NextInt32(random, 2, 9);
+                tmp.MaxMergeAtOnceExplicit = TestUtil.NextInt32(random, 2, 9);
             }
             else
             {
-                tmp.MaxMergeAtOnce = TestUtil.NextInt32(r, 10, 50);
-                tmp.MaxMergeAtOnceExplicit = TestUtil.NextInt32(r, 10, 50);
+                tmp.MaxMergeAtOnce = TestUtil.NextInt32(random, 10, 50);
+                tmp.MaxMergeAtOnceExplicit = TestUtil.NextInt32(random, 10, 50);
             }
-            if (Rarely(r))
+            if (Rarely(random))
             {
-                tmp.MaxMergedSegmentMB = 0.2 + r.NextDouble() * 2.0;
+                tmp.MaxMergedSegmentMB = 0.2 + random.NextDouble() * 2.0;
             }
             else
             {
-                tmp.MaxMergedSegmentMB = r.NextDouble() * 100;
+                tmp.MaxMergedSegmentMB = random.NextDouble() * 100;
             }
-            tmp.FloorSegmentMB = 0.2 + r.NextDouble() * 2.0;
-            tmp.ForceMergeDeletesPctAllowed = 0.0 + r.NextDouble() * 30.0;
-            if (Rarely(r))
+            tmp.FloorSegmentMB = 0.2 + random.NextDouble() * 2.0;
+            tmp.ForceMergeDeletesPctAllowed = 0.0 + random.NextDouble() * 30.0;
+            if (Rarely(random))
             {
-                tmp.SegmentsPerTier = TestUtil.NextInt32(r, 2, 20);
+                tmp.SegmentsPerTier = TestUtil.NextInt32(random, 2, 20);
             }
             else
             {
-                tmp.SegmentsPerTier = TestUtil.NextInt32(r, 10, 50);
+                tmp.SegmentsPerTier = TestUtil.NextInt32(random, 10, 50);
             }
-            ConfigureRandom(r, tmp);
-            tmp.ReclaimDeletesWeight = r.NextDouble() * 4;
+            ConfigureRandom(random, tmp);
+            tmp.ReclaimDeletesWeight = random.NextDouble() * 4;
             return tmp;
         }
 
@@ -1346,9 +1566,9 @@ namespace Lucene.Net.Util
             return NewMockDirectory(Random);
         }
 
-        public static MockDirectoryWrapper NewMockDirectory(Random r)
+        public static MockDirectoryWrapper NewMockDirectory(Random random)
         {
-            return (MockDirectoryWrapper)WrapDirectory(r, NewDirectoryImpl(r, TEST_DIRECTORY), false);
+            return (MockDirectoryWrapper)WrapDirectory(random, NewDirectoryImpl(random, TEST_DIRECTORY), false);
         }
 
         public static MockDirectoryWrapper NewMockFSDirectory(DirectoryInfo d)
@@ -1461,7 +1681,7 @@ namespace Lucene.Net.Util
             if (bare)
             {
                 BaseDirectoryWrapper @base = new BaseDirectoryWrapper(directory);
-                // LUCENENET TODO CloseAfterSuite(new IDisposableDirectory(@base, SuiteFailureMarker));
+                // LUCENENET TODO: CloseAfterSuite(new DisposableDirectory(@base, SuiteFailureMarker));
                 return @base;
             }
             else
@@ -1469,7 +1689,7 @@ namespace Lucene.Net.Util
                 MockDirectoryWrapper mock = new MockDirectoryWrapper(random, directory);
 
                 mock.Throttling = TEST_THROTTLING;
-                // LUCENENET TODO CloseAfterSuite(new IDisposableDirectory(mock, SuiteFailureMarker));
+                // LUCENENET TODO: CloseAfterSuite(new DisposableDirectory(mock, SuiteFailureMarker));
                 return mock;
             }
         }
@@ -1530,7 +1750,7 @@ namespace Lucene.Net.Util
                 {
                     newType.StoreTermVectorPositions = random.NextBoolean();
 
-                    if (newType.StoreTermVectorPositions && !newType.StoreTermVectorPayloads && !OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
+                    if (newType.StoreTermVectorPositions && !newType.StoreTermVectorPayloads && !OldFormatImpersonationIsActive)
                     {
                         newType.StoreTermVectorPayloads = random.NextBoolean();
                     }
@@ -1556,7 +1776,14 @@ namespace Lucene.Net.Util
         /// </summary>
         public static CultureInfo RandomCulture(Random random) // LUCENENET specific renamed from RandomLocale
         {
-            return RandomPicks.RandomFrom(random, CultureInfoSupport.GetNeutralAndSpecificCultures());
+            ICollection<CultureInfo> systemCultures = CultureInfoSupport.GetNeutralAndSpecificCultures();
+#if NETSTANDARD1_6
+            // .NET Core 1.0 on macOS seems to be flakey here and not return results occasionally, so compensate by
+            // returning CultureInfo.InvariantCulture when it happens.
+            if (systemCultures.Count == 0)
+                return CultureInfo.InvariantCulture;
+#endif
+            return RandomPicks.RandomFrom(random, systemCultures);
         }
 
         /// <summary>
@@ -1566,7 +1793,14 @@ namespace Lucene.Net.Util
         /// </summary>
         public static TimeZoneInfo RandomTimeZone(Random random)
         {
-            return RandomPicks.RandomFrom(random, TimeZoneInfo.GetSystemTimeZones());
+            var systemTimeZones = TimeZoneInfo.GetSystemTimeZones();
+#if NETSTANDARD1_6
+            // .NET Core 1.0 on macOS seems to be flakey here and not return results occasionally, so compensate by
+            // returning TimeZoneInfo.Local when it happens.
+            if (systemTimeZones.Count == 0)
+                return TimeZoneInfo.Local;
+#endif
+            return RandomPicks.RandomFrom(random, systemTimeZones);
         }
 
         /// <summary>
@@ -1777,6 +2011,25 @@ namespace Lucene.Net.Util
             }
         }
 
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        /// <summary>
+        /// Create a new searcher over the reader. this searcher might randomly use
+        /// threads.
+        /// </summary>
+        public static IndexSearcher NewSearcher(IndexReader r)
+        {
+            return NewSearcher(r, true);
+        }
+
+        /// <summary>
+        /// Create a new searcher over the reader. This searcher might randomly use
+        /// threads.
+        /// </summary>
+        public static IndexSearcher NewSearcher(IndexReader r, bool maybeWrap)
+        {
+            return NewSearcher(r, maybeWrap, true);
+        }
+#else
         /// <summary>
         /// Create a new searcher over the reader. this searcher might randomly use
         /// threads.
@@ -1785,43 +2038,43 @@ namespace Lucene.Net.Util
         // Is non-static because <see cref="ClassEnvRule"/> is now non-static.
         public IndexSearcher NewSearcher(IndexReader r)
         {
-            return NewSearcher(r, ClassEnvRule.similarity);
-        }
-
-        /// <param name="r"></param>
-        /// <param name="similarity">Generally, this should always be <see cref="LuceneTestCase.Similarity"/>.</param>
-        // LUCENENET specific
-        // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
-        public static IndexSearcher NewSearcher(IndexReader r, Similarity similarity)
-        {
-            return NewSearcher(r, true, similarity);
-        }
-
-        /// <summary>
-        /// Create a new searcher over the reader. this searcher might randomly use
-        /// threads.
-        /// </summary>
-        /// <param name="similarity">Generally, this should always be <see cref="LuceneTestCase.Similarity"/>.</param>
-        // LUCENENET specific
-        // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
-
-        public static IndexSearcher NewSearcher(IndexReader r, bool maybeWrap, Similarity similarity)
-        {
-            return NewSearcher(r, maybeWrap, true, similarity);
+            return NewSearcher(this, r, true);
         }
 
         /// <summary>
         /// Create a new searcher over the reader. This searcher might randomly use
         /// threads.
         /// </summary>
-        public IndexSearcher NewSearcher(IndexReader r, bool maybeWrap)
+        // LUCENENET specific
+        // Removes dependency on <see cref="LuceneTestCase.ClassEnvRule"/>
+        public static IndexSearcher NewSearcher(LuceneTestCase luceneTestCase, IndexReader r)
         {
-            return NewSearcher(r, maybeWrap, true);
+            return NewSearcher(luceneTestCase, r, true);
         }
 
-        public IndexSearcher NewSearcher(IndexReader r, bool maybeWrap, bool wrapWithAssertions)
+
+        /// <summary>
+        /// Create a new searcher over the reader. this searcher might randomly use
+        /// threads.
+        /// </summary>
+        /// <param name="luceneTestCase">The current test instance.</param>
+        // LUCENENET specific
+        // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
+
+        public static IndexSearcher NewSearcher(LuceneTestCase luceneTestCase, IndexReader r, bool maybeWrap)
         {
-            return NewSearcher(r, maybeWrap, wrapWithAssertions, ClassEnvRule.similarity);
+            return NewSearcher(luceneTestCase, r, maybeWrap, true);
+        }
+
+        /// <summary>
+        /// Create a new searcher over the reader. This searcher might randomly use
+        /// threads.
+        /// </summary>
+        // LUCENENET specific
+        // Is non-static because <see cref="ClassEnvRule"/> is now non-static.
+        public IndexSearcher NewSearcher(IndexReader r, bool maybeWrap)
+        {
+            return NewSearcher(this, r, maybeWrap, true);
         }
 
         /// <summary>
@@ -1831,11 +2084,36 @@ namespace Lucene.Net.Util
         /// <paramref name="wrapWithAssertions"/> is true, this searcher might be an
         /// <see cref="AssertingIndexSearcher"/> instance.
         /// </summary>
-        /// <param name="similarity">Generally, this should always be <see cref="LuceneTestCase.Similarity"/>.</param>
+        // LUCENENET specific
+        // Is non-static because <see cref="ClassEnvRule"/> is now non-static.
+        public IndexSearcher NewSearcher(IndexReader r, bool maybeWrap, bool wrapWithAssertions)
+        {
+            return NewSearcher(this, r, maybeWrap, wrapWithAssertions);
+        }
+#endif
+
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        /// <summary>
+        /// Create a new searcher over the reader. This searcher might randomly use
+        /// threads. If <paramref name="maybeWrap"/> is true, this searcher might wrap the
+        /// reader with one that returns null for <see cref="CompositeReader.GetSequentialSubReaders()"/>. If
+        /// <paramref name="wrapWithAssertions"/> is true, this searcher might be an
+        /// <see cref="AssertingIndexSearcher"/> instance.
+        /// </summary>
+        public static IndexSearcher NewSearcher(IndexReader r, bool maybeWrap, bool wrapWithAssertions)
+#else
+        /// <summary>
+        /// Create a new searcher over the reader. This searcher might randomly use
+        /// threads. If <paramref name="maybeWrap"/> is true, this searcher might wrap the
+        /// reader with one that returns null for <see cref="CompositeReader.GetSequentialSubReaders()"/>. If
+        /// <paramref name="wrapWithAssertions"/> is true, this searcher might be an
+        /// <see cref="AssertingIndexSearcher"/> instance.
+        /// </summary>
+        /// <param name="luceneTestCase">The current test instance.</param>
         // LUCENENET specific
         // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
-
-        public static IndexSearcher NewSearcher(IndexReader r, bool maybeWrap, bool wrapWithAssertions, Similarity similarity)
+        public static IndexSearcher NewSearcher(LuceneTestCase luceneTestCase, IndexReader r, bool maybeWrap, bool wrapWithAssertions)
+#endif
         {
             Random random = Random;
             if (Usually())
@@ -1861,7 +2139,11 @@ namespace Lucene.Net.Util
                 {
                     ret = random.NextBoolean() ? new IndexSearcher(r) : new IndexSearcher(r.Context);
                 }
-                ret.Similarity = similarity;
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                ret.Similarity = ClassEnvRule.similarity;
+#else
+                ret.Similarity = luceneTestCase?.ClassEnvRule.similarity; // LUCENENET special case: passing null allows us to skip the Similarity
+#endif
                 return ret;
             }
             else
@@ -1897,7 +2179,11 @@ namespace Lucene.Net.Util
                 {
                     ret = random.NextBoolean() ? new IndexSearcher(r, ex) : new IndexSearcher(r.Context, ex);
                 }
-                ret.Similarity = similarity;
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                ret.Similarity = ClassEnvRule.similarity;
+#else
+                ret.Similarity = luceneTestCase?.ClassEnvRule.similarity; // LUCENENET special case: passing null allows us to skip the Similarity
+#endif
                 return ret;
             }
         }
@@ -1905,7 +2191,7 @@ namespace Lucene.Net.Util
         /// <summary>
         /// Gets a resource from the classpath as <see cref="Stream"/>. This method should only
         /// be used, if a real file is needed. To get a stream, code should prefer
-        /// <see cref="AssemblyExtensions.FindAndGetManifestResourceStream(Assembly, Type, string)"/> using 
+        /// <see cref="Lucene.Net.Support.AssemblyExtensions.FindAndGetManifestResourceStream(Assembly, Type, string)"/> using 
         /// <c>this.GetType().Assembly</c> and <c>this.GetType()</c>.
         /// </summary>
         protected virtual Stream GetDataFile(string name)
@@ -2777,7 +3063,7 @@ namespace Lucene.Net.Util
             //}
             // LUCENENET specific - since NoSuchDirectoryException subclasses FileNotFoundException
             // in Lucene, we need to catch it here to be on the safe side.
-            catch (System.IO.DirectoryNotFoundException)
+            catch (DirectoryNotFoundException)
             {
                 return false;
             }
@@ -2911,7 +3197,7 @@ namespace Lucene.Net.Util
             //DirectoryInfo @base = BaseTempDirForTestClass();
 
             //int attempt = 0;
-            FileInfo f = FileSupport.CreateTempFile(prefix, suffix, new DirectoryInfo(System.IO.Path.GetTempPath()));
+            FileInfo f = FileSupport.CreateTempFile(prefix, suffix, new DirectoryInfo(Path.GetTempPath()));
             //do
             //{
             //    if (attempt++ >= TEMP_NAME_RETRY_THRESHOLD)
@@ -2963,10 +3249,10 @@ namespace Lucene.Net.Util
             return string.Format("{0}+{1}", this.GetType().Name, memberName);
         }
 
-        private void CleanupTemporaryFiles()
+        private static void CleanupTemporaryFiles()
         {
             // Drain cleanup queue and clear it.
-            var tempDirBasePath = (tempDirBase != null ? tempDirBase.FullName : null);
+            var tempDirBasePath = tempDirBase?.FullName;
             tempDirBase = null;
 
             // Only check and throw an IOException on un-removable files if the test

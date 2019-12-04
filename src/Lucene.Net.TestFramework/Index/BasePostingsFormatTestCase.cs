@@ -1,20 +1,26 @@
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
 using Lucene.Net.Support.Threading;
-using NUnit.Framework;
+using Lucene.Net.TestFramework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Console = Lucene.Net.Support.SystemConsole;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using Assert = Lucene.Net.TestFramework.Assert;
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Index
 {
-    using IBits = Lucene.Net.Util.IBits;
     using BytesRef = Lucene.Net.Util.BytesRef;
-
     /*
     * Licensed to the Apache Software Foundation (ASF) under one or more
     * contributor license agreements.  See the NOTICE file distributed with
@@ -43,6 +49,7 @@ namespace Lucene.Net.Index
     using FieldType = FieldType;
     using FixedBitSet = Lucene.Net.Util.FixedBitSet;
     using FlushInfo = Lucene.Net.Store.FlushInfo;
+    using IBits = Lucene.Net.Util.IBits;
     using IOContext = Lucene.Net.Store.IOContext;
     using PostingsConsumer = Lucene.Net.Codecs.PostingsConsumer;
     using TermsConsumer = Lucene.Net.Codecs.TermsConsumer;
@@ -74,9 +81,21 @@ namespace Lucene.Net.Index
         they weren't indexed
     */
 
-    [TestFixture]
+    //[TestFixture]
     public abstract class BasePostingsFormatTestCase : BaseIndexFileFormatTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public BasePostingsFormatTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+            beforeAfter.SetBeforeAfterClassActions(BeforeClass, AfterClass);
+#endif
+        }
+#else
+    {
+#endif
         private enum Option
         {
             // Sometimes use .Advance():
@@ -369,10 +388,33 @@ namespace Lucene.Net.Index
             return new SeedPostings(seed, minDocFreq, maxDocFreq, withLiveDocs ? globalLiveDocs : null, options);
         }
 
-        [OneTimeSetUp]
+//#if TESTFRAMEWORK_MSTEST
+//        private static readonly IList<string> initalizationLock = new List<string>();
+
+//        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+//        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassInitialize(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//        new public static void BeforeClass(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext context)
+//        {
+//            lock (initalizationLock)
+//            {
+//                if (!initalizationLock.Contains(context.FullyQualifiedTestClassName))
+//                    initalizationLock.Add(context.FullyQualifiedTestClassName);
+//                else
+//                    return; // Only allow this class to initialize once (MSTest bug)
+//            }
+//#else
+#if TESTFRAMEWORK_NUNIT
+        [NUnit.Framework.OneTimeSetUp]
+#endif
+//        new public static void BeforeClass()
+//        {
+//#endif
+//#else
+        //[OneTimeSetUp]
         public override void BeforeClass() // Renamed from CreatePostings to ensure the base class setup is called before this one
         {
             base.BeforeClass();
+//#endif
 
             totalPostings = 0;
             totalPayloadBytes = 0;
@@ -493,7 +535,17 @@ namespace Lucene.Net.Index
             }
         }
 
-        [OneTimeTearDown]
+
+//#if TESTFRAMEWORK_MSTEST
+//        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+//        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassCleanup(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//# el
+#if TESTFRAMEWORK_NUNIT
+        [NUnit.Framework.OneTimeTearDown]
+#endif
+//        new public static void AfterClass()
+//#else
+        //[OneTimeTearDown]
         public override void AfterClass()
         {
             allTerms = null;
@@ -531,7 +583,7 @@ namespace Lucene.Net.Index
 
                 string pf = TestUtil.GetPostingsFormat(codec, oldFieldInfo.Name);
                 int fieldMaxIndexOption;
-                if (m_doesntSupportOffsets.Contains(pf))
+                if (DoesntSupportOffsets.Contains(pf))
                 {
                     fieldMaxIndexOption = Math.Min(maxIndexOptionNoOffsets, maxIndexOption);
                 }
@@ -1377,7 +1429,7 @@ namespace Lucene.Net.Index
 
                 string field = "f_" + opts;
                 string pf = TestUtil.GetPostingsFormat(Codec.Default, field);
-                if (opts == IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS && m_doesntSupportOffsets.Contains(pf))
+                if (opts == IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS && DoesntSupportOffsets.Contains(pf))
                 {
                     continue;
                 }

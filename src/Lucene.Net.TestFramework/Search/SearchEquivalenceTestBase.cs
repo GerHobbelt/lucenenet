@@ -1,10 +1,12 @@
 using Lucene.Net.Documents;
 using Lucene.Net.Support;
-using NUnit.Framework;
+using Lucene.Net.TestFramework;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Assert = Lucene.Net.TestFramework.Assert;
 
 namespace Lucene.Net.Search
 {
@@ -49,28 +51,66 @@ namespace Lucene.Net.Search
     /// <see cref="AssertSubsetOf(Query, Query)"/>.
     /// </summary>
     public abstract class SearchEquivalenceTestBase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public SearchEquivalenceTestBase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+            beforeAfter.SetBeforeAfterClassActions(BeforeClass, AfterClass);
+#endif
+        }
+#else
+    {
+#endif
         protected static IndexSearcher m_s1, m_s2;
         protected static Directory m_directory;
         protected static IndexReader m_reader;
         protected static Analyzer m_analyzer;
         protected static string m_stopword; // we always pick a character as a stopword
 
-        /// <summary>
-        /// LUCENENET specific
-        /// Is non-static because ClassEnvRule is no longer static.
-        /// </summary>
-        [OneTimeSetUp]
+//#if TESTFRAMEWORK_MSTEST
+//        private static readonly IList<string> initalizationLock = new List<string>();
+
+//        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+//        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassInitialize(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//        new public static void BeforeClass(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext context)
+//        {
+//            lock (initalizationLock)
+//            {
+//                if (!initalizationLock.Contains(context.FullyQualifiedTestClassName))
+//                    initalizationLock.Add(context.FullyQualifiedTestClassName);
+//                else
+//                    return; // Only allow this class to initialize once (MSTest bug)
+//            }
+//#else
+#if TESTFRAMEWORK_NUNIT
+        [NUnit.Framework.OneTimeSetUp]
+#endif
+//        new public static void BeforeClass()
+//        {
+//#endif
+
+
+        // LUCENENET specific
+        // Is non-static because ClassEnvRule is no longer static.
+        ////[OneTimeSetUp]
         public override void BeforeClass()
         {
             base.BeforeClass();
 
+
             Random random = Random;
             m_directory = NewDirectory();
-            m_stopword = "" + RandomChar();
+            m_stopword = "" + GetRandomChar();
             CharacterRunAutomaton stopset = new CharacterRunAutomaton(BasicAutomata.MakeString(m_stopword));
             m_analyzer = new MockAnalyzer(random, MockTokenizer.WHITESPACE, false, stopset);
-            RandomIndexWriter iw = new RandomIndexWriter(random, m_directory, m_analyzer, ClassEnvRule.similarity, ClassEnvRule.timeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                random, m_directory, m_analyzer);
             Document doc = new Document();
             Field id = new StringField("id", "", Field.Store.NO);
             Field field = new TextField("field", "", Field.Store.NO);
@@ -107,7 +147,17 @@ namespace Lucene.Net.Search
             iw.Dispose();
         }
 
-        [OneTimeTearDown]
+
+//#if TESTFRAMEWORK_MSTEST
+//        // LUCENENET TODO: Add support for attribute inheritance when it is released (2.0.0)
+//        //[Microsoft.VisualStudio.TestTools.UnitTesting.ClassCleanup(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//# el
+#if TESTFRAMEWORK_NUNIT
+        [NUnit.Framework.OneTimeTearDown]
+#endif
+//        new public static void AfterClass()
+//#else
+        //[OneTimeTearDown]
         public override void AfterClass()
         {
             m_reader.Dispose();
@@ -136,7 +186,7 @@ namespace Lucene.Net.Search
                 {
                     sb.Append(' '); // whitespace
                 }
-                sb.Append(RandomChar());
+                sb.Append(GetRandomChar());
             }
             return sb.ToString();
         }
@@ -144,7 +194,7 @@ namespace Lucene.Net.Search
         /// <summary>
         /// Returns random character (a-z)
         /// </summary>
-        internal static char RandomChar()
+        internal static char GetRandomChar()
         {
             return (char)TestUtil.NextInt32(Random, 'a', 'z');
         }
@@ -155,7 +205,7 @@ namespace Lucene.Net.Search
         /// </summary>
         protected virtual Term RandomTerm()
         {
-            return new Term("field", "" + RandomChar());
+            return new Term("field", "" + GetRandomChar());
         }
 
         /// <summary>
@@ -163,7 +213,7 @@ namespace Lucene.Net.Search
         /// </summary>
         protected virtual Filter RandomFilter()
         {
-            return new QueryWrapperFilter(TermRangeQuery.NewStringRange("field", "a", "" + RandomChar(), true, true));
+            return new QueryWrapperFilter(TermRangeQuery.NewStringRange("field", "a", "" + GetRandomChar(), true, true));
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ using Lucene.Net.Documents;
 using Lucene.Net.Search;
 using Lucene.Net.Support;
 using Lucene.Net.Support.Threading;
+using Lucene.Net.TestFramework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -62,7 +63,16 @@ namespace Lucene.Net.Index
     /// searching threads.
     /// </summary>
     public abstract class ThreadedIndexingAndSearchingTestCase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public ThreadedIndexingAndSearchingTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
         protected readonly AtomicBoolean m_failed = new AtomicBoolean();
         protected readonly AtomicInt32 m_addCount = new AtomicInt32();
         protected readonly AtomicInt32 m_delCount = new AtomicInt32();
@@ -809,8 +819,12 @@ namespace Lucene.Net.Index
                         sum += doc.Fields.Count;
                     }
                 }
+                IndexSearcher searcher = 
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    outerInstance.
+#endif
+                    NewSearcher(reader);
 
-                IndexSearcher searcher = outerInstance.NewSearcher(reader);
                 sum += searcher.Search(new TermQuery(new Term("body", "united")), 10).TotalHits;
 
                 if (VERBOSE)

@@ -1,12 +1,12 @@
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
-using NUnit.Framework;
 using System;
 using System.IO;
 using CharacterRunAutomaton = Lucene.Net.Util.Automaton.CharacterRunAutomaton;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
 using RegExp = Lucene.Net.Util.Automaton.RegExp;
+using Assert = Lucene.Net.TestFramework.Assert;
 
 namespace Lucene.Net.Analysis
 {
@@ -335,7 +335,7 @@ namespace Lucene.Net.Analysis
             base.End();
             int finalOffset = CorrectOffset(off);
             offsetAtt.SetOffset(finalOffset, finalOffset);
-            // some tokenizers, such as limiting tokenizers, call end() before IncrementToken() returns false.
+            // some tokenizers, such as limiting tokenizers, call End() before IncrementToken() returns false.
             // these tests should disable this check (in general you should consume the entire stream)
             try
             {

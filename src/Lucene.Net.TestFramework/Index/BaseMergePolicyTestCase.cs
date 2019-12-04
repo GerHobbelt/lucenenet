@@ -1,6 +1,14 @@
 using Lucene.Net.Support;
-using NUnit.Framework;
+using Lucene.Net.TestFramework;
 using System;
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Index
 {
@@ -32,10 +40,19 @@ namespace Lucene.Net.Index
     /// Base test case for <see cref="Index.MergePolicy"/>.
     /// </summary>
     public abstract class BaseMergePolicyTestCase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public BaseMergePolicyTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
         /// <summary>
         /// Create a new <see cref="Index.MergePolicy"/> instance. </summary>
-        protected abstract MergePolicy NewMergePolicy(); // LUCENENET specific - renamed from MergePolicy() to be consistent
+        new protected abstract MergePolicy NewMergePolicy(); // LUCENENET specific - renamed from MergePolicy() to be consistent
 
         [Test]
         public virtual void TestForceMergeNotNeeded()

@@ -1,12 +1,21 @@
 using Lucene.Net.Support;
+using Lucene.Net.TestFramework;
 using System;
 using System.Collections;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using Assert = Lucene.Net.TestFramework.Assert;
+
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Util
 {
-    using NUnit.Framework;
-
     /*
     * Licensed to the Apache Software Foundation (ASF) under one or more
     * contributor license agreements.  See the NOTICE file distributed with
@@ -30,8 +39,19 @@ namespace Lucene.Net.Util
     /// <summary>
     /// Base test class for <see cref="DocIdSet"/>s. </summary>
     public abstract class BaseDocIdSetTestCase<T> : LuceneTestCase
+        
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
         where T : Lucene.Net.Search.DocIdSet
     {
+        public BaseDocIdSetTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+        where T : Lucene.Net.Search.DocIdSet
+    {
+#endif
         /// <summary>
         /// Create a copy of the given <see cref="BitArray"/> which has <paramref name="length"/> bits. </summary>
         public abstract T CopyOf(BitArray bs, int length);
@@ -156,7 +176,9 @@ namespace Lucene.Net.Util
         /// <summary>
         /// Assert that the content of the <see cref="DocIdSet"/> is the same as the content of the <see cref="BitArray"/>.
         /// </summary>
+#pragma warning disable xUnit1013
         public virtual void AssertEquals(int numBits, BitArray ds1, T ds2)
+#pragma warning restore xUnit1013
         {
             // nextDoc
             DocIdSetIterator it2 = ds2.GetIterator();

@@ -421,7 +421,7 @@ namespace Lucene.Net.Index
         /// Create a new <see cref="CheckIndex"/> on the directory. </summary>
         public CheckIndex(Directory dir)
         {
-            this.dir = dir;
+            this.dir = dir ?? throw new ArgumentNullException(nameof(dir)); // LUCENENET: Added guard clause
             infoStream = null;
         }
 
@@ -685,7 +685,7 @@ namespace Lucene.Net.Index
                 int segmentName = 0;
                 try
                 {
-                    segmentName = int.Parse /*Convert.ToInt32*/(info.Info.Name.Substring(1));
+                    segmentName = int.Parse(info.Info.Name.Substring(1), CultureInfo.InvariantCulture);
                 }
                 catch
                 {
@@ -979,7 +979,7 @@ namespace Lucene.Net.Index
             }
             catch (Exception e)
             {
-                Msg(infoStream, "ERROR [" + Convert.ToString(e.Message) + "]");
+                Msg(infoStream, "ERROR [" + e.Message + "]");
                 status.Error = e;
                 if (infoStream != null)
                 {
@@ -1750,7 +1750,7 @@ namespace Lucene.Net.Index
             }
             catch (Exception e)
             {
-                Msg(infoStream, "ERROR [" + Convert.ToString(e.Message) + "]");
+                Msg(infoStream, "ERROR [" + e.Message + "]");
                 status.Error = e;
                 if (infoStream != null)
                 {
@@ -1799,7 +1799,7 @@ namespace Lucene.Net.Index
             }
             catch (Exception e)
             {
-                Msg(infoStream, "ERROR [" + Convert.ToString(e.Message) + "]");
+                Msg(infoStream, "ERROR [" + e.Message + "]");
                 status.Error = e;
                 if (infoStream != null)
                 {
@@ -2325,7 +2325,7 @@ namespace Lucene.Net.Index
             }
             catch (Exception e)
             {
-                Msg(infoStream, "ERROR [" + Convert.ToString(e.Message) + "]");
+                Msg(infoStream, "ERROR [" + e.Message + "]");
                 status.Error = e;
                 if (infoStream != null)
                 {

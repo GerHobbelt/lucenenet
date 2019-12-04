@@ -45,7 +45,11 @@ namespace Lucene.Net.Classification
         {
             base.SetUp();
             _dir = NewDirectory();
-            _indexWriter = new RandomIndexWriter(Random, _dir, new MockAnalyzer(Random), Similarity, TimeZone);
+            _indexWriter = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, _dir, new MockAnalyzer(Random));
 
             FieldType ft = new FieldType(TextField.TYPE_STORED);
             ft.StoreTermVectors = true;
@@ -103,16 +107,16 @@ namespace Lucene.Net.Classification
                 DatasetSplitter datasetSplitter = new DatasetSplitter(testRatio, crossValidationRatio);
                 datasetSplitter.Split(originalIndex, trainingIndex, testIndex, crossValidationIndex, new MockAnalyzer(Random), fieldNames);
 
-                NotNull(trainingIndex);
-                NotNull(testIndex);
-                NotNull(crossValidationIndex);
+                Assert.NotNull(trainingIndex);
+                Assert.NotNull(testIndex);
+                Assert.NotNull(crossValidationIndex);
 
                 DirectoryReader trainingReader = DirectoryReader.Open(trainingIndex);
-                True((int)(originalIndex.MaxDoc * (1d - testRatio - crossValidationRatio)) == trainingReader.MaxDoc);
+                Assert.True((int)(originalIndex.MaxDoc * (1d - testRatio - crossValidationRatio)) == trainingReader.MaxDoc);
                 DirectoryReader testReader = DirectoryReader.Open(testIndex);
-                True((int)(originalIndex.MaxDoc * testRatio) == testReader.MaxDoc);
+                Assert.True((int)(originalIndex.MaxDoc * testRatio) == testReader.MaxDoc);
                 DirectoryReader cvReader = DirectoryReader.Open(crossValidationIndex);
-                True((int)(originalIndex.MaxDoc * crossValidationRatio) == cvReader.MaxDoc);
+                Assert.True((int)(originalIndex.MaxDoc * crossValidationRatio) == cvReader.MaxDoc);
 
                 trainingReader.Dispose();
                 testReader.Dispose();

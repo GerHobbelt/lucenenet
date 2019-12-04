@@ -67,7 +67,11 @@ namespace Lucene.Net.Facet.Taxonomy
             config.SetIndexFieldName("float", "$facets.float");
             config.SetMultiValued("float", true);
 
-            var writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            var writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             // index documents, 50% have only 'b' and all have 'a'
             for (int i = 0; i < 110; i++)
@@ -171,7 +175,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 facets.GetSpecificValue("float");
-                Fail("should have hit exc");
+                fail("should have hit exc");
             }
             catch (System.ArgumentException)
             {
@@ -181,7 +185,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 facets.GetTopChildren(10, "float");
-                Fail("should have hit exc");
+                fail("should have hit exc");
             }
             catch (System.ArgumentException)
             {
@@ -197,7 +201,11 @@ namespace Lucene.Net.Facet.Taxonomy
 
             ITaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);
             FacetsConfig config = new FacetsConfig();
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new Int32AssociationFacetField(14, "a", "x"));
@@ -205,7 +213,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 writer.AddDocument(config.Build(taxoWriter, doc));
-                Fail("did not hit expected exception");
+                fail("did not hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -223,14 +231,18 @@ namespace Lucene.Net.Facet.Taxonomy
             ITaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);
             FacetsConfig config = new FacetsConfig();
             config.SetHierarchical("a", true);
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new Int32AssociationFacetField(14, "a", "x"));
             try
             {
                 writer.AddDocument(config.Build(taxoWriter, doc));
-                Fail("did not hit expected exception");
+                fail("did not hit expected exception");
             }
             catch (System.ArgumentException)
             {
@@ -248,14 +260,18 @@ namespace Lucene.Net.Facet.Taxonomy
             ITaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);
             FacetsConfig config = new FacetsConfig();
             config.SetRequireDimCount("a", true);
-            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new Int32AssociationFacetField(14, "a", "x"));
             try
             {
                 writer.AddDocument(config.Build(taxoWriter, doc));
-                Fail("did not hit expected exception");
+                fail("did not hit expected exception");
             }
             catch (System.ArgumentException)
             {

@@ -22,9 +22,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using NUnit.Framework;
 using Lucene.Net.Support;
 using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using Assert = Lucene.Net.TestFramework.Assert;
+
+#if TESTFRAMEWORK_MSTEST
+using CollectionAssert = Lucene.Net.TestFramework.Assert;
+#elif TESTFRAMEWORK_NUNIT
+using CollectionAssert = NUnit.Framework.CollectionAssert;
+#elif TESTFRAMEWORK_XUNIT
+using CollectionAssert = Lucene.Net.TestFramework.Assert;
+#endif
 
 namespace Lucene.Net.Util
 {
@@ -95,11 +103,12 @@ namespace Lucene.Net.Util
 
         internal static void assertEquals<T, S>(IDictionary<T, S> expected, IDictionary<T, S> actual)
         {
-            Assert.AreEqual(expected.Count, actual.Count);
-            foreach (var key in expected.Keys)
-            {
-                Assert.AreEqual(expected[key], actual[key]);
-            }
+            Assert.AreEqual(expected, actual);
+        }
+
+        internal static void assertEquals(ICollection expected, ICollection actual)
+        {
+            Assert.AreEqual(expected, actual);
         }
 
         internal static void assertNotSame(object unexpected, object actual)
@@ -142,7 +151,7 @@ namespace Lucene.Net.Util
             Assert.Null(o, msg);
         }
 
-        internal static void assertArrayEquals(IEnumerable a1, IEnumerable a2)
+        internal static void assertArrayEquals<T>(T[] a1, T[] a2)
         {
             CollectionAssert.AreEqual(a1, a2);
         }

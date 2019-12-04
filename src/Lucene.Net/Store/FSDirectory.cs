@@ -2,6 +2,7 @@ using Lucene.Net.Support.IO;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;// Used only for WRITE_LOCK_NAME in deprecated create=true case:
 
@@ -301,6 +302,13 @@ namespace Lucene.Net.Store
         {
             EnsureOpen();
             FileInfo file = new FileInfo(Path.Combine(m_directory.FullName, name));
+            // LUCENENET specific: We need to explicitly throw when the file has already been deleted,
+            // since FileInfo doesn't do that for us.
+            // (An enhancement carried over from Lucene 8.2.0)
+            if (!File.Exists(file.FullName))
+            {
+                throw new FileNotFoundException("Cannot delete " + file + " because it doesn't exist.");
+            }
             try
             {
                 file.Delete();
@@ -408,7 +416,7 @@ namespace Lucene.Net.Store
                 char ch = dirName[charIDX];
                 digest = 31*digest + ch;
             }
-            return "lucene-" + digest.ToString("x");
+            return "lucene-" + digest.ToString("x", CultureInfo.InvariantCulture);
         }
 
         /// <summary>

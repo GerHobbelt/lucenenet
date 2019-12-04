@@ -3,12 +3,13 @@ using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Support.Threading;
+using Lucene.Net.TestFramework;
 using Lucene.Net.Util;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Assert = Lucene.Net.TestFramework.Assert;
 using Directory = Lucene.Net.Store.Directory;
 
 namespace Lucene.Net.Analysis
@@ -34,7 +35,16 @@ namespace Lucene.Net.Analysis
     /// Base test class for testing Unicode collation.
     /// </summary>
     public abstract class CollationTestBase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public CollationTestBase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
         protected string m_firstRangeBeginningOriginal = "\u062F";
         protected string m_firstRangeEndOriginal = "\u0698";
 
@@ -115,7 +125,7 @@ namespace Lucene.Net.Analysis
 
                     Search.Query query = new TermRangeQuery("content", firstBeg, firstEnd, true, true);
                     ScoreDoc[] hits = searcher.Search(query, null, 1000).ScoreDocs;
-                    AreEqual(0, hits.Length, "The index Term should not be included.");
+                    Assert.AreEqual(0, hits.Length, "The index Term should not be included.");
 
                     query = new TermRangeQuery("content", secondBeg, secondEnd, true, true);
                     hits = searcher.Search(query, null, 1000).ScoreDocs;
@@ -138,7 +148,7 @@ namespace Lucene.Net.Analysis
 
                 using (IndexReader reader = DirectoryReader.Open(farsiIndex))
                 {
-                    IndexSearcher search = this.NewSearcher(reader);
+                    IndexSearcher search = NewSearcher(reader);
 
                     // Unicode order would include U+0633 in [ U+062F - U+0698 ], but Farsi
                     // orders the U+0698 character before the U+0633 character, so the single
@@ -336,10 +346,10 @@ namespace Lucene.Net.Analysis
                             ITermToBytesRefAttribute termAtt = ts.AddAttribute<ITermToBytesRefAttribute>();
                             BytesRef bytes = termAtt.BytesRef;
                             ts.Reset();
-                            IsTrue(ts.IncrementToken());
+                            Assert.IsTrue(ts.IncrementToken());
                             termAtt.FillBytesRef();
-                            AreEqual(expected, bytes);
-                            IsFalse(ts.IncrementToken());
+                            Assert.AreEqual(expected, bytes);
+                            Assert.IsFalse(ts.IncrementToken());
                             ts.End();
                         }
                         catch (IOException e)

@@ -4,11 +4,20 @@ using Lucene.Net.Documents;
 using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
 using Lucene.Net.Support.Threading;
-using NUnit.Framework;
+using Lucene.Net.TestFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Assert = Lucene.Net.TestFramework.Assert;
+
+#if TESTFRAMEWORK_MSTEST
+using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
+#elif TESTFRAMEWORK_NUNIT
+using Test = NUnit.Framework.TestAttribute;
+#elif TESTFRAMEWORK_XUNIT
+using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
+#endif
 
 namespace Lucene.Net.Index
 {
@@ -54,12 +63,21 @@ namespace Lucene.Net.Index
     /// <summary>
     /// Base class aiming at testing <see cref="TermVectorsFormat"/>.
     /// To test a new format, all you need is to register a new <see cref="Codec"/> which
-    /// uses it and extend this class and override <see cref="GetCodec()"/>.
+    /// uses it and extend this class and override <see cref="BaseIndexFileFormatTestCase.GetCodec()"/>.
     /// <para/>
     /// @lucene.experimental
     /// </summary>
     public abstract class BaseTermVectorsFormatTestCase : BaseIndexFileFormatTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public BaseTermVectorsFormatTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
         /// <summary>
         /// A combination of term vectors options.
         /// </summary>
@@ -428,7 +446,7 @@ namespace Lucene.Net.Index
                     this.fieldNames[i] = RandomPicks.RandomFrom(Random, fieldNames.Except(usedFileNames).ToArray());
                     //do
                     //{
-                    //    this.FieldNames[i] = RandomInts.RandomFrom(Random(), fieldNames);
+                    //    this.FieldNames[i] = RandomPicks.RandomFrom(Random(), fieldNames);
                     //} while (usedFileNames.Contains(this.FieldNames[i]));
 
                     usedFileNames.Add(this.fieldNames[i]);
@@ -525,8 +543,8 @@ namespace Lucene.Net.Index
         {
             Assert.AreEqual(1, terms.DocCount);
             int termCount = (new HashSet<string>(Arrays.AsList(tk.terms))).Count;
-            Assert.AreEqual(termCount, terms.Count);
-            Assert.AreEqual(termCount, terms.SumDocFreq);
+            Assert.AreEqual((long)termCount, terms.Count); // LUCENENET specific - cast required because types don't match (xUnit checks this)
+            Assert.AreEqual((long)termCount, terms.SumDocFreq); // LUCENENET specific - cast required because types don't match (xUnit checks this)
             Assert.AreEqual(ft.StoreTermVectorPositions, terms.HasPositions);
             Assert.AreEqual(ft.StoreTermVectorOffsets, terms.HasOffsets);
             Assert.AreEqual(ft.StoreTermVectorPayloads && tk.HasPayloads(), terms.HasPayloads);
@@ -683,7 +701,11 @@ namespace Lucene.Net.Index
                 int docWithVectors = Random.Next(numDocs);
                 Document emptyDoc = new Document();
                 using (Directory dir = NewDirectory())
-                using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    Random, dir))
                 {
                     RandomDocument doc = docFactory.NewDocument(TestUtil.NextInt32(Random, 1, 3), 20, options);
                     for (int i = 0; i < numDocs; ++i)
@@ -731,7 +753,11 @@ namespace Lucene.Net.Index
                     continue;
                 }
                 using (Directory dir = NewDirectory())
-                using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    Random, dir))
                 {
                     RandomDocument doc = docFactory.NewDocument(TestUtil.NextInt32(Random, 1, 2), AtLeast(20000),
                         options);
@@ -749,7 +775,11 @@ namespace Lucene.Net.Index
             foreach (Options options in ValidOptions())
             {
                 using (Directory dir = NewDirectory())
-                using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    Random, dir))
                 {
                     RandomDocument doc = docFactory.NewDocument(AtLeast(100), 5, options);
                     writer.AddDocument(doc.ToDocument());
@@ -775,7 +805,11 @@ namespace Lucene.Net.Index
                         continue;
                     }
                     using (Directory dir = NewDirectory())
-                    using (var writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                    using (var writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, dir))
                     {
                         RandomDocument doc1 = docFactory.NewDocument(numFields, 20, options1);
                         RandomDocument doc2 = docFactory.NewDocument(numFields, 20, options2);
@@ -804,7 +838,11 @@ namespace Lucene.Net.Index
                 docs[i] = docFactory.NewDocument(TestUtil.NextInt32(Random, 1, 3), TestUtil.NextInt32(Random, 10, 50), RandomOptions());
             }
             using (Directory dir = NewDirectory())
-            using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+            using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir))
             {
                 for (int i = 0; i < numDocs; ++i)
                 {
@@ -840,7 +878,11 @@ namespace Lucene.Net.Index
                     docs[i] = docFactory.NewDocument(TestUtil.NextInt32(Random, 1, 3), AtLeast(10), options);
                 }
                 using (Directory dir = NewDirectory())
-                using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    Random, dir))
                 {
                     for (int i = 0; i < numDocs; ++i)
                     {
@@ -888,7 +930,11 @@ namespace Lucene.Net.Index
                 }
                 AtomicObject<Exception> exception = new AtomicObject<Exception>();
                 using (Directory dir = NewDirectory())
-                using (RandomIndexWriter writer = new RandomIndexWriter(Random, dir, ClassEnvRule.similarity, ClassEnvRule.timeZone))
+                using (RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    Random, dir))
                 {
                     for (int i = 0; i < numDocs; ++i)
                     {

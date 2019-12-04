@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Randomized.Generators;
@@ -163,15 +164,19 @@ namespace Lucene.Net.Search
             }
 
             Dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random, Dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Dir);
             int numDocs = AtLeast(200);
             for (int i = 0; i < numDocs; i++)
             {
                 IList<Field> fields = new List<Field>();
                 fields.Add(NewTextField("english", English.Int32ToEnglish(i), Field.Store.NO));
                 fields.Add(NewTextField("oddeven", (i % 2 == 0) ? "even" : "odd", Field.Store.NO));
-                fields.Add(NewStringField("byte", "" + ((sbyte)Random.Next()), Field.Store.NO));
-                fields.Add(NewStringField("short", "" + ((short)Random.Next()), Field.Store.NO));
+                fields.Add(NewStringField("byte", "" + ((sbyte)Random.Next()).ToString(CultureInfo.InvariantCulture), Field.Store.NO));
+                fields.Add(NewStringField("short", "" + ((short)Random.Next()).ToString(CultureInfo.InvariantCulture), Field.Store.NO));
                 fields.Add(new Int32Field("int", Random.Next(), Field.Store.NO));
                 fields.Add(new Int64Field("long", Random.NextInt64(), Field.Store.NO));
 
