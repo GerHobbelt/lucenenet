@@ -1,8 +1,7 @@
-using Lucene.Net.Util;
-using System;
-using System.IO;
+﻿using opennlp.tools.chunker;
 
-namespace Lucene.Net.TestFramework
+
+namespace Lucene.Net.Analysis.OpenNlp.Tools
 {
     /*
      * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -22,20 +21,27 @@ namespace Lucene.Net.TestFramework
      */
 
     /// <summary>
-    /// Common assertion code
+    /// Supply OpenNLP Chunking tool
+    /// Requires binary models from OpenNLP project on SourceForge.
     /// </summary>
-    internal partial class Assert
+    public class NLPChunkerOp
     {
-        private const int WARN_WIN32_FILE_EXISTS = unchecked((int)0x80070050);
+        private ChunkerME chunker = null;
 
-        private static bool IsFileAlreadyExistsException(Exception ex, string filePath)
+        public NLPChunkerOp(ChunkerModel chunkerModel) 
         {
-            if (!typeof(IOException).Equals(ex))
-                return false;
-            else if (Constants.WINDOWS)
-                return ex.HResult == WARN_WIN32_FILE_EXISTS;
-            else
-                return File.Exists(filePath);
+            chunker = new ChunkerME(chunkerModel);
+        }
+
+        public virtual string[] GetChunks(string[] words, string[] tags, double[] probs)
+        {
+            lock (this)
+            {
+                string[] chunks = chunker.chunk(words, tags);
+                if (probs != null)
+                    chunker.probs(probs);
+                return chunks;
+            }
         }
     }
 }
