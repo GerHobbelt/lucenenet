@@ -1,5 +1,5 @@
 ﻿---
-uid: Lucene.Net.Analysis.Smartcn
+uid: Lucene.Net.Analysis.Cn.Smart
 summary: *content
 ---
 
@@ -20,8 +20,6 @@ summary: *content
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-
-
 
 Analyzer for Simplified Chinese, which indexes words.
 @lucene.experimental
