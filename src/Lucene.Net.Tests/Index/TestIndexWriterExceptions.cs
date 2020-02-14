@@ -1,10 +1,11 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Analysis;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -163,7 +164,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class IndexerThread : ThreadClass
+        private class IndexerThread : ThreadJob
         {
             private DateTime unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -927,7 +928,7 @@ namespace Lucene.Net.Index
                     // don't use a merge policy here they depend on the DWPThreadPool and its max thread states etc.
                     int finalI = i;
 
-                    ThreadClass[] threads = new ThreadClass[NUM_THREAD];
+                    ThreadJob[] threads = new ThreadJob[NUM_THREAD];
                     for (int t = 0; t < NUM_THREAD; t++)
                     {
                         threads[t] = new ThreadAnonymousInnerClassHelper(this, NUM_ITER, writer, finalI, t);
@@ -1009,7 +1010,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestIndexWriterExceptions OuterInstance;
 
@@ -1109,7 +1110,7 @@ namespace Lucene.Net.Index
         }
 
         // LUCENE-1044: test exception during sync
-        [Test] // LUCENENET TODO: Can this test be optimized to run faster on .NET Core 1.0?
+        [Test]
         public virtual void TestExceptionDuringSync([ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler)
         {
             MockDirectoryWrapper dir = NewMockDirectory();
@@ -2220,7 +2221,7 @@ namespace Lucene.Net.Index
         // up), so we successfully close IW or open an NRT
         // reader, we don't lose any deletes or updates:
 #if NETSTANDARD1_6
-        [LongRunningTest] // LUCENENET TODO: Can this test be optimized to run faster on .NET Core 1.0?
+        [LongRunningTest]
 #endif
         [Test]
         public virtual void TestNoLostDeletesOrUpdates()
@@ -2283,7 +2284,7 @@ namespace Lucene.Net.Index
                 // TODO: we could also install an infoStream and try
                 // to fail in "more evil" places inside BDS
 
-                shouldFail.Set(true);
+                shouldFail.Value = (true);
                 bool doClose = false;
 
                 try
@@ -2371,7 +2372,7 @@ namespace Lucene.Net.Index
                         throw; // LUCENENET: CA2200: Rethrow to preserve stack details (https://docs.microsoft.com/en-us/visualstudio/code-quality/ca2200-rethrow-to-preserve-stack-details)
                     }
                 }
-                shouldFail.Set(false);
+                shouldFail.Value = (false);
 
                 IndexReader ir;
 
@@ -2470,7 +2471,7 @@ namespace Lucene.Net.Index
 
             public override void Eval(MockDirectoryWrapper dir)
             {
-                if (ShouldFail.Get() == false)
+                if (ShouldFail == false)
                 {
                     return;
                 }
@@ -2493,7 +2494,7 @@ namespace Lucene.Net.Index
                         Console.WriteLine("TEST: now fail; thread=" + Thread.CurrentThread.Name + " exc:");
                         Console.WriteLine((new Exception()).StackTrace);
                     }
-                    ShouldFail.Set(false);
+                    ShouldFail.Value = (false);
                     throw new FakeIOException();
                 }
             }
@@ -2609,7 +2610,7 @@ namespace Lucene.Net.Index
         }
 
 #if NETSTANDARD1_6
-        [LongRunningTest] // LUCENENET TODO: Can this test be optimized to run faster on .NET Core 1.0?
+        [LongRunningTest]
 #endif
         [Test]
         public virtual void TestRandomExceptionDuringRollback()

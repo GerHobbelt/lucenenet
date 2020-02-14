@@ -1,7 +1,8 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Threading;
@@ -559,7 +560,7 @@ namespace Lucene.Net.Index
 
             CountdownEvent startingGun = new CountdownEvent(1);
             AtomicBoolean hitExc = new AtomicBoolean();
-            ThreadClass[] threads = new ThreadClass[3];
+            ThreadJob[] threads = new ThreadJob[3];
             for (int i = 0; i < 3; i++)
             {
                 Field field;
@@ -584,16 +585,16 @@ namespace Lucene.Net.Index
 
             startingGun.Signal();
 
-            foreach (ThreadClass t in threads)
+            foreach (ThreadJob t in threads)
             {
                 t.Join();
             }
-            Assert.IsTrue(hitExc.Get());
+            Assert.IsTrue(hitExc);
             w.Dispose();
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestDocValuesIndexing OuterInstance;
 
@@ -623,7 +624,7 @@ namespace Lucene.Net.Index
 #pragma warning restore 168
                 {
                     // expected
-                    HitExc.Set(true);
+                    HitExc.Value = (true);
                 }
                 catch (Exception e)
                 {

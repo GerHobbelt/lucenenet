@@ -1,9 +1,10 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -499,7 +500,7 @@ namespace Lucene.Net.Search.Spell
                 }
 
                 spellChecker.Dispose();
-                stop.Set(true);
+                stop.Value = true;
 
                 // wait for 60 seconds - usually this is very fast but coverage runs could take quite long
                 //executor.awaitTermination(60L, TimeUnit.SECONDS);
@@ -565,7 +566,7 @@ namespace Lucene.Net.Search.Spell
         //    System.out.println(count);
         //  }
 
-        private class SpellCheckWorker : ThreadClass
+        private class SpellCheckWorker : ThreadJob
         {
             private readonly TestSpellChecker outerInstance;
 
@@ -593,7 +594,7 @@ namespace Lucene.Net.Search.Spell
 #endif
                 try
                 {
-                    while (!stop.Get())
+                    while (!stop)
                     {
                         try
                         {

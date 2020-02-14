@@ -1,6 +1,7 @@
-using Lucene.Net.Randomized.Generators;
+using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -8,8 +9,10 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using Console = Lucene.Net.Support.SystemConsole;
+
 
 namespace Lucene.Net.Search
 {
@@ -65,7 +68,7 @@ namespace Lucene.Net.Search
     using IOUtils = Lucene.Net.Util.IOUtils;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
     using TestUtil = Lucene.Net.Util.TestUtil;
-    using System.Text;
+    
 
     [TestFixture]
     public class TestFieldCache : LuceneTestCase
@@ -480,7 +483,7 @@ namespace Lucene.Net.Search
             cache.PurgeAllCaches();
 
             int NUM_THREADS = 3;
-            ThreadClass[] threads = new ThreadClass[NUM_THREADS];
+            ThreadJob[] threads = new ThreadJob[NUM_THREADS];
             AtomicBoolean failed = new AtomicBoolean();
             AtomicInt32 iters = new AtomicInt32();
             int NUM_ITER = 200 * RANDOM_MULTIPLIER;
@@ -495,10 +498,10 @@ namespace Lucene.Net.Search
             {
                 threads[threadIDX].Join();
             }
-            Assert.IsFalse(failed.Get());
+            Assert.IsFalse(failed);
         }
 
-        private class RunnableAnonymousInnerClassHelper : IThreadRunnable
+        private class RunnableAnonymousInnerClassHelper //: IThreadRunnable
         {
             private readonly TestFieldCache OuterInstance;
 
@@ -519,7 +522,7 @@ namespace Lucene.Net.Search
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestFieldCache OuterInstance;
 
@@ -544,7 +547,7 @@ namespace Lucene.Net.Search
 
                 try
                 {
-                    while (!Failed.Get())
+                    while (!Failed)
                     {
                         int op = Random.Next(3);
                         if (op == 0)
@@ -552,7 +555,7 @@ namespace Lucene.Net.Search
                             // Purge all caches & resume, once all
                             // threads get here:
                             Restart.SignalAndWait();
-                            if (Iters.Get() >= NUM_ITER)
+                            if (Iters >= NUM_ITER)
                             {
                                 break;
                             }
@@ -586,7 +589,7 @@ namespace Lucene.Net.Search
                 }
                 catch (Exception t)
                 {
-                    Failed.Set(true);
+                    Failed.Value = true;
                     throw new Exception(t.Message, t);
                 }
             }

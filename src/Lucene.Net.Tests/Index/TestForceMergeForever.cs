@@ -1,5 +1,6 @@
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using Console = Lucene.Net.Support.SystemConsole;
@@ -96,18 +97,18 @@ namespace Lucene.Net.Index
 
             AtomicBoolean doStop = new AtomicBoolean();
             w.Config.SetMaxBufferedDocs(2);
-            ThreadClass t = new ThreadAnonymousInnerClassHelper(this, w, numStartDocs, docs, doStop);
+            ThreadJob t = new ThreadAnonymousInnerClassHelper(this, w, numStartDocs, docs, doStop);
             t.Start();
             w.ForceMerge(1);
-            doStop.Set(true);
+            doStop.Value = true;
             t.Join();
-            Assert.IsTrue(w.MergeCount.Get() <= 1, "merge count is " + w.MergeCount.Get());
+            Assert.IsTrue(w.MergeCount <= 1, "merge count is " + w.MergeCount);
             w.Dispose();
             d.Dispose();
             docs.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestForceMergeForever OuterInstance;
 
@@ -129,7 +130,7 @@ namespace Lucene.Net.Index
             {
                 try
                 {
-                    while (!DoStop.Get())
+                    while (!DoStop)
                     {
                         w.UpdateDocument(new Term("docid", "" + Random.Next(NumStartDocs)), Docs.NextDoc());
                         // Force deletes to apply

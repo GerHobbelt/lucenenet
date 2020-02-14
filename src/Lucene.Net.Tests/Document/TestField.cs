@@ -1,13 +1,13 @@
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Attributes;
+using Lucene.Net.Documents.Extensions;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
-using System;
 using System.IO;
 using System.Text;
 using Directory = Lucene.Net.Store.Directory;
@@ -82,7 +82,7 @@ namespace Lucene.Net.Documents
             TrySetStringValue(field);
             TrySetTokenStreamValue(field);
 
-            Assert.AreEqual(6d, BitConverter.Int64BitsToDouble(field.GetInt64Value().Value), 0.0d);
+            Assert.AreEqual(6d, J2N.BitConversion.Int64BitsToDouble(field.GetInt64Value().Value), 0.0d);
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace Lucene.Net.Documents
             TrySetStringValue(field);
             TrySetTokenStreamValue(field);
 
-            Assert.AreEqual(6f, Number.Int32BitsToSingle(field.GetInt32Value().Value), 0.0f);
+            Assert.AreEqual(6f, J2N.BitConversion.Int32BitsToSingle(field.GetInt32Value().Value), 0.0f);
         }
 
         [Test]

@@ -1,5 +1,5 @@
-﻿using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
@@ -10,8 +10,6 @@ using Console = Lucene.Net.Support.SystemConsole;
 
 namespace Lucene.Net.Facet.Taxonomy.Directory
 {
-
-
     using Cl2oTaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.Cl2oTaxonomyWriterCache;
     using Directory = Lucene.Net.Store.Directory;
     using DirectoryReader = Lucene.Net.Index.DirectoryReader;
@@ -295,7 +293,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                 Console.WriteLine("TEST: use cache=" + cache);
             }
             var tw = new DirectoryTaxonomyWriter(dir, OpenMode.CREATE, cache);
-            ThreadClass[] addThreads = new ThreadClass[AtLeast(4)];
+            ThreadJob[] addThreads = new ThreadJob[AtLeast(4)];
             for (int z = 0; z < addThreads.Length; z++)
             {
                 addThreads[z] = new ThreadAnonymousInnerClassHelper(this, range, numCats, values, tw);
@@ -346,7 +344,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             IOUtils.Dispose(dtr, dir);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestDirectoryTaxonomyWriter outerInstance;
 

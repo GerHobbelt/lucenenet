@@ -22,6 +22,7 @@
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries.Function;
 using Lucene.Net.Queries.Function.ValueSources;
 using Lucene.Net.Search.Grouping.Function;
@@ -588,8 +589,7 @@ namespace Lucene.Net.Search.Grouping
                     }
                 }
 
-                List<GroupDoc> l = groups[d.group];
-                if (l == null)
+                if (!groups.TryGetValue(d.group, out List<GroupDoc> l) || l == null)
                 {
                     //Console.WriteLine("    add sortedGroup=" + groupToString(d.group));
                     sortedGroups.Add(d.group);

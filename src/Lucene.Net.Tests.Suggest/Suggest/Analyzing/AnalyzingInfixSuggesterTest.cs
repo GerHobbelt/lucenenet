@@ -1,10 +1,11 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
 using Lucene.Net.Attributes;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -15,7 +16,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using Console = Lucene.Net.Support.SystemConsole;
 
 namespace Lucene.Net.Search.Suggest.Analyzing
@@ -560,7 +560,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             internal int index;
         }
 
-        private class LookupThread : ThreadClass
+        private class LookupThread : ThreadJob
         {
             private readonly AnalyzingInfixSuggesterTest outerInstance;
 
@@ -581,7 +581,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
 #if FEATURE_THREAD_PRIORITY
                 Priority += 1;
 #endif
-                while (!stop.Get())
+                while (!stop)
                 {
                     string query = RandomText();
                     int topN = TestUtil.NextInt32(Random, 1, 100);
@@ -599,7 +599,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                     catch (Exception e)
                     {
                         error[0] = e;
-                        stop.Set(true);
+                        stop.Value = true;
                     }
                 }
             }
@@ -749,7 +749,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                             Console.WriteLine("TEST: now close/reopen suggester");
                         }
                         //lookupThread.Finish();
-                        stop.Set(true);
+                        stop.Value = true;
                         lookupThread.Join();
                         Assert.Null(error[0], "Unexpcted exception at retry : \n" + stackTraceStr(error[0]));
                         suggester.Dispose();
@@ -892,7 +892,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
 
                 //lookupThread.finish();
-                stop.Set(true);
+                stop.Value = true;
                 lookupThread.Join();
                 Assert.Null(error[0], "Unexpcted exception at retry : \n" + stackTraceStr(error[0]));
             }

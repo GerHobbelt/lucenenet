@@ -1,6 +1,7 @@
-﻿using Lucene.Net.Attributes;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Attributes;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -10,8 +11,6 @@ using System.Threading;
 
 namespace Lucene.Net.Facet.Taxonomy
 {
-
-
     using Directory = Lucene.Net.Store.Directory;
     using DirectoryTaxonomyReader = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyReader;
     using DirectoryTaxonomyWriter = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter;
@@ -833,14 +832,14 @@ namespace Lucene.Net.Facet.Taxonomy
                 newTaxoReader.Dispose();
             }
 
-            stop.Set(true);
+            stop.Value = true;
             thread.Join();
             Assert.Null(error[0], "Unexpcted exception at retry " + retry + " retrieval " + retrieval[0] + ": \n" + stackTraceStr(error[0]));
 
             tr.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestTaxonomyCombined outerInstance;
 
@@ -876,7 +875,7 @@ namespace Lucene.Net.Facet.Taxonomy
 #endif 
                 try
                 {
-                    while (!stop.Get())
+                    while (!stop)
                     {
                         int lastOrd = tr.ParallelTaxonomyArrays.Parents.Length - 1;
                         Assert.NotNull(tr.GetPath(lastOrd), "path of last-ord " + lastOrd + " is not found!");
@@ -887,7 +886,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 catch (Exception e)
                 {
                     error[0] = e;
-                    stop.Set(true);
+                    stop.Value = true;
                 }
             }
 

@@ -1,7 +1,7 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Attributes;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -276,7 +276,7 @@ namespace Lucene.Net.Search
 #if !NETSTANDARD1_6
             nrtDeletesThread.Priority = (ThreadPriority)Math.Min((int)Thread.CurrentThread.Priority + 2, (int)ThreadPriority.Highest);
 #endif
-            nrtDeletesThread.SetDaemon(true);
+            nrtDeletesThread.IsBackground = (true);
             nrtDeletesThread.Start();
 
             nrtNoDeletesThread = new ControlledRealTimeReopenThread<IndexSearcher>(genWriter, nrtNoDeletes, maxReopenSec, minReopenSec);
@@ -284,7 +284,7 @@ namespace Lucene.Net.Search
 #if !NETSTANDARD1_6
             nrtNoDeletesThread.Priority = (ThreadPriority)Math.Min((int)Thread.CurrentThread.Priority + 2, (int)ThreadPriority.Highest);
 #endif
-            nrtNoDeletesThread.SetDaemon(true);
+            nrtNoDeletesThread.IsBackground = (true);
             nrtNoDeletesThread.Start();
         }
 
@@ -391,7 +391,7 @@ namespace Lucene.Net.Search
             doc.Add(NewTextField("test", "test", Field.Store.YES));
             writer.AddDocument(doc);
             manager.MaybeRefresh();
-            ThreadClass t = new ThreadAnonymousInnerClassHelper(this, latch, signal, writer, manager);
+            var t = new ThreadAnonymousInnerClassHelper(this, latch, signal, writer, manager);
             t.Start();
             _writer.waitAfterUpdate = true; // wait in addDocument to let some reopens go through
             long lastGen = writer.UpdateDocument(new Term("foo", "bar"), doc); // once this returns the doc is already reflected in the last reopen
@@ -415,11 +415,11 @@ namespace Lucene.Net.Search
             }
 
             AtomicBoolean finished = new AtomicBoolean(false);
-            ThreadClass waiter = new ThreadAnonymousInnerClassHelper2(this, lastGen, thread, finished);
+            var waiter = new ThreadAnonymousInnerClassHelper2(this, lastGen, thread, finished);
             waiter.Start();
             manager.MaybeRefresh();
             waiter.Join(1000);
-            if (!finished.Get())
+            if (!finished)
             {
                 waiter.Interrupt();
                 fail("thread deadlocked on waitForGeneration");
@@ -429,7 +429,7 @@ namespace Lucene.Net.Search
             IOUtils.Dispose(manager, _writer, d);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestControlledRealTimeReopenThread outerInstance;
 
@@ -468,7 +468,7 @@ namespace Lucene.Net.Search
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper2 : ThreadClass
+        private class ThreadAnonymousInnerClassHelper2 : ThreadJob
         {
             private readonly TestControlledRealTimeReopenThread outerInstance;
 
@@ -499,7 +499,7 @@ namespace Lucene.Net.Search
                     throw new Exception(ie.Message, ie);
                 }
 #endif
-                finished.Set(true);
+                finished.Value = true;
             }
         }
 
@@ -603,9 +603,9 @@ namespace Lucene.Net.Search
             sm.AddListener(new RefreshListenerAnonymousInnerClassHelper(this, afterRefreshCalled));
             iw.AddDocument(new Document());
             iw.Commit();
-            assertFalse(afterRefreshCalled.Get());
+            assertFalse(afterRefreshCalled);
             sm.MaybeRefreshBlocking();
-            assertTrue(afterRefreshCalled.Get());
+            assertTrue(afterRefreshCalled);
             sm.Dispose();
             iw.Dispose();
             dir.Dispose();
@@ -630,7 +630,7 @@ namespace Lucene.Net.Search
             {
                 if (didRefresh)
                 {
-                    afterRefreshCalled.Set(true);
+                    afterRefreshCalled.Value = true;
                 }
             }
         }
@@ -669,16 +669,16 @@ namespace Lucene.Net.Search
             ControlledRealTimeReopenThread<IndexSearcher> controlledRealTimeReopenThread = 
                 new ControlledRealTimeReopenThread<IndexSearcher>(tiw, sm, maxStaleSecs, 0);
 
-            controlledRealTimeReopenThread.SetDaemon(true);
+            controlledRealTimeReopenThread.IsBackground = (true);
             controlledRealTimeReopenThread.Start();
 
-            IList<ThreadClass> commitThreads = new List<ThreadClass>();
+            IList<ThreadJob> commitThreads = new List<ThreadJob>();
 
             for (int i = 0; i < 500; i++)
             {
                 if (i > 0 && i % 50 == 0)
                 {
-                    ThreadClass commitThread = new RunnableAnonymousInnerClassHelper(this, sdp, dir, iw);
+                    ThreadJob commitThread = new RunnableAnonymousInnerClassHelper(this, sdp, dir, iw);
                     commitThread.Start();
                     commitThreads.Add(commitThread);
                 }
@@ -696,7 +696,7 @@ namespace Lucene.Net.Search
                 assertEquals(1, td.TotalHits);
             }
 
-            foreach (ThreadClass commitThread in commitThreads)
+            foreach (ThreadJob commitThread in commitThreads)
             {
                 commitThread.Join();
             }
@@ -707,7 +707,7 @@ namespace Lucene.Net.Search
             dir.Dispose();
         }
 
-        private class RunnableAnonymousInnerClassHelper : ThreadClass
+        private class RunnableAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestControlledRealTimeReopenThread outerInstance;
 

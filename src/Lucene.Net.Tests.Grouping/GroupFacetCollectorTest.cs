@@ -2,6 +2,7 @@
 using Lucene.Net.Documents;
 using Lucene.Net.Search.Grouping.Terms;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
@@ -809,8 +810,7 @@ namespace Lucene.Net.Search.Grouping
             // Only include null count when no facet prefix is specified
             if (facetPrefix == null)
             {
-                ISet<string> groups = facetGroups[null];
-                if (groups != null)
+                if (facetGroups.TryGetValue(null, out ISet<string> groups) && groups != null)
                 {
                     totalMissCount = groups.size();
                 }

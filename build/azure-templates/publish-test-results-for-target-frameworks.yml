@@ -25,23 +25,23 @@ parameters:
   testResultsFileName: 'TestResults.trx' # The name of the file (not path) of the test results. Default 'TestResults.trx'.
 
 steps:
-- powershell: |
-    function EnsureNotNullOrEmpty([string]$param, [string]$nameOfParam) {
-        if ([string]::IsNullOrEmpty($param)) {
-            Write-Host "##vso[task.logissue type=error;]Missing template parameter \"$nameOfParam\""
-            Write-Host "##vso[task.complete result=Failed;]"
-        }
-    }
-    EnsureNotNullOrEmpty('${{ parameters.testProjectName }}', 'testProjectName')
-    EnsureNotNullOrEmpty('${{ parameters.osName }}', 'osName')
-    EnsureNotNullOrEmpty('${{ parameters.testResultsFormat }}', 'testResultsFormat')
-    EnsureNotNullOrEmpty('${{ parameters.testResultsArtifactName }}', 'testResultsArtifactName')
-    EnsureNotNullOrEmpty('${{ parameters.testResultsFileName }}', 'testResultsFileName')
-  displayName: 'Validate Template Parameters'
+#- powershell: |
+#    function EnsureNotNullOrEmpty([string]$param, [string]$nameOfParam) {
+#        if ([string]::IsNullOrEmpty($param)) {
+#            Write-Host "##vso[task.logissue type=error;]Missing template parameter \"$nameOfParam\""
+#            Write-Host "##vso[task.complete result=Failed;]"
+#        }
+#    }
+#    EnsureNotNullOrEmpty('${{ parameters.testProjectName }}', 'testProjectName')
+#    EnsureNotNullOrEmpty('${{ parameters.osName }}', 'osName')
+#    EnsureNotNullOrEmpty('${{ parameters.testResultsFormat }}', 'testResultsFormat')
+#    EnsureNotNullOrEmpty('${{ parameters.testResultsArtifactName }}', 'testResultsArtifactName')
+#    EnsureNotNullOrEmpty('${{ parameters.testResultsFileName }}', 'testResultsFileName')
+#  displayName: 'Validate Template Parameters'
 
 - template: publish-test-results.yml
   parameters:
-    framework: 'netcoreapp2.1'
+    framework: 'netcoreapp3.1'
     testProjectName: '${{ parameters.testProjectName }}'
     osName: '${{ parameters.osName }}'
     testResultsFormat: '${{ parameters.testResultsFormat }}'
@@ -50,7 +50,7 @@ steps:
 
 - template: publish-test-results.yml
   parameters:
-    framework: 'netcoreapp1.1'
+    framework: 'netcoreapp2.2'
     testProjectName: '${{ parameters.testProjectName }}'
     osName: '${{ parameters.osName }}'
     testResultsFormat: '${{ parameters.testResultsFormat }}'
@@ -59,7 +59,7 @@ steps:
 
 - template: publish-test-results.yml
   parameters:
-    framework: 'net451'
+    framework: 'net48'
     testProjectName: '${{ parameters.testProjectName }}'
     osName: '${{ parameters.osName }}'
     testResultsFormat: '${{ parameters.testResultsFormat }}'

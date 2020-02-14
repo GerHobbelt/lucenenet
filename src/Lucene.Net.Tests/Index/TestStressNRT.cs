@@ -1,8 +1,8 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
@@ -113,7 +113,7 @@ namespace Lucene.Net.Index
 
             AtomicInt32 numCommitting = new AtomicInt32();
 
-            IList<ThreadClass> threads = new List<ThreadClass>();
+            IList<ThreadJob> threads = new List<ThreadJob>();
 
             Directory dir = NewDirectory();
 
@@ -124,24 +124,24 @@ namespace Lucene.Net.Index
 
             for (int i = 0; i < nWriteThreads; i++)
             {
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper(this, "WRITER" + i, commitPercent, softCommitPercent, deletePercent, deleteByQueryPercent, ndocs, maxConcurrentCommits, tombstones, operations, storedOnlyType, numCommitting, writer);
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper(this, "WRITER" + i, commitPercent, softCommitPercent, deletePercent, deleteByQueryPercent, ndocs, maxConcurrentCommits, tombstones, operations, storedOnlyType, numCommitting, writer);
 
                 threads.Add(thread);
             }
 
             for (int i = 0; i < nReadThreads; i++)
             {
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper2(this, "READER" + i, ndocs, tombstones, operations);
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper2(this, "READER" + i, ndocs, tombstones, operations);
 
                 threads.Add(thread);
             }
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Start();
             }
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -155,7 +155,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestStressNRT OuterInstance;
 
@@ -195,7 +195,7 @@ namespace Lucene.Net.Index
             {
                 try
                 {
-                    while (Operations.Get() > 0)
+                    while (Operations > 0)
                     {
                         int oper = rand.Next(100);
 
@@ -408,7 +408,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper2 : ThreadClass
+        private class ThreadAnonymousInnerClassHelper2 : ThreadJob
         {
             private readonly TestStressNRT OuterInstance;
 
@@ -526,7 +526,7 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception e)
                 {
-                    Operations.Set((int)-1L);
+                    Operations.Value = ((int)-1L);
                     Console.WriteLine(Thread.CurrentThread.Name + ": FAILED: unexpected exception");
                     Console.WriteLine(e.StackTrace);
                     throw new Exception(e.Message, e);

@@ -1,7 +1,6 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Text;
@@ -95,33 +94,33 @@ namespace Lucene.Net.Search
             AtomicBoolean failed = new AtomicBoolean();
             AtomicInt64 netSearch = new AtomicInt64();
 
-            ThreadClass[] threads = new ThreadClass[NUM_SEARCH_THREADS];
+            ThreadJob[] threads = new ThreadJob[NUM_SEARCH_THREADS];
             for (int threadID = 0; threadID < NUM_SEARCH_THREADS; threadID++)
             {
                 threads[threadID] = new ThreadAnonymousInnerClassHelper(this, s, failed, netSearch);
-                threads[threadID].SetDaemon(true);
+                threads[threadID].IsBackground = (true);
             }
 
-            foreach (ThreadClass t in threads)
+            foreach (ThreadJob t in threads)
             {
                 t.Start();
             }
 
-            foreach (ThreadClass t in threads)
+            foreach (ThreadJob t in threads)
             {
                 t.Join();
             }
 
             if (VERBOSE)
             {
-                Console.WriteLine(NUM_SEARCH_THREADS + " threads did " + netSearch.Get() + " searches");
+                Console.WriteLine(NUM_SEARCH_THREADS + " threads did " + netSearch + " searches");
             }
 
             r.Dispose();
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestSearchWithThreads OuterInstance;
 
@@ -147,7 +146,7 @@ namespace Lucene.Net.Search
                     long totHits = 0;
                     long totSearch = 0;
                     long stopAt = Environment.TickCount + OuterInstance.RUN_TIME_MSEC;
-                    while (Environment.TickCount < stopAt && !Failed.Get())
+                    while (Environment.TickCount < stopAt && !Failed)
                     {
                         s.Search(new TermQuery(new Term("body", "aaa")), col);
                         totHits += col.TotalHits;
@@ -160,7 +159,7 @@ namespace Lucene.Net.Search
                 }
                 catch (Exception exc)
                 {
-                    Failed.Set(true);
+                    Failed.Value = (true);
                     throw new Exception(exc.Message, exc);
                 }
             }

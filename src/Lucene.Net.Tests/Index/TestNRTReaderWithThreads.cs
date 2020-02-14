@@ -1,7 +1,8 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using NUnit.Framework;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using System;
 using System.Threading;
 using Console = Lucene.Net.Support.SystemConsole;
@@ -85,7 +86,7 @@ namespace Lucene.Net.Index
             mainDir.Dispose();
         }
 
-        public class RunThread : ThreadClass
+        public class RunThread : ThreadJob
         {
             private readonly TestNRTReaderWithThreads OuterInstance;
 
@@ -123,7 +124,7 @@ namespace Lucene.Net.Index
                             // we may or may not delete because the term may not exist,
                             // however we're opening and closing the reader rapidly
                             IndexReader reader = Writer.GetReader();
-                            int id = r.Next(OuterInstance.Seq.Get());
+                            int id = r.Next(OuterInstance.Seq);
                             Term term = new Term("id", Convert.ToString(id));
                             int count = TestIndexWriterReader.Count(term, reader);
                             Writer.DeleteDocuments(term);

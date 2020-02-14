@@ -1,16 +1,13 @@
-﻿using System;
+﻿using J2N.Threading.Atomic;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Threading;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using Console = Lucene.Net.Support.SystemConsole;
+using J2N.Threading;
 
 namespace Lucene.Net.Facet.Taxonomy.Directory
 {
-
-
     using Document = Lucene.Net.Documents.Document;
     using ITaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.ITaxonomyWriterCache;
     using Cl2oTaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.Cl2oTaxonomyWriterCache;
@@ -113,8 +110,8 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             Directory taxoDir = NewDirectory();
             ConcurrentDictionary<string, string> values = new ConcurrentDictionary<string, string>();
             IndexWriter iw = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, null));
-            var tw = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE, NewTaxoWriterCache(numDocs.Get()));
-            ThreadClass[] indexThreads = new ThreadClass[AtLeast(4)];
+            var tw = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE, NewTaxoWriterCache(numDocs));
+            ThreadJob[] indexThreads = new ThreadJob[AtLeast(4)];
             FacetsConfig config = new FacetsConfig();
             for (int i = 0; i < 10; i++)
             {
@@ -127,11 +124,11 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                 indexThreads[i] = new ThreadAnonymousInnerClassHelper(this, numDocs, values, iw, tw, config);
             }
 
-            foreach (ThreadClass t in indexThreads)
+            foreach (ThreadJob t in indexThreads)
             {
                 t.Start();
             }
-            foreach (ThreadClass t in indexThreads)
+            foreach (ThreadJob t in indexThreads)
             {
                 t.Join();
             }
@@ -170,7 +167,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             IOUtils.Dispose(tw, iw, tr, taxoDir, indexDir);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestConcurrentFacetedIndexing outerInstance;
 

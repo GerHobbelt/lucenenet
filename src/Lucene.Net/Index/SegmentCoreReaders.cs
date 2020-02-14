@@ -1,4 +1,4 @@
-using Lucene.Net.Codecs;
+using J2N.Threading.Atomic;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
@@ -185,18 +185,12 @@ namespace Lucene.Net.Index
             }
         }
 
-        internal int RefCount
-        {
-            get
-            {
-                return @ref.Get();
-            }
-        }
+        internal int RefCount => @ref;
 
         internal void IncRef()
         {
             int count;
-            while ((count = @ref.Get()) > 0)
+            while ((count = @ref) > 0)
             {
                 if (@ref.CompareAndSet(count, count + 1))
                 {

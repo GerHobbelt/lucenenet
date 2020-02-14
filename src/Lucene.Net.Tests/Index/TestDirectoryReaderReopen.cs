@@ -1,6 +1,7 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -480,7 +481,7 @@ namespace Lucene.Net.Index
             public abstract void Run();
         }
 
-        private class ReaderThread : ThreadClass
+        private class ReaderThread : ThreadJob
         {
             internal ReaderThreadTask Task;
             internal Exception Error;

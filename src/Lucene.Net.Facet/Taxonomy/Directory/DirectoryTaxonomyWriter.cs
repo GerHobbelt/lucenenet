@@ -1,6 +1,8 @@
 ﻿using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
+using J2N.Threading.Atomic;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
@@ -775,7 +777,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
         {
             lock (this)
             {
-                if (cacheMisses.Get() < cacheMissesUntilFill)
+                if (cacheMisses < cacheMissesUntilFill)
                 {
                     return;
                 }
@@ -1136,7 +1138,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                 cache.Clear();
                 cacheIsComplete = false;
                 shouldFillCache = true;
-                cacheMisses.Set(0);
+                cacheMisses.Value = 0;
 
                 // update indexEpoch as a taxonomy replace is just like it has be recreated
                 ++indexEpoch;

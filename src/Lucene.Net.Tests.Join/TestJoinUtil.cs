@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Join;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using Console = Lucene.Net.Support.SystemConsole;
 
 namespace Lucene.Net.Tests.Join
@@ -715,7 +714,7 @@ namespace Lucene.Net.Tests.Join
                             TermsEnum termsEnum = null;
                             SortedSet<BytesRef> joinValues =
                                 new SortedSet<BytesRef>(BytesRef.UTF8SortedAsUnicodeComparer);
-                            joinValues.AddAll(joinValueToJoinScores.Keys);
+                            joinValues.UnionWith(joinValueToJoinScores.Keys);
                             foreach (BytesRef joinValue in joinValues)
                             {
                                 termsEnum = terms.GetIterator(termsEnum);

@@ -1,8 +1,8 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -368,7 +368,7 @@ namespace Lucene.Net.Index
             TestUtil.ReduceOpenFiles(w.IndexWriter);
             w.Commit();
             var failed = new AtomicBoolean();
-            var threads = new ThreadClass[NUM_THREADS];
+            var threads = new ThreadJob[NUM_THREADS];
             long endTime = Environment.TickCount + ((long)(RUN_SEC * 1000));
             for (int i = 0; i < NUM_THREADS; i++)
             {
@@ -380,12 +380,12 @@ namespace Lucene.Net.Index
             {
                 threads[i].Join();
             }
-            Assert.IsFalse(failed.Get());
+            Assert.IsFalse(failed);
             w.Dispose();
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly Func<string, string, Field.Store, Field> NewStringField;
             private Directory Dir;
@@ -420,7 +420,7 @@ namespace Lucene.Net.Index
                     int count = 0;
                     do
                     {
-                        if (Failed.Get())
+                        if (Failed)
                         {
                             break;
                         }
@@ -442,7 +442,7 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception t)
                 {
-                    Failed.Set(true);
+                    Failed.Value = (true);
                     throw new Exception(t.Message, t);
                 }
             }

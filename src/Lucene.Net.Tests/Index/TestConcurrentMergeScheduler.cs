@@ -1,17 +1,18 @@
 #if FEATURE_CONCURRENTMERGESCHEDULER
+using J2N.Threading.Atomic;
+using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
+using NUnit.Framework;
 using System;
+using System.IO;
 using System.Threading;
 using Console = Lucene.Net.Support.SystemConsole;
 
 namespace Lucene.Net.Index
 {
-    using Attributes;
-    using Lucene.Net.Store;
-    using Lucene.Net.Support;
-    using Lucene.Net.Util;
-    using NUnit.Framework;
-    using System.IO;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -311,7 +312,7 @@ namespace Lucene.Net.Index
             IndexWriter w = new IndexWriter(dir, iwc);
             Document doc = new Document();
             doc.Add(NewField("field", "field", TextField.TYPE_NOT_STORED));
-            while (enoughMergesWaiting.CurrentCount != 0 && !failed.Get())
+            while (enoughMergesWaiting.CurrentCount != 0 && !failed)
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -357,7 +358,7 @@ namespace Lucene.Net.Index
                         while (true)
                         {
                             // wait for 10 milliseconds
-                            if (EnoughMergesWaiting.Wait(new TimeSpan(0, 0, 0, 0, 10)) || Failed.Get())
+                            if (EnoughMergesWaiting.Wait(new TimeSpan(0, 0, 0, 0, 10)) || Failed)
                             {
                                 break;
                             }
@@ -374,7 +375,7 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception /*t*/)
                 {
-                    Failed.Set(true);
+                    Failed.Value = (true);
                     m_writer.MergeFinish(merge);
 
                     // LUCENENET specific - throwing an exception on a background thread causes the test

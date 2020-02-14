@@ -1,11 +1,12 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Analysis;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Support.IO;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -343,7 +344,7 @@ namespace Lucene.Net.Index
 #endif
                 Random, dir);
             int numThreads = AtLeast(2);
-            ThreadClass[] threads = new ThreadClass[numThreads];
+            ThreadJob[] threads = new ThreadJob[numThreads];
             CountdownEvent latch = new CountdownEvent(1);
             CountdownEvent doneLatch = new CountdownEvent(numThreads);
             for (int i = 0; i < numThreads; i++)
@@ -364,7 +365,7 @@ namespace Lucene.Net.Index
             }
 
             modifier.DeleteAll();
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -379,7 +380,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestIndexWriterDelete OuterInstance;
 
@@ -1353,8 +1354,8 @@ namespace Lucene.Net.Index
                 }
                 id++;
             }
-            closing.Set(true);
-            Assert.IsTrue(sawAfterFlush.Get());
+            closing.Value = (true);
+            Assert.IsTrue(sawAfterFlush);
             w.Dispose();
             dir.Dispose();
         }
@@ -1378,9 +1379,9 @@ namespace Lucene.Net.Index
 
             protected override void DoAfterFlush()
             {
-                Assert.IsTrue(Closing.Get() || DocsInSegment.Get() >= 7, "only " + DocsInSegment.Get() + " in segment");
-                DocsInSegment.Set(0);
-                SawAfterFlush.Set(true);
+                Assert.IsTrue(Closing || DocsInSegment >= 7, "only " + DocsInSegment + " in segment");
+                DocsInSegment.Value = 0;
+                SawAfterFlush.Value = (true);
             }
         }
 

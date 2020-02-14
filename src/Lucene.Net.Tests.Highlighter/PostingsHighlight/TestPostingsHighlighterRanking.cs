@@ -2,6 +2,7 @@
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
@@ -140,7 +141,7 @@ namespace Lucene.Net.Search.PostingsHighlight
 
                 BooleanQuery bq = new BooleanQuery(false);
                 bq.Add(query, Occur.MUST);
-                bq.Add(new TermQuery(new Term("id", Number.ToString(doc))), Occur.MUST);
+                bq.Add(new TermQuery(new Term("id", doc.ToString(CultureInfo.InvariantCulture))), Occur.MUST);
                 TopDocs td = @is.Search(bq, 1);
                 p1.Highlight("body", bq, @is, td, n);
                 p2.Highlight("body", bq, @is, td, n + 1);

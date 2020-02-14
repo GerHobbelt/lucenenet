@@ -1,6 +1,6 @@
-﻿using Lucene.Net.Benchmarks.ByTask.Utils;
+﻿using J2N.Threading.Atomic;
+using Lucene.Net.Benchmarks.ByTask.Utils;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -452,7 +452,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Feeds
             // re-initiate since properties by round may have changed.
             SetConfig(m_config, m_source);
             m_source.ResetInputs();
-            numDocsCreated.Set(0);
+            numDocsCreated.Value = 0;
             ResetLeftovers();
         }
 

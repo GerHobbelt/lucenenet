@@ -22,7 +22,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     
     <AssemblyTitle>Lucene.Net.Tests.Cli</AssemblyTitle>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
@@ -37,14 +37,14 @@
   <ItemGroup>
     <ProjectReference Include="..\lucene-cli\lucene-cli.csproj" />
     <ProjectReference Include="..\..\..\Lucene.Net\Lucene.Net.csproj" />
-    <ProjectReference Include="..\..\..\Lucene.Net.TestFramework.NUnit\Lucene.Net.TestFramework.NUnit.csproj" />
+    <ProjectReference Include="..\..\..\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <PackageReference Include="System.Net.Primitives" Version="$(SystemNetPrimitivesPackageVersion)"/>
   </ItemGroup>
 
   <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Update="NUnit" Version="3.12.0" />

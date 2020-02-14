@@ -1,16 +1,13 @@
 ﻿// Lucene version compatibility level 8.2.0
 // LUCENENET NOTE: This class now exists both here and in Lucene.Net.Tests
+using J2N.Threading;
 using Lucene.Net.Index;
 using Lucene.Net.MockFile;
 using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
-using Lucene.Net.TestFramework;
 using Lucene.Net.Util;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using AssertionError = Lucene.Net.Diagnostics.AssertionException;
 using Assert = Lucene.Net.TestFramework.Assert;
@@ -26,21 +23,21 @@ using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
 namespace Lucene.Net.Store
 {
     /*
-    * Licensed to the Apache Software Foundation (ASF) under one or more
-    * contributor license agreements.  See the NOTICE file distributed with
-    * this work for additional information regarding copyright ownership.
-    * The ASF licenses this file to You under the Apache License, Version 2.0
-    * (the "License"); you may not use this file except in compliance with
-    * the License.  You may obtain a copy of the License at
-    *
-    *     http://www.apache.org/licenses/LICENSE-2.0
-    *
-    * Unless required by applicable law or agreed to in writing, software
-    * distributed under the License is distributed on an "AS IS" BASIS,
-    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    * See the License for the specific language governing permissions and
-    * limitations under the License.
-    */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Base class for per-Directory tests.
@@ -852,7 +849,7 @@ namespace Lucene.Net.Store
             return (byte)((idx % 256) * (1 + (idx / 256)));
         }
 
-        private class CopyBytesThread : ThreadClass
+        private class CopyBytesThread : ThreadJob
         {
             private readonly Barrier start;
             private readonly IndexInput src;
@@ -908,14 +905,14 @@ namespace Lucene.Net.Store
                     // now make N copies of the remaining bytes
                     int threads = 10;
                     Barrier start = new Barrier(threads);
-                    ThreadClass[] copies = new ThreadClass[threads];
+                    ThreadJob[] copies = new ThreadJob[threads];
                     for (int i = 0; i < threads; i++)
                     {
                         copies[i] = new CopyBytesThread(start, input, d, i);
                         copies[i].Start();
                     }
 
-                    foreach (ThreadClass t in copies)
+                    foreach (ThreadJob t in copies)
                     {
                         t.Join();
                     }

@@ -1,15 +1,21 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Codecs;
 using Lucene.Net.Documents;
 using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Search;
+using Lucene.Net.Store;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
-using Lucene.Net.TestFramework;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using static Lucene.Net.Index.TermsEnum;
 using Assert = Lucene.Net.TestFramework.Assert;
+using Attribute = Lucene.Net.Util.Attribute;
 
 #if TESTFRAMEWORK_MSTEST
 using Test = Microsoft.VisualStudio.TestTools.UnitTesting.TestMethodAttribute;
@@ -21,44 +27,22 @@ using Test = Lucene.Net.TestFramework.SkippableFactAttribute;
 
 namespace Lucene.Net.Index
 {
-    using Attribute = Lucene.Net.Util.Attribute;
-    using BytesRef = Lucene.Net.Util.BytesRef;
-    using CharTermAttribute = Lucene.Net.Analysis.TokenAttributes.CharTermAttribute;
-    using Codec = Lucene.Net.Codecs.Codec;
-    using Directory = Lucene.Net.Store.Directory;
-    using Document = Documents.Document;
-    using Field = Field;
-    using FieldType = FieldType;
-    using FixedBitSet = Lucene.Net.Util.FixedBitSet;
-    using IAttribute = Lucene.Net.Util.IAttribute;
-    using IndexSearcher = Lucene.Net.Search.IndexSearcher;
-    using OffsetAttribute = Lucene.Net.Analysis.TokenAttributes.OffsetAttribute;
-    using PayloadAttribute = Lucene.Net.Analysis.TokenAttributes.PayloadAttribute;
-    using PositionIncrementAttribute = Lucene.Net.Analysis.TokenAttributes.PositionIncrementAttribute;
-    using SeekStatus = Lucene.Net.Index.TermsEnum.SeekStatus;
-    using StringField = StringField;
-    using TermQuery = Lucene.Net.Search.TermQuery;
-    using TestUtil = Lucene.Net.Util.TestUtil;
-    using TextField = TextField;
-
     /*
-    * Licensed to the Apache Software Foundation (ASF) under one or more
-    * contributor license agreements.  See the NOTICE file distributed with
-    * this work for additional information regarding copyright ownership.
-    * The ASF licenses this file to You under the Apache License, Version 2.0
-    * (the "License"); you may not use this file except in compliance with
-    * the License.  You may obtain a copy of the License at
-    *
-    *     http://www.apache.org/licenses/LICENSE-2.0
-    *
-    * Unless required by applicable law or agreed to in writing, software
-    * distributed under the License is distributed on an "AS IS" BASIS,
-    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    * See the License for the specific language governing permissions and
-    * limitations under the License.
-    */
-
-    using TokenStream = Lucene.Net.Analysis.TokenStream;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Base class aiming at testing <see cref="TermVectorsFormat"/>.
@@ -928,7 +912,7 @@ namespace Lucene.Net.Index
                 {
                     docs[i] = docFactory.NewDocument(TestUtil.NextInt32(Random, 1, 3), AtLeast(10), options);
                 }
-                AtomicObject<Exception> exception = new AtomicObject<Exception>();
+                AtomicReference<Exception> exception = new AtomicReference<Exception>();
                 using (Directory dir = NewDirectory())
                 using (RandomIndexWriter writer = new RandomIndexWriter(
 #if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
@@ -948,16 +932,16 @@ namespace Lucene.Net.Index
                             AssertEquals(docs[i], reader.GetTermVectors(docID));
                         }
 
-                        ThreadClass[] threads = new ThreadClass[2];
+                        ThreadJob[] threads = new ThreadJob[2];
                         for (int i = 0; i < threads.Length; ++i)
                         {
                             threads[i] = new ThreadAnonymousInnerClassHelper(this, numDocs, docs, reader, exception, i);
                         }
-                        foreach (ThreadClass thread in threads)
+                        foreach (ThreadJob thread in threads)
                         {
                             thread.Start();
                         }
-                        foreach (ThreadClass thread in threads)
+                        foreach (ThreadJob thread in threads)
                         {
                             thread.Join();
                         }
@@ -967,17 +951,17 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly BaseTermVectorsFormatTestCase outerInstance;
 
-            private int numDocs;
-            private RandomDocument[] docs;
-            private IndexReader reader;
-            private AtomicObject<Exception> exception;
-            private int i;
+            private readonly int numDocs;
+            private readonly RandomDocument[] docs;
+            private readonly IndexReader reader;
+            private readonly AtomicReference<Exception> exception;
+            private readonly int i;
 
-            public ThreadAnonymousInnerClassHelper(BaseTermVectorsFormatTestCase outerInstance, int numDocs, RandomDocument[] docs, IndexReader reader, AtomicObject<Exception> exception, int i)
+            public ThreadAnonymousInnerClassHelper(BaseTermVectorsFormatTestCase outerInstance, int numDocs, RandomDocument[] docs, IndexReader reader, AtomicReference<Exception> exception, int i)
             {
                 this.outerInstance = outerInstance;
                 this.numDocs = numDocs;
