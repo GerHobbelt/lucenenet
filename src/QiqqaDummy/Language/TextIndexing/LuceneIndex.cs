@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Lucene.Net.Analysis;
@@ -11,7 +12,11 @@ using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Utilities.BibTex.Parsing;
 using Utilities.Files;
+using Directory = Alphaleonis.Win32.Filesystem.Directory;
+using File = Alphaleonis.Win32.Filesystem.File;
+using Path = Alphaleonis.Win32.Filesystem.Path;
 using Version = Lucene.Net.Util.Version;
+
 
 namespace Utilities.Language.TextIndexing
 {
@@ -116,45 +121,66 @@ namespace Utilities.Language.TextIndexing
 
         ~LuceneIndex()
         {
-            Logging.Info("~LuceneIndex()");
-            Dispose(false);            
+            Logging.Debug("~LuceneIndex()");
+            Dispose(false);
         }
 
         public void Dispose()
         {
-            Logging.Info("Disposing LuceneIndex");
+            Logging.Debug("Disposing LuceneIndex");
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         private int dispose_count = 0;
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            Logging.Debug("LuceneIndex::Dispose({0}) @{1}", disposing ? "true" : "false", ++dispose_count);
-            if (disposing)
-            {
-                // Get rid of managed resources
-                Logging.Info("Disposing the lucene index writer");
+            Logging.Debug("LuceneIndex::Dispose({0}) @{1}", disposing, dispose_count);
 
+            try
+            {
+                if (dispose_count == 0)
+                {
+                    // Get rid of managed resources
+                    Logging.Info("Disposing the lucene index writer");
+
+                    // Utilities.LockPerfTimer l1_clk = Utilities.LockPerfChecker.Start();
+                    lock (index_writer_lock)
+                    {
+                        // l1_clk.LockPerfTimerStop();
+                        FlushIndexWriter_LOCK();
+                    }
+                }
+
+                // Utilities.LockPerfTimer l2_clk = Utilities.LockPerfChecker.Start();
                 lock (index_writer_lock)
                 {
-                    FlushIndexWriter_LOCK();
+                    // l2_clk.LockPerfTimerStop();
+                    index_writer = null;
                 }
             }
+            catch (Exception ex)
+            {
+                Logging.Error(ex);
+            }
 
-            // Get rid of unmanaged resources 
+            ++dispose_count;
         }
 
         public void WriteMasterList()
         {
+            // Utilities.LockPerfTimer l1_clk = Utilities.LockPerfChecker.Start();
             lock (index_writer_lock)
             {
+                // l1_clk.LockPerfTimerStop();
                 FlushIndexWriter_LOCK();
             }
         }
-        
+
         private void FlushIndexWriter_LOCK()
         {
+            Stopwatch clk = Stopwatch.StartNew();
+
             Logging.Info("+Flushing a lucene IndexWriter");
             if (null != index_writer)
             {
@@ -164,7 +190,7 @@ namespace Utilities.Language.TextIndexing
                 index_writer.Dispose();
                 index_writer = null;
             }
-            Logging.Info("-Flushing a lucene IndexWriter");
+            Logging.Info("-Flushing a lucene IndexWriter (time spent: {0} ms)", clk.ElapsedMilliseconds);
         }
 
         private static void AddDocumentMetadata_SB(Document document, StringBuilder sb, string field_name, string field_value)
@@ -190,6 +216,7 @@ namespace Utilities.Language.TextIndexing
             }
         }
 
+        // TODO: refactor call interface: way too many parameters to be legible.
         public void AddDocumentMetadata(bool is_deleted, string fingerprint, string title, string author, string year, string comment, string tag, string annotation, string bibtex, Utilities.BibTex.Parsing.BibTexItem bibtex_item)
         {
             Lucene.Net.Documents.Document document = null;
@@ -216,7 +243,7 @@ namespace Utilities.Language.TextIndexing
                 string content = content_sb.ToString();
                 document.Add(new Field("content", content, STORE_NO_INDEX_ANALYZED));
             }
-            
+
             AddDocumentPage_INTERNAL(fingerprint, 0, document);
         }
 
@@ -239,8 +266,10 @@ namespace Utilities.Language.TextIndexing
         private void AddDocumentPage_INTERNAL(string fingerprint, int page, Document document)
         {
             // Write to the index            
+            // Utilities.LockPerfTimer l1_clk = Utilities.LockPerfChecker.Start();
             lock (index_writer_lock)
             {
+                // l1_clk.LockPerfTimerStop();
                 if (null == index_writer)
                 {
                     Logging.Info("+Creating a new lucene IndexWriter");
@@ -320,7 +349,7 @@ namespace Utilities.Language.TextIndexing
                     /// external synchronization, you should <b>not</b>
                     /// synchronize on the <see cref="IndexSearcher"/> instance;
                     /// use your own (non-Lucene) objects instead.</p>
-                    Lucene.Net.Search.IndexSearcher index_searcher = new Lucene.Net.Search.IndexSearcher(index_reader);
+                    using (Lucene.Net.Search.IndexSearcher index_searcher = new Lucene.Net.Search.IndexSearcher(index_reader))
                     {
                         Lucene.Net.QueryParsers.QueryParser query_parser = new Lucene.Net.QueryParsers.QueryParser(Lucene.Net.Util.LuceneVersion.LUCENE_29, "content", analyzer);
 
@@ -342,6 +371,9 @@ namespace Utilities.Language.TextIndexing
                                 fingerprints.Add(index_result);
                             }
                         }
+
+                        // Close the index
+                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }
@@ -363,7 +395,7 @@ namespace Utilities.Language.TextIndexing
             {
                 using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                 {
-                    IndexSearcher index_searcher = new IndexSearcher(index_reader);
+                    using (IndexSearcher index_searcher = new IndexSearcher(index_reader))
                     {
                         QueryParser query_parser = new QueryParser(Lucene.Net.Util.LuceneVersion.LUCENE_29, "content", analyzer);
 
@@ -396,6 +428,9 @@ namespace Utilities.Language.TextIndexing
                                 result.page_results.Add(new PageResult { page = page, score = score });
                             }
                         }
+
+                        // Close the index
+                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }
@@ -419,7 +454,7 @@ namespace Utilities.Language.TextIndexing
                 {
                     ////Do a quick check for whether there are actually any segments files, otherwise we throw many exceptions in the IndexReader.Open in a very tight loop.
                     ////Added by Nik to cope with some exception...will uncomment this when i know what the problem is...
-                    //var segments_files = System.IO.Directory.GetFiles(LIBRARY_INDEX_BASE_PATH, "segments*",SearchOption.AllDirectories);
+                    //var segments_files = Directory.GetFiles(LIBRARY_INDEX_BASE_PATH, "segments*", SearchOption.AllDirectories);
                     //if (segments_files.Length <= 0)
                     //{
                     //    Logging.Debug("No index segments files found");
@@ -428,7 +463,7 @@ namespace Utilities.Language.TextIndexing
 
                     using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                     {
-                        IndexSearcher index_searcher = new IndexSearcher(index_reader);
+                        using (IndexSearcher index_searcher = new IndexSearcher(index_reader))
                         {
                             TermQuery term_query = new TermQuery(new Term("content", keyword));
                             Hits hits = index_searcher.Search(term_query);
@@ -440,6 +475,9 @@ namespace Utilities.Language.TextIndexing
                                 string fingerprint = hit.Get("fingerprint");
                                 fingerprints.Add(fingerprint);
                             }
+
+                            // Close the index
+                            index_searcher.Close();
                         }
                         index_reader.Close();
                     }
@@ -461,7 +499,7 @@ namespace Utilities.Language.TextIndexing
             {
                 using (DirectoryReader index_reader = DirectoryReader.Open(LIBRARY_INDEX_DIRECTORY))
                 {
-                    IndexSearcher index_searcher = new IndexSearcher(index_reader);
+                    using (IndexSearcher index_searcher = new IndexSearcher(index_reader))
                     {
                         LuceneMoreLikeThis mlt = new LuceneMoreLikeThis(index_reader);
                         mlt.SetFieldNames(new string[] { "content" });
@@ -476,6 +514,9 @@ namespace Utilities.Language.TextIndexing
                             string fingerprint = hit.Get("fingerprint");
                             fingerprints.Add(fingerprint);
                         }
+
+                        // Close the index
+                        index_searcher.Close();
                     }
                     index_reader.Close();
                 }
@@ -490,21 +531,9 @@ namespace Utilities.Language.TextIndexing
 
         // ---------------------------------------------------------
 
-        private string VersionFilename
-        {
-            get
-            {
-                return LIBRARY_INDEX_BASE_PATH + "index_version.txt";
-            }
-        }
+        private string VersionFilename => Path.GetFullPath(Path.Combine(LIBRARY_INDEX_BASE_PATH, @"index_version.txt"));
 
-        private string LuceneWriteLockFilename
-        {
-            get
-            {
-                return LIBRARY_INDEX_BASE_PATH + "write.lock";
-            }
-        }
+        private string LuceneWriteLockFilename => Path.GetFullPath(Path.Combine(LIBRARY_INDEX_BASE_PATH, @"write.lock"));
 
         public void InvalidateIndex()
         {
@@ -512,17 +541,17 @@ namespace Utilities.Language.TextIndexing
             FileTools.Delete(VersionFilename);
         }
 
-        
+
         private void CheckIndexVersion()
         {
-            string version = null;
+            string version = String.Empty;
 
             try
             {
                 if (File.Exists(VersionFilename))
                 {
                     string[] index_version_lines = File.ReadAllLines(VersionFilename);
-                    version = index_version_lines[0];
+                    version = index_version_lines[0].Trim();
                 }
             }
             catch (Exception ex)
