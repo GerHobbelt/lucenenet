@@ -11,11 +11,9 @@ using Lucene.Net.Index;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Utilities.BibTex.Parsing;
-using Utilities.Files;
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using Path = Alphaleonis.Win32.Filesystem.Path;
-using Version = Lucene.Net.Util.Version;
 
 
 namespace Utilities.Language.TextIndexing
@@ -92,9 +90,8 @@ namespace Utilities.Language.TextIndexing
         //
         //public virtual DirectoryReader GetReader(bool applyAllDeletes)
 
-
-        protected static FieldType STORE_NO_INDEX_ANALYZED = Field.TranslateFieldType(Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED, TermVector.NO);
-        protected static FieldType STORE_YES_INDEX_NO_NORMS = Field.TranslateFieldType(Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS, TermVector.NO);
+        protected static FieldType STORE_NO_INDEX_ANALYZED = Field.TranslateFieldType(Lucene.Net.Documents.Field.Store.NO, Lucene.Net.Documents.Field.Index.ANALYZED, Field.TermVector.NO);
+        protected static FieldType STORE_YES_INDEX_NO_NORMS = Field.TranslateFieldType(Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS, Field.TermVector.NO);
 
         public LuceneIndex(string LIBRARY_INDEX_BASE_PATH)
         {
@@ -114,7 +111,7 @@ namespace Utilities.Language.TextIndexing
             }
 
             // Create our common parts
-            analyzer = new Lucene.Net.Analysis.Standard.StandardAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_29, new Hashtable());
+            analyzer = new Lucene.Net.Analysis.Standard.StandardAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_CURRENT, new Hashtable());
 
             LIBRARY_INDEX_DIRECTORY = Lucene.Net.Store.FSDirectory.Open(LIBRARY_INDEX_BASE_PATH);
         }
@@ -371,11 +368,7 @@ namespace Utilities.Language.TextIndexing
                                 fingerprints.Add(index_result);
                             }
                         }
-
-                        // Close the index
-                        index_searcher.Close();
                     }
-                    index_reader.Close();
                 }
             }
             catch (Exception ex)
@@ -428,11 +421,7 @@ namespace Utilities.Language.TextIndexing
                                 result.page_results.Add(new PageResult { page = page, score = score });
                             }
                         }
-
-                        // Close the index
-                        index_searcher.Close();
                     }
-                    index_reader.Close();
                 }
             }
             catch (Exception ex)
@@ -449,7 +438,7 @@ namespace Utilities.Language.TextIndexing
 
             try
             {
-                keyword = ReasonableWord.MakeReasonableWord(keyword);
+                //keyword = ReasonableWord.MakeReasonableWord(keyword);
                 if (null != keyword)
                 {
                     ////Do a quick check for whether there are actually any segments files, otherwise we throw many exceptions in the IndexReader.Open in a very tight loop.
@@ -475,11 +464,7 @@ namespace Utilities.Language.TextIndexing
                                 string fingerprint = hit.Get("fingerprint");
                                 fingerprints.Add(fingerprint);
                             }
-
-                            // Close the index
-                            index_searcher.Close();
                         }
-                        index_reader.Close();
                     }
                 }
             }

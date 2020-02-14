@@ -498,9 +498,6 @@ namespace Utilities.Language.TextIndexing
             maxNumTokensParsed = i;
         }
 
-
-
-
         /// <summary> Return a query that will return docs like the passed lucene document ID.
         /// 
         /// </summary>
@@ -869,6 +866,7 @@ namespace Utilities.Language.TextIndexing
                 }
             }
         }
+
         /// <summary> Adds term frequencies found by tokenizing text from reader into the Map words</summary>
         /// <param name="r">a source of text to be tokenized
         /// </param>
