@@ -1,9 +1,11 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Shingle;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Codecs;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
@@ -13,6 +15,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 using Directory = Lucene.Net.Store.Directory;
 
 namespace Lucene.Net.Search.Suggest.Analyzing
@@ -625,7 +628,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 // We only add a given suffix once, from the highest
                 // order model that saw it; for subsequent lower order
                 // models we skip it:
-                var seen = new HashSet<BytesRef>();
+                var seen = new JCG.HashSet<BytesRef>();
 
                 for (int gram = grams - 1; gram >= 0; gram--)
                 {

@@ -1,11 +1,11 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
-using Console = Lucene.Net.Support.SystemConsole;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
+using System;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
-    using NUnit.Framework;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -88,12 +88,12 @@ namespace Lucene.Net.Index
             // this test relies on being able to open a reader before any commit
             // happened, so we must create an initial commit just to allow that, but
             // before any documents were added.
-            IndexWriter writer = InitIndex(newScheduler, Random(), true);
+            IndexWriter writer = InitIndex(newScheduler, Random, true);
             MockDirectoryWrapper dir = (MockDirectoryWrapper)writer.Directory;
 
             // We create leftover files because merging could be
             // running when we crash:
-            dir.AssertNoUnrefencedFilesOnClose = false;
+            dir.AssertNoUnreferencedFilesOnClose = false;
 
             Crash(writer);
 
@@ -107,7 +107,11 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random(), dir2, Similarity, TimeZone)).Dispose();
+            (new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir2)).Dispose();
             dir2.Dispose();
         }
 
@@ -120,18 +124,18 @@ namespace Lucene.Net.Index
             // happened, so we must create an initial commit just to allow that, but
             // before any documents were added.
             Console.WriteLine("TEST: initIndex");
-            IndexWriter writer = InitIndex(newScheduler1, Random(), true);
+            IndexWriter writer = InitIndex(newScheduler1, Random, true);
             Console.WriteLine("TEST: done initIndex");
             MockDirectoryWrapper dir = (MockDirectoryWrapper)writer.Directory;
 
             // We create leftover files because merging could be
             // running / store files could be open when we crash:
-            dir.AssertNoUnrefencedFilesOnClose = false;
+            dir.AssertNoUnreferencedFilesOnClose = false;
 
             dir.PreventDoubleWrite = false;
             Console.WriteLine("TEST: now crash");
             Crash(writer);
-            writer = InitIndex(newScheduler2, Random(), dir, false);
+            writer = InitIndex(newScheduler2, Random, dir, false);
             writer.Dispose();
 
             IndexReader reader = DirectoryReader.Open(dir);
@@ -144,7 +148,11 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random(), dir2, Similarity, TimeZone)).Dispose();
+            (new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir2)).Dispose();
             dir2.Dispose();
         }
 
@@ -153,15 +161,15 @@ namespace Lucene.Net.Index
             [ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler1,
             [ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler2)
         {
-            IndexWriter writer = InitIndex(newScheduler1, Random(), false);
+            IndexWriter writer = InitIndex(newScheduler1, Random, false);
             MockDirectoryWrapper dir = (MockDirectoryWrapper)writer.Directory;
 
             // We create leftover files because merging could be
             // running when we crash:
-            dir.AssertNoUnrefencedFilesOnClose = false;
+            dir.AssertNoUnreferencedFilesOnClose = false;
 
             writer.Dispose();
-            writer = InitIndex(newScheduler2, Random(), dir, false);
+            writer = InitIndex(newScheduler2, Random, dir, false);
             Assert.AreEqual(314, writer.MaxDoc);
             Crash(writer);
 
@@ -184,7 +192,11 @@ namespace Lucene.Net.Index
             Directory dir2 = NewDirectory(dir);
             dir.Dispose();
 
-            (new RandomIndexWriter(Random(), dir2, Similarity, TimeZone)).Dispose();
+            (new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir2)).Dispose();
             dir2.Dispose();
         }
 
@@ -192,7 +204,7 @@ namespace Lucene.Net.Index
         public virtual void TestCrashAfterClose(
             [ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler)
         {
-            IndexWriter writer = InitIndex(newScheduler, Random(), false);
+            IndexWriter writer = InitIndex(newScheduler, Random, false);
             MockDirectoryWrapper dir = (MockDirectoryWrapper)writer.Directory;
 
             writer.Dispose();
@@ -215,7 +227,7 @@ namespace Lucene.Net.Index
         public virtual void TestCrashAfterCloseNoWait(
             [ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler)
         {
-            IndexWriter writer = InitIndex(newScheduler, Random(), false);
+            IndexWriter writer = InitIndex(newScheduler, Random, false);
             MockDirectoryWrapper dir = (MockDirectoryWrapper)writer.Directory;
 
             writer.Dispose(false);

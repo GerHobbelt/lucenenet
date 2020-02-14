@@ -1,8 +1,9 @@
-﻿using Lucene.Net.Support;
+﻿using J2N.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Benchmarks.Quality.Trec
 {
@@ -63,12 +64,15 @@ namespace Lucene.Net.Benchmarks.Quality.Trec
                         continue;
                     }
                     StringTokenizer st = new StringTokenizer(line);
-                    string queryID = st.NextToken();
-                    st.NextToken();
-                    string docName = st.NextToken();
-                    bool relevant = !zero.Equals(st.NextToken(), StringComparison.Ordinal);
+                    st.MoveNext();
+                    string queryID = st.Current;
+                    st.MoveNext();
+                    st.MoveNext();
+                    string docName = st.Current;
+                    st.MoveNext();
+                    bool relevant = !zero.Equals(st.Current, StringComparison.Ordinal);
                     // LUCENENET: don't call st.NextToken() unless the condition fails.
-                    Debug.Assert(!st.HasMoreTokens(), "wrong format: " + line + "  next: " + (st.HasMoreTokens() ? st.NextToken() : ""));
+                    Debug.Assert(st.RemainingTokens != 0, "wrong format: " + line + "  next: " + (st.MoveNext() ? st.Current : ""));
                     if (relevant)
                     { // only keep relevant docs
                         if (curr == null || !curr.queryID.Equals(queryID, StringComparison.Ordinal))
@@ -108,7 +112,7 @@ namespace Lucene.Net.Benchmarks.Quality.Trec
             internal QRelJudgement(string queryID)
             {
                 this.queryID = queryID;
-                relevantDocs = new HashMap<string, string>();
+                relevantDocs = new JCG.Dictionary<string, string>();
             }
 
             public virtual void AddRelevantDoc(string docName)
@@ -135,14 +139,8 @@ namespace Lucene.Net.Benchmarks.Quality.Trec
             for (int i = 0; i < qq.Length; i++)
             {
                 string id = qq[i].QueryID;
-                if (missingQueries.ContainsKey(id))
-                {
-                    missingQueries.Remove(id);
-                }
-                else
-                {
+                if (!missingQueries.Remove(id))
                     missingJudgements.Add(id);
-                }
             }
             bool isValid = true;
             if (missingJudgements.Count > 0)

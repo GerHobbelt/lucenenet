@@ -1,7 +1,7 @@
+using Lucene.Net.Util;
+
 namespace Lucene.Net.Codecs.Lucene40
 {
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-
     /*
      * Licensed to the Apache Software Foundation (ASF) under one or more
      * contributor license agreements.  See the NOTICE file distributed with
@@ -20,7 +20,7 @@ namespace Lucene.Net.Codecs.Lucene40
      */
 
     /// <summary>
-    /// Read-write version of Lucene40Codec for testing </summary>
+    /// Read-write version of <see cref="Lucene40Codec"/> for testing. </summary>
 #pragma warning disable 612, 618
     public sealed class Lucene40RWCodec : Lucene40Codec
     {
@@ -32,14 +32,10 @@ namespace Lucene.Net.Codecs.Lucene40
             {
                 get
                 {
-                    if (!LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
-                    {
+                    if (!LuceneTestCase.OldFormatImpersonationIsActive)
                         return base.FieldInfosWriter;
-                    }
                     else
-                    {
                         return new Lucene40FieldInfosWriter();
-                    }
                 }
             }
         }
@@ -47,20 +43,11 @@ namespace Lucene.Net.Codecs.Lucene40
         private readonly DocValuesFormat docValues = new Lucene40RWDocValuesFormat();
         private readonly NormsFormat norms = new Lucene40RWNormsFormat();
 
-        public override FieldInfosFormat FieldInfosFormat
-        {
-            get { return fieldInfos; }
-        }
+        public override FieldInfosFormat FieldInfosFormat => fieldInfos;
 
-        public override DocValuesFormat DocValuesFormat
-        {
-            get { return docValues; }
-        }
+        public override DocValuesFormat DocValuesFormat => docValues;
 
-        public override NormsFormat NormsFormat
-        {
-            get { return norms; }
-        }
+        public override NormsFormat NormsFormat => norms;
     }
 #pragma warning restore 612, 618
 }

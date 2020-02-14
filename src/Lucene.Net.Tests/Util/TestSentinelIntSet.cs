@@ -1,6 +1,6 @@
-using Lucene.Net.Randomized.Generators;
 using NUnit.Framework;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Util
 {
@@ -51,16 +51,16 @@ namespace Lucene.Net.Util
         {
             for (int i = 0; i < 10000; i++)
             {
-                int initSz = Random().Next(20);
-                int num = Random().Next(30);
-                int maxVal = (Random().NextBoolean() ? Random().Next(50) : Random().Next(int.MaxValue)) + 1;
+                int initSz = Random.Next(20);
+                int num = Random.Next(30);
+                int maxVal = (Random.NextBoolean() ? Random.Next(50) : Random.Next(int.MaxValue)) + 1;
 
-                HashSet<int> a = new HashSet<int>(/*initSz*/);
+                ISet<int> a = new JCG.HashSet<int>(initSz);
                 SentinelInt32Set b = new SentinelInt32Set(initSz, -1);
 
                 for (int j = 0; j < num; j++)
                 {
-                    int val = Random().Next(maxVal);
+                    int val = Random.Next(maxVal);
                     bool exists = !a.Add(val);
                     bool existsB = b.Exists(val);
                     Assert.AreEqual(exists, existsB);

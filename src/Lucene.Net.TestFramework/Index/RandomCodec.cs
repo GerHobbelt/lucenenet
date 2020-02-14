@@ -1,68 +1,53 @@
 using Lucene.Net.Codecs;
+using Lucene.Net.Codecs.Asserting;
+using Lucene.Net.Codecs.Bloom;
+using Lucene.Net.Codecs.DiskDV;
+using Lucene.Net.Codecs.Lucene41;
+using Lucene.Net.Codecs.Lucene41Ords;
+using Lucene.Net.Codecs.Lucene45;
+using Lucene.Net.Codecs.Lucene46;
+using Lucene.Net.Codecs.Memory;
+using Lucene.Net.Codecs.MockIntBlock;
+using Lucene.Net.Codecs.MockRandom;
+using Lucene.Net.Codecs.MockSep;
+using Lucene.Net.Codecs.NestedPulsing;
+using Lucene.Net.Codecs.Pulsing;
+using Lucene.Net.Codecs.SimpleText;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using J2N.Collections.Generic.Extensions;
 
 namespace Lucene.Net.Index
 {
     /*
-    * Licensed to the Apache Software Foundation (ASF) under one or more
-    * contributor license agreements.  See the NOTICE file distributed with
-    * this work for additional information regarding copyright ownership.
-    * The ASF licenses this file to You under the Apache License, Version 2.0
-    * (the "License"); you may not use this file except in compliance with
-    * the License.  You may obtain a copy of the License at
-    *
-    *     http://www.apache.org/licenses/LICENSE-2.0
-    *
-    * Unless required by applicable law or agreed to in writing, software
-    * distributed under the License is distributed on an "AS IS" BASIS,
-    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    * See the License for the specific language governing permissions and
-    * limitations under the License.
-    */
-
-    using AssertingDocValuesFormat = Lucene.Net.Codecs.Asserting.AssertingDocValuesFormat;
-    using AssertingPostingsFormat = Lucene.Net.Codecs.Asserting.AssertingPostingsFormat;
-
-    using DocValuesFormat = Lucene.Net.Codecs.DocValuesFormat;
-
-    using TestBloomFilteredLucene41Postings = Lucene.Net.Codecs.Bloom.TestBloomFilteredLucene41Postings;
-    using DiskDocValuesFormat = Lucene.Net.Codecs.DiskDV.DiskDocValuesFormat;
-    using Lucene41PostingsFormat = Lucene.Net.Codecs.Lucene41.Lucene41PostingsFormat;
-
-    using Lucene41WithOrds = Lucene.Net.Codecs.Lucene41Ords.Lucene41WithOrds;
-    using Lucene45DocValuesFormat = Lucene.Net.Codecs.Lucene45.Lucene45DocValuesFormat;
-    using Lucene46Codec = Lucene.Net.Codecs.Lucene46.Lucene46Codec;
-    using PostingsFormat = Lucene.Net.Codecs.PostingsFormat;
-
-    using DirectPostingsFormat = Lucene.Net.Codecs.Memory.DirectPostingsFormat;
-    using MemoryDocValuesFormat = Lucene.Net.Codecs.Memory.MemoryDocValuesFormat;
-    using MemoryPostingsFormat = Lucene.Net.Codecs.Memory.MemoryPostingsFormat;
-    using MockFixedInt32BlockPostingsFormat = Lucene.Net.Codecs.MockIntBlock.MockFixedInt32BlockPostingsFormat;
-    using MockVariableInt32BlockPostingsFormat = Lucene.Net.Codecs.MockIntBlock.MockVariableInt32BlockPostingsFormat;
-    using MockRandomPostingsFormat = Lucene.Net.Codecs.MockRandom.MockRandomPostingsFormat;
-    using MockSepPostingsFormat = Lucene.Net.Codecs.MockSep.MockSepPostingsFormat;
-    using NestedPulsingPostingsFormat = Lucene.Net.Codecs.NestedPulsing.NestedPulsingPostingsFormat;
-    using Pulsing41PostingsFormat = Lucene.Net.Codecs.Pulsing.Pulsing41PostingsFormat;
-    using SimpleTextDocValuesFormat = Lucene.Net.Codecs.SimpleText.SimpleTextDocValuesFormat;
-    using SimpleTextPostingsFormat = Lucene.Net.Codecs.SimpleText.SimpleTextPostingsFormat;
-    using FSTOrdPostingsFormat = Lucene.Net.Codecs.Memory.FSTOrdPostingsFormat;
-    using FSTOrdPulsing41PostingsFormat = Lucene.Net.Codecs.Memory.FSTOrdPulsing41PostingsFormat;
-    using FSTPostingsFormat = Lucene.Net.Codecs.Memory.FSTPostingsFormat;
-    using FSTPulsing41PostingsFormat = Lucene.Net.Codecs.Memory.FSTPulsing41PostingsFormat;
-    using TestUtil = Lucene.Net.Util.TestUtil;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
-    /// Codec that assigns per-field random postings formats.
+    /// <see cref="Codec"/> that assigns per-field random <see cref="Codecs.PostingsFormat"/>s.
     /// <para/>
     /// The same field/format assignment will happen regardless of order,
     /// a hash is computed up front that determines the mapping.
-    /// this means fields can be put into things like HashSets and added to
+    /// This means fields can be put into things like <see cref="HashSet{T}"/>s and added to
     /// documents in different orders and the test will still be deterministic
     /// and reproducable.
     /// </summary>
@@ -79,11 +64,11 @@ namespace Lucene.Net.Index
 
         /// <summary>
         /// unique set of format names this codec knows about </summary>
-        public ISet<string> formatNames = new HashSet<string>();
+        public ISet<string> FormatNames { get; set; } = new JCG.HashSet<string>();
 
         /// <summary>
         /// unique set of docvalues format names this codec knows about </summary>
-        public ISet<string> dvFormatNames = new HashSet<string>();
+        public ISet<string> DvFormatNames { get; set; } = new JCG.HashSet<string>();
 
         /// <summary>
         /// memorized field->postingsformat mappings </summary>
@@ -97,14 +82,13 @@ namespace Lucene.Net.Index
 
         public override PostingsFormat GetPostingsFormatForField(string name)
         {
-            PostingsFormat codec;
-            if (!previousMappings.TryGetValue(name, out codec) || codec == null)
+            if (!previousMappings.TryGetValue(name, out PostingsFormat codec) || codec == null)
             {
                 codec = formats[Math.Abs(perFieldSeed ^ name.GetHashCode()) % formats.Count];
                 if (codec is SimpleTextPostingsFormat && perFieldSeed % 5 != 0)
                 {
-                  // make simpletext rarer, choose again
-                  codec = formats[Math.Abs(perFieldSeed ^ name.ToUpperInvariant().GetHashCode()) % formats.Count];
+                    // make simpletext rarer, choose again
+                    codec = formats[Math.Abs(perFieldSeed ^ name.ToUpperInvariant().GetHashCode()) % formats.Count];
                 }
                 previousMappings[name] = codec;
                 // Safety:
@@ -113,7 +97,7 @@ namespace Lucene.Net.Index
 
             //if (LuceneTestCase.VERBOSE)
             //{
-                Console.WriteLine("RandomCodec.GetPostingsFormatForField(\"" + name + "\") returned '" + codec.Name + "' with underlying type '" + codec.GetType().ToString() + "'.");
+            Console.WriteLine("RandomCodec.GetPostingsFormatForField(\"" + name + "\") returned '" + codec.Name + "' with underlying type '" + codec.GetType().ToString() + "'.");
             //}
 
             return codec;
@@ -121,14 +105,13 @@ namespace Lucene.Net.Index
 
         public override DocValuesFormat GetDocValuesFormatForField(string name)
         {
-            DocValuesFormat codec;
-            if (!previousDVMappings.TryGetValue(name, out codec) || codec == null)
+            if (!previousDVMappings.TryGetValue(name, out DocValuesFormat codec) || codec == null)
             {
                 codec = dvFormats[Math.Abs(perFieldSeed ^ name.GetHashCode()) % dvFormats.Count];
                 if (codec is SimpleTextDocValuesFormat && perFieldSeed % 5 != 0)
                 {
-                  // make simpletext rarer, choose again
-                  codec = dvFormats[Math.Abs(perFieldSeed ^ name.ToUpperInvariant().GetHashCode()) % dvFormats.Count];
+                    // make simpletext rarer, choose again
+                    codec = dvFormats[Math.Abs(perFieldSeed ^ name.ToUpperInvariant().GetHashCode()) % dvFormats.Count];
                 }
                 previousDVMappings[name] = codec;
                 // Safety:
@@ -148,9 +131,9 @@ namespace Lucene.Net.Index
             this.perFieldSeed = random.Next();
             // TODO: make it possible to specify min/max iterms per
             // block via CL:
-            int minItemsPerBlock = TestUtil.NextInt(random, 2, 100);
+            int minItemsPerBlock = TestUtil.NextInt32(random, 2, 100);
             int maxItemsPerBlock = 2 * (Math.Max(2, minItemsPerBlock - 1)) + random.Next(100);
-            int lowFreqCutoff = TestUtil.NextInt(random, 2, 100);
+            int lowFreqCutoff = TestUtil.NextInt32(random, 2, 100);
 
             Add(avoidCodecs,
                 new Lucene41PostingsFormat(minItemsPerBlock, maxItemsPerBlock),
@@ -167,8 +150,8 @@ namespace Lucene.Net.Index
                 //with such "wrapper" classes?
                 new TestBloomFilteredLucene41Postings(), 
                 new MockSepPostingsFormat(), 
-                new MockFixedInt32BlockPostingsFormat(TestUtil.NextInt(random, 1, 2000)),
-                new MockVariableInt32BlockPostingsFormat(TestUtil.NextInt(random, 1, 127)), 
+                new MockFixedInt32BlockPostingsFormat(TestUtil.NextInt32(random, 1, 2000)),
+                new MockVariableInt32BlockPostingsFormat(TestUtil.NextInt32(random, 1, 127)), 
                 new MockRandomPostingsFormat(random),
                 new NestedPulsingPostingsFormat(), 
                 new Lucene41WithOrds(), 
@@ -185,8 +168,8 @@ namespace Lucene.Net.Index
                 new SimpleTextDocValuesFormat(), 
                 new AssertingDocValuesFormat());
 
-            Collections.Shuffle(formats);
-            Collections.Shuffle(dvFormats);
+            formats.Shuffle(random);
+            dvFormats.Shuffle(random);
 
             // Avoid too many open files:
             if (formats.Count > 4)
@@ -200,7 +183,7 @@ namespace Lucene.Net.Index
         }
 
         public RandomCodec(Random random)
-            : this(random, new HashSet<string>())
+            : this(random, new JCG.HashSet<string>())
         {
         }
 
@@ -211,7 +194,7 @@ namespace Lucene.Net.Index
                 if (!avoidCodecs.Contains(p.Name))
                 {
                     formats.Add(p);
-                    formatNames.Add(p.Name);
+                    FormatNames.Add(p.Name);
                 }
             }
         }
@@ -223,15 +206,15 @@ namespace Lucene.Net.Index
                 if (!avoidCodecs.Contains(d.Name))
                 {
                     dvFormats.Add(d);
-                    dvFormatNames.Add(d.Name);
+                    DvFormatNames.Add(d.Name);
                 }
             }
         }
 
         public override string ToString()
         {
-            // LUCENENET NOTE: using toString() extension method on dictionaries to print out their contents
-            return base.ToString() + ": " + previousMappings.toString() + ", docValues:" + previousDVMappings.toString();
+            // LUCENENET NOTE: using StringFormatter on dictionaries to print out their contents
+            return string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}: {1}, docValues:{2}", base.ToString(), previousMappings, previousDVMappings);
         }
     }
 }

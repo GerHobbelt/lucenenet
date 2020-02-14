@@ -19,19 +19,22 @@
  *
 */
 
+
+#if !FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Support
 {
 #if FEATURE_SERIALIZABLE
     [Serializable]
 #endif
-    public sealed class WeakDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : class 
+    internal sealed class WeakDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : class 
     {
-        private HashMap<WeakKey<TKey>, TValue> _hm;
+        private IDictionary<WeakKey<TKey>, TValue> _hm;
         private int _gcCollections = 0;
 
         public WeakDictionary(int initialCapacity)
@@ -48,17 +51,21 @@ namespace Lucene.Net.Support
 
         private WeakDictionary(int initialCapacity, IEnumerable<KeyValuePair<TKey, TValue>> otherDict)
         {
-            _hm = new HashMap<WeakKey<TKey>, TValue>(initialCapacity);
+            _hm = new JCG.Dictionary<WeakKey<TKey>, TValue>(initialCapacity);
             foreach (var kvp in otherDict)
             {
                 _hm.Add(new WeakKey<TKey>(kvp.Key), kvp.Value);
             }
         }
 
+        // LUCENENET NOTE: Added AddOrUpdate method so we don't need so many conditional compilation blocks.
+        // This is just to cascade the call to this[key] = value
+        public void AddOrUpdate(TKey key, TValue value) => this[key] = value;
+
         private void Clean()
         {
             if (_hm.Count == 0) return;
-            var newHm = new HashMap<WeakKey<TKey>, TValue>(_hm.Count);
+            var newHm = new JCG.Dictionary<WeakKey<TKey>, TValue>(_hm.Count);
             foreach (var entry in _hm.Where(x => x.Key != null && x.Key.IsAlive))
             {
                 newHm.Add(entry.Key, entry.Value);
@@ -181,13 +188,13 @@ namespace Lucene.Net.Support
             throw new NotSupportedException();
         }
 
-        #region KeyCollection
+#region KeyCollection
 
         private class KeyCollection : ICollection<TKey>
         {
-            private readonly HashMap<WeakKey<TKey>, TValue> _internalDict;
+            private readonly IDictionary<WeakKey<TKey>, TValue> _internalDict;
 
-            public KeyCollection(HashMap<WeakKey<TKey>, TValue> dict)
+            public KeyCollection(IDictionary<WeakKey<TKey>, TValue> dict)
             {
                 _internalDict = dict;
             }
@@ -220,7 +227,7 @@ namespace Lucene.Net.Support
                 get { return true; }
             }
 
-            #region Explicit Interface Definitions
+#region Explicit Interface Definitions
 
             bool ICollection<TKey>.Contains(TKey item)
             {
@@ -242,10 +249,10 @@ namespace Lucene.Net.Support
                 throw new NotSupportedException();
             }
 
-            #endregion Explicit Interface Definitions
+#endregion Explicit Interface Definitions
         }
 
-        #endregion KeyCollection
+#endregion KeyCollection
 
         /// <summary>
         /// A weak reference wrapper for the hashtable keys. Whenever a key\value pair
@@ -280,10 +287,8 @@ namespace Lucene.Net.Support
                     return true;
                 }
 
-                if (obj is WeakKey<T>)
+                if (obj is WeakKey<T> other)
                 {
-                    var other = (WeakKey<T>)obj;
-
                     var referenceTarget = reference.Target; // Careful: can be null in the mean time...
                     return referenceTarget != null && referenceTarget.Equals(other.Target);
                 }
@@ -303,3 +308,4 @@ namespace Lucene.Net.Support
         }
     }
 }
+#endif

@@ -5,6 +5,7 @@ using Lucene.Net.Analysis.Util;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Fst;
+using J2N;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Ja
 {
@@ -168,12 +169,12 @@ namespace Lucene.Net.Analysis.Ja
             this.readingAtt = AddAttribute<IReadingAttribute>();
             this.inflectionAtt = AddAttribute<IInflectionAttribute>();
 
-            dictionary = TokenInfoDictionary.GetInstance();
+            dictionary = TokenInfoDictionary.Instance;
             fst = dictionary.FST;
-            unkDictionary = UnknownDictionary.GetInstance();
+            unkDictionary = UnknownDictionary.Instance;
             characterDefinition = unkDictionary.CharacterDefinition;
             this.userDictionary = userDictionary;
-            costs = ConnectionCosts.GetInstance();
+            costs = ConnectionCosts.Instance;
             fstReader = fst.GetBytesReader();
             if (userDictionary != null)
             {

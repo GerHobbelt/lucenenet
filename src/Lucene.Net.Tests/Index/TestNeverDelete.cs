@@ -1,12 +1,13 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -55,11 +56,11 @@ namespace Lucene.Net.Index
             {
                 ((MockDirectoryWrapper)d).NoDeleteOpenFile = false;
             }
-            RandomIndexWriter w = new RandomIndexWriter(Random(), d, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetIndexDeletionPolicy(NoDeletionPolicy.INSTANCE));
-            w.w.Config.SetMaxBufferedDocs(TestUtil.NextInt(Random(), 5, 30));
+            RandomIndexWriter w = new RandomIndexWriter(Random, d, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetIndexDeletionPolicy(NoDeletionPolicy.INSTANCE));
+            w.IndexWriter.Config.SetMaxBufferedDocs(TestUtil.NextInt32(Random, 5, 30));
 
             w.Commit();
-            ThreadClass[] indexThreads = new ThreadClass[Random().Next(4)];
+            ThreadJob[] indexThreads = new ThreadJob[Random.Next(4)];
             long stopTime = Environment.TickCount + AtLeast(1000);
             for (int x = 0; x < indexThreads.Length; x++)
             {
@@ -68,7 +69,7 @@ namespace Lucene.Net.Index
                 indexThreads[x].Start();
             }
 
-            HashSet<string> allFiles = new HashSet<string>();
+            ISet<string> allFiles = new JCG.HashSet<string>();
 
             DirectoryReader r = DirectoryReader.Open(d);
             while (Environment.TickCount < stopTime)
@@ -78,7 +79,7 @@ namespace Lucene.Net.Index
                 {
                     Console.WriteLine("TEST: check files: " + ic.FileNames);
                 }
-                allFiles.AddAll(ic.FileNames);
+                allFiles.UnionWith(ic.FileNames);
                 // Make sure no old files were removed
                 foreach (string fileName in allFiles)
                 {
@@ -94,7 +95,7 @@ namespace Lucene.Net.Index
             }
             r.Dispose();
 
-            foreach (ThreadClass t in indexThreads)
+            foreach (ThreadJob t in indexThreads)
             {
                 t.Join();
             }
@@ -104,7 +105,7 @@ namespace Lucene.Net.Index
             System.IO.Directory.Delete(tmpDir.FullName, true);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly Func<string, string, Field.Store, Field> NewStringField;
             private readonly Func<string, string, Field.Store, Field> NewTextField;

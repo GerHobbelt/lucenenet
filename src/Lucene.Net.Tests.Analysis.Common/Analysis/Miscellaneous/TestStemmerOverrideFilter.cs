@@ -1,7 +1,8 @@
-﻿using Lucene.Net.Analysis.Core;
+﻿using J2N;
+using J2N.Text;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.En;
 using Lucene.Net.Analysis.Miscellaneous;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -12,21 +13,21 @@ using System.Text;
 namespace Lucene.Net.Analysis.Miscellaneous
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     public class TestStemmerOverrideFilter : BaseTokenStreamTestCase
     {
@@ -72,7 +73,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
             int numTerms = AtLeast(50);
             for (int i = 0; i < numTerms; i++)
             {
-                string randomRealisticUnicodeString = TestUtil.RandomRealisticUnicodeString(Random());
+                string randomRealisticUnicodeString = TestUtil.RandomRealisticUnicodeString(Random);
                 char[] charArray = randomRealisticUnicodeString.ToCharArray();
                 StringBuilder sb = new StringBuilder();
                 for (int j = 0; j < charArray.Length;)
@@ -86,7 +87,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 }
                 if (sb.Length > 0)
                 {
-                    string value = TestUtil.RandomSimpleString(Random());
+                    string value = TestUtil.RandomSimpleString(Random);
                     map[sb.ToString()] = value.Length == 0 ? "a" : value;
 
                 }
@@ -95,14 +96,14 @@ namespace Lucene.Net.Analysis.Miscellaneous
             {
                 map["booked"] = "books";
             }
-            StemmerOverrideFilter.Builder builder = new StemmerOverrideFilter.Builder(Random().nextBoolean());
+            StemmerOverrideFilter.Builder builder = new StemmerOverrideFilter.Builder(Random.nextBoolean());
             IDictionary<string, string> entrySet = map;
             StringBuilder input = new StringBuilder();
             IList<string> output = new List<string>();
             foreach (KeyValuePair<string, string> entry in entrySet)
             {
                 builder.Add(entry.Key, entry.Value);
-                if (Random().nextBoolean() || output.Count == 0)
+                if (Random.nextBoolean() || output.Count == 0)
                 {
                     input.Append(entry.Key).Append(" ");
                     output.Add(entry.Value);
@@ -120,10 +121,10 @@ namespace Lucene.Net.Analysis.Miscellaneous
             int numTerms = AtLeast(50);
             for (int i = 0; i < numTerms; i++)
             {
-                string randomRealisticUnicodeString = TestUtil.RandomRealisticUnicodeString(Random());
+                string randomRealisticUnicodeString = TestUtil.RandomRealisticUnicodeString(Random);
                 if (randomRealisticUnicodeString.Length > 0)
                 {
-                    string value = TestUtil.RandomSimpleString(Random());
+                    string value = TestUtil.RandomSimpleString(Random);
                     map[randomRealisticUnicodeString] = value.Length == 0 ? "a" : value;
                 }
             }
@@ -131,7 +132,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
             {
                 map["booked"] = "books";
             }
-            StemmerOverrideFilter.Builder builder = new StemmerOverrideFilter.Builder(Random().nextBoolean());
+            StemmerOverrideFilter.Builder builder = new StemmerOverrideFilter.Builder(Random.nextBoolean());
             IDictionary<string, string> entrySet = map;
             foreach (KeyValuePair<string, string> entry in entrySet)
             {
@@ -140,7 +141,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
             StemmerOverrideFilter.StemmerOverrideMap build = builder.Build();
             foreach (KeyValuePair<string, string> entry in entrySet)
             {
-                if (Random().nextBoolean())
+                if (Random.nextBoolean())
                 {
                     Tokenizer tokenizer = new KeywordTokenizer(new StringReader(entry.Key));
                     TokenStream stream = new PorterStemFilter(new StemmerOverrideFilter(tokenizer, build));

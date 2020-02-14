@@ -179,7 +179,7 @@ namespace Lucene.Net.Queries
         public override int GetHashCode()
         {
             return (this.GetType().GetHashCode() + subQuery.GetHashCode() + Arrays.GetHashCode(scoringQueries)) ^
-                   Number.SingleToInt32Bits(Boost) ^ (strict ? 1234 : 4321);
+                   J2N.BitConversion.SingleToInt32Bits(Boost) ^ (strict ? 1234 : 4321);
         }
 
         /// <summary>
@@ -384,7 +384,7 @@ namespace Lucene.Net.Queries
 
             public override ICollection<ChildScorer> GetChildren()
             {
-                return Collections.Singleton(new ChildScorer(subQueryScorer, "CUSTOM"));
+                return new List<ChildScorer> { new ChildScorer(subQueryScorer, "CUSTOM") };
             }
 
             public override int Advance(int target)

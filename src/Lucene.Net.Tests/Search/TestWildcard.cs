@@ -1,8 +1,7 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -262,7 +261,11 @@ namespace Lucene.Net.Search
         private Directory GetIndexStore(string field, string[] contents)
         {
             Directory indexStore = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), indexStore, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, indexStore);
             for (int i = 0; i < contents.Length; ++i)
             {
                 Document doc = new Document();
@@ -304,7 +307,7 @@ namespace Lucene.Net.Search
 
             // prepare the index
             Directory dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
             for (int i = 0; i < docs.Length; i++)
             {
                 Document doc = new Document();

@@ -1,4 +1,5 @@
-using Lucene.Net.Support;
+using J2N;
+using J2N.Text;
 using System;
 using System.Diagnostics;
 using System.Text;
@@ -117,7 +118,7 @@ namespace Lucene.Net.Util
         private const long HALF_SHIFT = 10;
         private const long HALF_MASK = 0x3FFL;
 
-        private const int SURROGATE_OFFSET = Character.MIN_SUPPLEMENTARY_CODE_POINT - (UNI_SUR_HIGH_START << (int)HALF_SHIFT) - UNI_SUR_LOW_START;
+        private const int SURROGATE_OFFSET = Character.MinSupplementaryCodePoint - (UNI_SUR_HIGH_START << (int)HALF_SHIFT) - UNI_SUR_LOW_START;
 
         /// <summary>
         /// Encode characters from a <see cref="T:char[]"/> <paramref name="source"/>, starting at
@@ -536,12 +537,11 @@ namespace Lucene.Net.Util
 
         /* Map UTF-8 encoded prefix byte to sequence length.  -1 (0xFF)
          * means illegal prefix.  see RFC 2279 for details */
-        internal static readonly int[] utf8CodeLength;
-
-        static UnicodeUtil()
+        internal static readonly int[] utf8CodeLength = LoadUTF8CodeLength();
+        private static int[] LoadUTF8CodeLength() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
         {
             int v = int.MinValue;
-            utf8CodeLength = new int[] {
+            return new int[] {
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

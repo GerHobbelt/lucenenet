@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.QueryParsers.Flexible.Precedence
 {
@@ -142,7 +143,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         public PrecedenceQueryParser GetParser(Analyzer a)
         {
             if (a == null)
-                a = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+                a = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             PrecedenceQueryParser qp = new PrecedenceQueryParser();
             qp.Analyzer = (a);
             qp.DefaultOperator = (StandardQueryConfigHandler.Operator.OR);
@@ -194,7 +195,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         public Query getQueryDOA(String query, Analyzer a)
         {
             if (a == null)
-                a = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+                a = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             PrecedenceQueryParser qp = new PrecedenceQueryParser();
             qp.Analyzer = (a);
             qp.DefaultOperator = (StandardQueryConfigHandler.Operator.AND);
@@ -258,7 +259,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
                 "+(title:dog title:cat) -author:\"bob dole\"");
 
             PrecedenceQueryParser qp = new PrecedenceQueryParser();
-            qp.Analyzer = (new MockAnalyzer(Random()));
+            qp.Analyzer = (new MockAnalyzer(Random));
             // make sure OR is the default:
             assertEquals(StandardQueryConfigHandler.Operator.OR, qp.DefaultOperator);
             qp.DefaultOperator = (StandardQueryConfigHandler.Operator.AND);
@@ -274,7 +275,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         [Test]
         public void TestPunct()
         {
-            Analyzer a = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
+            Analyzer a = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
             assertQueryEquals("a&b", a, "a&b");
             assertQueryEquals("a&&b", a, "a&&b");
             assertQueryEquals(".NET", a, ".NET");
@@ -298,7 +299,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
             assertQueryEquals("term 1.0 1 2", null, "term");
             assertQueryEquals("term term1 term2", null, "term term term");
 
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
             assertQueryEquals("3", a, "3");
             assertQueryEquals("term 1.0 1 2", a, "term 1.0 1 2");
             assertQueryEquals("term term1 term2", a, "term term1 term2");
@@ -480,9 +481,9 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
             String defaultField = "default";
             String monthField = "month";
             String hourField = "hour";
-            PrecedenceQueryParser qp = new PrecedenceQueryParser(new MockAnalyzer(Random()));
+            PrecedenceQueryParser qp = new PrecedenceQueryParser(new MockAnalyzer(Random));
 
-            IDictionary<string, DateTools.Resolution?> fieldMap = new HashMap<string, DateTools.Resolution?>();
+            IDictionary<string, DateTools.Resolution?> fieldMap = new JCG.Dictionary<string, DateTools.Resolution?>();
             // set a field specific date resolution
             fieldMap.Put(monthField, DateTools.Resolution.MONTH);
 #pragma warning disable 612, 618
@@ -555,7 +556,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         [Test]
         public void TestEscaped()
         {
-            Analyzer a = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
+            Analyzer a = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
 
             assertQueryEquals("a\\-b:c", a, "a-b:c");
             assertQueryEquals("a\\+b:c", a, "a+b:c");
@@ -627,7 +628,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         public void TestBoost()
         {
             CharacterRunAutomaton stopSet = new CharacterRunAutomaton(BasicAutomata.MakeString("on"));
-            Analyzer oneStopAnalyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, stopSet);
+            Analyzer oneStopAnalyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, stopSet);
 
             PrecedenceQueryParser qp = new PrecedenceQueryParser();
             qp.Analyzer = (oneStopAnalyzer);
@@ -642,7 +643,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
             q = qp.Parse("\"on\"^1.0", "field");
             assertNotNull(q);
 
-            q = GetParser(new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)).Parse("the^3",
+            q = GetParser(new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)).Parse("the^3",
                     "field");
             assertNotNull(q);
         }
@@ -668,7 +669,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
             BooleanQuery.MaxClauseCount = (2);
             try
             {
-                GetParser(new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false)).Parse("one two three", "field");
+                GetParser(new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false)).Parse("one two three", "field");
                 fail("ParseException expected due to too many boolean clauses");
             }
 #pragma warning disable 168
@@ -683,7 +684,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         [Test]
         public void TestNOT()
         {
-            Analyzer a = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
+            Analyzer a = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
             assertQueryEquals("NOT foo AND bar", a, "-foo +bar");
         }
 
@@ -694,7 +695,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Precedence
         [Test]
         public void TestPrecedence()
         {
-            PrecedenceQueryParser parser = GetParser(new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false));
+            PrecedenceQueryParser parser = GetParser(new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false));
             Query query1 = parser.Parse("A AND B OR C AND D", "field");
             Query query2 = parser.Parse("(A AND B) OR (C AND D)", "field");
             assertEquals(query1, query2);

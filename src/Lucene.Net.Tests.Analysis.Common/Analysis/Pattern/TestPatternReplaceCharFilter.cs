@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Pattern
 {
@@ -250,11 +250,11 @@ namespace Lucene.Net.Analysis.Pattern
         [Test, LongRunningTest]
         public virtual void TestRandomStrings()
         {
-            int numPatterns = 10 + Random().Next(20);
-            Random random = new Random(Random().nextInt(int.MaxValue));
+            int numPatterns = 10 + LuceneTestCase.Random.Next(20);
+            Random random = new Random(Random.nextInt(int.MaxValue));
             for (int i = 0; i < numPatterns; i++)
             {
-                Regex p = TestUtil.RandomPattern(Random());
+                Regex p = TestUtil.RandomRegex(LuceneTestCase.Random);
 
                 string replacement = TestUtil.RandomSimpleString(random);
                 Analyzer a = new AnalyzerAnonymousInnerClassHelper(this, p, replacement);
@@ -282,12 +282,12 @@ namespace Lucene.Net.Analysis.Pattern
                 this.replacement = replacement;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new PatternReplaceCharFilter(p, replacement, reader);
             }

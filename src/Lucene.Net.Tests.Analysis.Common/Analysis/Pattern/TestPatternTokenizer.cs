@@ -121,10 +121,10 @@ namespace Lucene.Net.Analysis.Pattern
         public virtual void TestRandomStrings()
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
 
             Analyzer b = new AnalyzerAnonymousInnerClassHelper2(this);
-            CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -136,7 +136,7 @@ namespace Lucene.Net.Analysis.Pattern
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new PatternTokenizer(reader, new Regex("a", RegexOptions.Compiled), -1);
                 return new TokenStreamComponents(tokenizer);
@@ -152,7 +152,7 @@ namespace Lucene.Net.Analysis.Pattern
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new PatternTokenizer(reader, new Regex("a", RegexOptions.Compiled), 0);
                 return new TokenStreamComponents(tokenizer);

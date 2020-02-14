@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 using Version = Lucene.Net.Util.LuceneVersion;
 
 namespace Lucene.Net.Analysis.Core
@@ -62,7 +62,7 @@ namespace Lucene.Net.Analysis.Core
             List<string> a = new List<string>();
             for (int i = 0; i < 20; i++)
             {
-                string w = English.IntToEnglish(i).Trim();
+                string w = English.Int32ToEnglish(i).Trim();
                 sb.Append(w).Append(" ");
                 if (i % 3 != 0)
                 {
@@ -127,7 +127,7 @@ namespace Lucene.Net.Analysis.Core
         {
             CharArraySet stopSet = StopFilter.MakeStopSet(TEST_VERSION_CURRENT, "of");
             StopFilter stpf = new StopFilter(TEST_VERSION_CURRENT, new MockTokenizer(new StringReader("test of"), MockTokenizer.WHITESPACE, false), stopSet);
-            AssertTokenStreamContents(stpf, new string[] { "test" }, new int[] { 0 }, new int[] { 4 }, null, new int[] { 1 }, null, 7, 1, null, true);
+            AssertTokenStreamContents(stpf, new string[] { "test" }, new int[] { 0 }, new int[] { 4 }, null, new int[] { 1 }, null, 7, 1, null, true, null);
         }
 
         private void DoTestStopPositons(StopFilter stpf, bool enableIcrements)
@@ -143,7 +143,7 @@ namespace Lucene.Net.Analysis.Core
             {
                 assertTrue(stpf.IncrementToken());
                 log("Token " + i + ": " + stpf);
-                string w = English.IntToEnglish(i).Trim();
+                string w = English.Int32ToEnglish(i).Trim();
                 assertEquals("expecting token " + i + " to be " + w, w, termAtt.ToString());
                 assertEquals("all but first token must have position increment of 3", enableIcrements ? (i == 0 ? 1 : 3) : 1, posIncrAtt.PositionIncrement);
             }
@@ -226,7 +226,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filter = new MockSynonymFilter(outerInstance, tokenizer);

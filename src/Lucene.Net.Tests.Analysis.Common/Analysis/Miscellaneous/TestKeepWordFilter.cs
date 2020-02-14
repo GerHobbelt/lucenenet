@@ -3,6 +3,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Miscellaneous
 {
@@ -31,7 +32,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         [Test]
         public virtual void TestStopAndGo()
         {
-            ISet<string> words = new HashSet<string>();
+            ISet<string> words = new JCG.HashSet<string>();
             words.Add("aaa");
             words.Add("bbb");
 
@@ -65,13 +66,13 @@ namespace Lucene.Net.Analysis.Miscellaneous
         [Test]
         public virtual void TestRandomStrings()
         {
-            ISet<string> words = new HashSet<string>();
+            ISet<string> words = new JCG.HashSet<string>();
             words.Add("a");
             words.Add("b");
 
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this, words);
 
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -86,7 +87,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.words = words;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenStream stream = new KeepWordFilter(TEST_VERSION_CURRENT, tokenizer, new CharArraySet(TEST_VERSION_CURRENT, words, true));

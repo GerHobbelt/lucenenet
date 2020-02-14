@@ -1,5 +1,8 @@
-using Lucene.Net.Support;
+using Lucene.Net.Analysis;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
 using System;
+using System.IO;
 
 namespace Lucene.Net.Index
 {
@@ -20,9 +23,6 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using Lucene.Net.Analysis;
-    using NUnit.Framework;
-    using System.IO;
     using BytesRef = Lucene.Net.Util.BytesRef;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
@@ -56,7 +56,7 @@ namespace Lucene.Net.Index
             private readonly TestLazyProxSkipping OuterInstance;
 
             public SeekCountingDirectory(TestLazyProxSkipping outerInstance, Directory @delegate)
-                : base(Random(), @delegate)
+                : base(Random, @delegate)
             {
                 this.OuterInstance = outerInstance;
             }
@@ -171,7 +171,7 @@ namespace Lucene.Net.Index
         public virtual void TestSeek()
         {
             Directory directory = NewDirectory();
-            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             for (int i = 0; i < 10; i++)
             {
                 Document doc = new Document();

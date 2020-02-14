@@ -1,7 +1,8 @@
+using Lucene.Net.Store;
 using Lucene.Net.Support;
 using System;
-using System.Diagnostics;
 using System.Threading;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
 
 namespace Lucene.Net.Util
 {
@@ -22,28 +23,25 @@ namespace Lucene.Net.Util
      * limitations under the License.
      */
 
-    using DataInput = Lucene.Net.Store.DataInput;
-    using IndexOutput = Lucene.Net.Store.IndexOutput;
-
     /// <summary>
-    /// Intentionally slow IndexOutput for testing.
+    /// Intentionally slow <see cref="IndexOutput"/> for testing.
     /// </summary>
     public class ThrottledIndexOutput : IndexOutput
     {
         public const int DEFAULT_MIN_WRITTEN_BYTES = 1024;
-        private readonly int BytesPerSecond;
+        private readonly int bytesPerSecond;
         private IndexOutput @delegate;
-        private long FlushDelayMillis;
-        private long CloseDelayMillis;
-        private long SeekDelayMillis;
-        private long PendingBytes;
-        private long MinBytesWritten;
-        private long TimeElapsed;
-        private readonly byte[] Bytes = new byte[1];
+        private long flushDelayMillis;
+        private long closeDelayMillis;
+        private long seekDelayMillis;
+        private long pendingBytes;
+        private long minBytesWritten;
+        private long timeElapsed;
+        private readonly byte[] bytes = new byte[1];
 
         public virtual ThrottledIndexOutput NewFromDelegate(IndexOutput output)
         {
-            return new ThrottledIndexOutput(BytesPerSecond, FlushDelayMillis, CloseDelayMillis, SeekDelayMillis, MinBytesWritten, output);
+            return new ThrottledIndexOutput(bytesPerSecond, flushDelayMillis, closeDelayMillis, seekDelayMillis, minBytesWritten, output);
         }
 
         public ThrottledIndexOutput(int bytesPerSecond, long delayInMillis, IndexOutput @delegate)
@@ -65,16 +63,16 @@ namespace Lucene.Net.Util
         {
             Debug.Assert(bytesPerSecond > 0);
             this.@delegate = @delegate;
-            this.BytesPerSecond = bytesPerSecond;
-            this.FlushDelayMillis = flushDelayMillis;
-            this.CloseDelayMillis = closeDelayMillis;
-            this.SeekDelayMillis = seekDelayMillis;
-            this.MinBytesWritten = minBytesWritten;
+            this.bytesPerSecond = bytesPerSecond;
+            this.flushDelayMillis = flushDelayMillis;
+            this.closeDelayMillis = closeDelayMillis;
+            this.seekDelayMillis = seekDelayMillis;
+            this.minBytesWritten = minBytesWritten;
         }
 
         public override void Flush()
         {
-            Sleep(FlushDelayMillis);
+            Sleep(flushDelayMillis);
             @delegate.Flush();
         }
 
@@ -84,7 +82,7 @@ namespace Lucene.Net.Util
             {
                 try
                 {
-                    Sleep(CloseDelayMillis + GetDelay(true));
+                    Sleep(closeDelayMillis + GetDelay(true));
                 }
                 finally
                 {
@@ -101,14 +99,14 @@ namespace Lucene.Net.Util
         [Obsolete("(4.1) this method will be removed in Lucene 5.0")]
         public override void Seek(long pos)
         {
-            Sleep(SeekDelayMillis);
+            Sleep(seekDelayMillis);
             @delegate.Seek(pos);
         }
 
         public override void WriteByte(byte b)
         {
-            Bytes[0] = b;
-            WriteBytes(Bytes, 0, 1);
+            bytes[0] = b;
+            WriteBytes(bytes, 0, 1);
         }
 
         public override void WriteBytes(byte[] b, int offset, int length)
@@ -118,22 +116,22 @@ namespace Lucene.Net.Util
             // sleep, then 2nd half, then sleep, so we sometimes
             // interrupt having only written not all bytes
             @delegate.WriteBytes(b, offset, length);
-            TimeElapsed += Time.NanoTime() - before;
-            PendingBytes += length;
+            timeElapsed += Time.NanoTime() - before;
+            pendingBytes += length;
             Sleep(GetDelay(false));
         }
 
         protected internal virtual long GetDelay(bool closing)
         {
-            if (PendingBytes > 0 && (closing || PendingBytes > MinBytesWritten))
+            if (pendingBytes > 0 && (closing || pendingBytes > minBytesWritten))
             {
-                long actualBps = (TimeElapsed / PendingBytes) * 1000000000L; // nano to sec
-                if (actualBps > BytesPerSecond)
+                long actualBps = (timeElapsed / pendingBytes) * 1000000000L; // nano to sec
+                if (actualBps > bytesPerSecond)
                 {
-                    long expected = (PendingBytes * 1000L / BytesPerSecond);
-                    long delay = expected - (TimeElapsed / 1000000L);
-                    PendingBytes = 0;
-                    TimeElapsed = 0;
+                    long expected = (pendingBytes * 1000L / bytesPerSecond);
+                    long delay = expected - (timeElapsed / 1000000L);
+                    pendingBytes = 0;
+                    timeElapsed = 0;
                     return delay;
                 }
             }
@@ -162,15 +160,8 @@ namespace Lucene.Net.Util
 
         public override long Length
         {
-            set
-            {
-                @delegate.Length = value;
-            }
-
-            get
-            {
-                return @delegate.Length;
-            }
+            get => @delegate.Length;
+            set => @delegate.Length = value;
         }
 
         public override void CopyBytes(DataInput input, long numBytes)
@@ -179,11 +170,6 @@ namespace Lucene.Net.Util
         }
 
         public override long Checksum
-        {
-            get
-            {
-                return @delegate.Checksum;
-            }
-        }
+            => @delegate.Checksum;
     }
 }

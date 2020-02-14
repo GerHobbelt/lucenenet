@@ -1,14 +1,14 @@
+using J2N.Text;
 using Lucene.Net.Analysis;
-using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Codecs.Lucene3x
 {
@@ -39,7 +39,7 @@ namespace Lucene.Net.Codecs.Lucene3x
         public override void BeforeClass()
         {
             base.BeforeClass();
-            OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+            OldFormatImpersonationIsActive = true;
         }
 
         private static string MakeDifficultRandomUnicodeString(Random r)
@@ -213,7 +213,7 @@ namespace Lucene.Net.Codecs.Lucene3x
                 Assert.AreEqual(TermsEnum.SeekStatus.FOUND, te.SeekCeil(term.Bytes));
 
                 // now .next() this many times:
-                int ct = TestUtil.NextInt(r, 5, 100);
+                int ct = TestUtil.NextInt32(r, 5, 100);
                 for (int i = 0; i < ct; i++)
                 {
                     if (VERBOSE)
@@ -304,7 +304,7 @@ namespace Lucene.Net.Codecs.Lucene3x
                             Assert.AreEqual(fieldTerms[spot].Bytes, te.Term);
 
                             // now .next() this many times:
-                            int ct = TestUtil.NextInt(r, 5, 100);
+                            int ct = TestUtil.NextInt32(r, 5, 100);
                             for (int i = 0; i < ct; i++)
                             {
                                 if (VERBOSE)
@@ -344,10 +344,11 @@ namespace Lucene.Net.Codecs.Lucene3x
         public virtual void TestSurrogatesOrder()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
-                .SetCodec(new PreFlexRWCodec()));
+            var config = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
+            config.Codec = new PreFlexRWCodec();
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir, config);
 
-            int numField = TestUtil.NextInt(Random(), 2, 5);
+            int numField = TestUtil.NextInt32(Random, 2, 5);
 
             int uniqueTermCount = 0;
 
@@ -360,11 +361,11 @@ namespace Lucene.Net.Codecs.Lucene3x
                 string field = "f" + f;
                 int numTerms = AtLeast(200);
 
-                ISet<string> uniqueTerms = new HashSet<string>();
+                ISet<string> uniqueTerms = new JCG.HashSet<string>();
 
                 for (int i = 0; i < numTerms; i++)
                 {
-                    string term = GetRandomString(Random()) + "_ " + (tc++);
+                    string term = GetRandomString(Random) + "_ " + (tc++);
                     uniqueTerms.Add(term);
                     fieldTerms.Add(new Term(field, term));
                     Documents.Document doc = new Documents.Document();
@@ -374,7 +375,7 @@ namespace Lucene.Net.Codecs.Lucene3x
                 uniqueTermCount += uniqueTerms.Count;
             }
 
-            IndexReader reader = w.Reader;
+            IndexReader reader = w.GetReader();
 
             if (VERBOSE)
             {
@@ -407,8 +408,8 @@ namespace Lucene.Net.Codecs.Lucene3x
             //Assert.IsNotNull(fields);
 
             DoTestStraightEnum(fieldTerms, reader, uniqueTermCount);
-            DoTestSeekExists(Random(), fieldTerms, reader);
-            DoTestSeekDoesNotExist(Random(), numField, fieldTerms, fieldTermsArray, reader);
+            DoTestSeekExists(Random, fieldTerms, reader);
+            DoTestSeekDoesNotExist(Random, numField, fieldTerms, fieldTermsArray, reader);
 
             reader.Dispose();
             w.Dispose();

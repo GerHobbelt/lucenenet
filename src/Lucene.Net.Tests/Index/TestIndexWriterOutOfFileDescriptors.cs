@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -43,11 +42,11 @@ namespace Lucene.Net.Index
         {
             MockDirectoryWrapper dir = NewMockFSDirectory(CreateTempDir("TestIndexWriterOutOfFileDescriptors"));
             dir.PreventDoubleWrite = false;
-            double rate = Random().NextDouble() * 0.01;
+            double rate = Random.NextDouble() * 0.01;
             //System.out.println("rate=" + rate);
             dir.RandomIOExceptionRateOnOpen = rate;
             int iters = AtLeast(20);
-            LineFileDocs docs = new LineFileDocs(Random(), DefaultCodecSupportsDocValues());
+            LineFileDocs docs = new LineFileDocs(Random, DefaultCodecSupportsDocValues);
             IndexReader r = null;
             DirectoryReader r2 = null;
             bool any = false;
@@ -62,8 +61,8 @@ namespace Lucene.Net.Index
                 }
                 try
                 {
-                    MockAnalyzer analyzer = new MockAnalyzer(Random());
-                    analyzer.MaxTokenLength = TestUtil.NextInt(Random(), 1, IndexWriter.MAX_TERM_LENGTH);
+                    MockAnalyzer analyzer = new MockAnalyzer(Random);
+                    analyzer.MaxTokenLength = TestUtil.NextInt32(Random, 1, IndexWriter.MAX_TERM_LENGTH);
                     IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
 
                     if (VERBOSE)
@@ -78,9 +77,9 @@ namespace Lucene.Net.Index
                         ((IConcurrentMergeScheduler)ms).SetSuppressExceptions();
                     }
                     w = new IndexWriter(dir, iwc);
-                    if (r != null && Random().Next(5) == 3)
+                    if (r != null && Random.Next(5) == 3)
                     {
-                        if (Random().NextBoolean())
+                        if (Random.NextBoolean())
                         {
                             if (VERBOSE)
                             {
@@ -159,14 +158,14 @@ namespace Lucene.Net.Index
                     }
                 }
 
-                if (any && r == null && Random().NextBoolean())
+                if (any && r == null && Random.NextBoolean())
                 {
                     // Make a copy of a non-empty index so we can use
                     // it to addIndexes later:
                     dir.RandomIOExceptionRateOnOpen = 0.0;
                     r = DirectoryReader.Open(dir);
                     dirCopy = NewMockFSDirectory(CreateTempDir("TestIndexWriterOutOfFileDescriptors.copy"));
-                    HashSet<string> files = new HashSet<string>();
+                    ISet<string> files = new JCG.HashSet<string>();
                     foreach (string file in dir.ListAll())
                     {
                         dir.Copy(dirCopy, file, file, IOContext.DEFAULT);
@@ -177,7 +176,7 @@ namespace Lucene.Net.Index
                     // files ... we can easily have leftover files at
                     // the time we take a copy because we are holding
                     // open a reader:
-                    (new IndexWriter(dirCopy, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())))).Dispose();
+                    (new IndexWriter(dirCopy, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)))).Dispose();
                     dirCopy.RandomIOExceptionRate = rate;
                     dir.RandomIOExceptionRateOnOpen = rate;
                 }

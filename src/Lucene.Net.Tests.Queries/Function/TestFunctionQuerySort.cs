@@ -22,10 +22,10 @@
 using System;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries.Function.ValueSources;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 
@@ -42,7 +42,7 @@ namespace Lucene.Net.Tests.Queries.Function
             Directory dir = NewDirectory();
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, null);
             iwc.SetMergePolicy(NewLogMergePolicy()); // depends on docid order
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
 
             Document doc = new Document();
             Field field = new StringField("value", "", Field.Store.YES);
@@ -57,7 +57,7 @@ namespace Lucene.Net.Tests.Queries.Function
             }
 
             // Open index
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
             IndexSearcher searcher = NewSearcher(reader);
 

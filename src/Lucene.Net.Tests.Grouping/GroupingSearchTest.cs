@@ -1,10 +1,10 @@
 ﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries.Function;
 using Lucene.Net.Queries.Function.ValueSources;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Mutable;
 using NUnit.Framework;
@@ -46,11 +46,11 @@ namespace Lucene.Net.Search.Grouping
 
             Directory dir = NewDirectory();
             RandomIndexWriter w = new RandomIndexWriter(
-                Random(),
+                Random,
                 dir,
                 NewIndexWriterConfig(TEST_VERSION_CURRENT,
-                    new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
-            bool canUseIDV = !"Lucene3x".Equals(w.w.Config.Codec.Name, StringComparison.Ordinal);
+                    new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
+            bool canUseIDV = !"Lucene3x".Equals(w.IndexWriter.Config.Codec.Name, StringComparison.Ordinal);
             List<Document> documents = new List<Document>();
             // 0
             Document doc = new Document();
@@ -109,7 +109,7 @@ namespace Lucene.Net.Search.Grouping
 
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = NewSearcher(w.Reader);
+            IndexSearcher indexSearcher = NewSearcher(w.GetReader());
             w.Dispose();
 
             Sort groupSort = Sort.RELEVANCE;
@@ -211,7 +211,7 @@ namespace Lucene.Net.Search.Grouping
         private GroupingSearch CreateRandomGroupingSearch(string groupField, Sort groupSort, int docsInGroup, bool canUseIDV)
         {
             GroupingSearch groupingSearch;
-            if (Random().nextBoolean())
+            if (Random.nextBoolean())
             {
                 ValueSource vs = new BytesRefFieldSource(groupField);
                 groupingSearch = new GroupingSearch(vs, new Hashtable());
@@ -224,7 +224,7 @@ namespace Lucene.Net.Search.Grouping
             groupingSearch.SetGroupSort(groupSort);
             groupingSearch.SetGroupDocsLimit(docsInGroup);
 
-            if (Random().nextBoolean())
+            if (Random.nextBoolean())
             {
                 groupingSearch.SetCachingInMB(4.0, true);
             }
@@ -237,15 +237,15 @@ namespace Lucene.Net.Search.Grouping
         {
             Directory dir = NewDirectory();
             RandomIndexWriter w = new RandomIndexWriter(
-                Random(),
+                Random,
                 dir,
                 NewIndexWriterConfig(TEST_VERSION_CURRENT,
-                    new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+                    new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
             Document doc = new Document();
             doc.Add(NewField("group", "foo", StringField.TYPE_NOT_STORED));
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = NewSearcher(w.Reader);
+            IndexSearcher indexSearcher = NewSearcher(w.GetReader());
             w.Dispose();
 
             GroupingSearch gs = new GroupingSearch("group");

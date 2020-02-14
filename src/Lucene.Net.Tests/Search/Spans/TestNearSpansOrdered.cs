@@ -1,6 +1,6 @@
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 
 namespace Lucene.Net.Search.Spans
@@ -56,14 +56,14 @@ namespace Lucene.Net.Search.Spans
         {
             base.SetUp();
             Directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
             for (int i = 0; i < DocFields.Length; i++)
             {
                 Document doc = new Document();
                 doc.Add(NewTextField(FIELD, DocFields[i], Field.Store.NO));
                 writer.AddDocument(doc);
             }
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Searcher = NewSearcher(Reader);
         }
@@ -84,7 +84,11 @@ namespace Lucene.Net.Search.Spans
         public virtual void TestSpanNearQuery()
         {
             SpanNearQuery q = MakeQuery();
-            CheckHits.DoCheckHits(Random(), q, FIELD, Searcher, new int[] { 0, 1 }, Similarity);
+            CheckHits.DoCheckHits(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, q, FIELD, Searcher, new int[] { 0, 1 });
         }
 
         public virtual string s(Spans span)

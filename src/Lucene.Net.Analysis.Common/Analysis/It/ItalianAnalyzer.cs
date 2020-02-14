@@ -3,7 +3,6 @@ using Lucene.Net.Analysis.Miscellaneous;
 using Lucene.Net.Analysis.Snowball;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
 using Lucene.Net.Tartarus.Snowball.Ext;
 using Lucene.Net.Util;
 using System;
@@ -13,21 +12,21 @@ using System.Text;
 namespace Lucene.Net.Analysis.It
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// <see cref="Analyzer"/> for Italian.
@@ -52,8 +51,8 @@ namespace Lucene.Net.Analysis.It
 #pragma warning disable 612, 618
             LuceneVersion.LUCENE_CURRENT,
 #pragma warning restore 612, 618
-            Arrays.AsList("c", "l", "all", "dall", "dell", "nell", "sull", "coll", "pell", "gl", "agl", 
-                "dagl", "degl", "negl", "sugl", "un", "m", "t", "s", "v", "d"), true));
+            new string[] { "c", "l", "all", "dall", "dell", "nell", "sull", "coll", "pell", "gl", "agl",
+                "dagl", "degl", "negl", "sugl", "un", "m", "t", "s", "v", "d" }, true));
 
         /// <summary>
         /// Returns an unmodifiable instance of the default stop words set. </summary>
@@ -72,23 +71,23 @@ namespace Lucene.Net.Analysis.It
         /// </summary>
         private class DefaultSetHolder
         {
-            internal static readonly CharArraySet DEFAULT_STOP_SET;
+            internal static readonly CharArraySet DEFAULT_STOP_SET = LoadDefaultStopSet();
 
-            static DefaultSetHolder()
+            private static CharArraySet LoadDefaultStopSet() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    DEFAULT_STOP_SET = WordlistLoader.GetSnowballWordSet(
+                    return WordlistLoader.GetSnowballWordSet(
                         IOUtils.GetDecodingReader(typeof(SnowballFilter), DEFAULT_STOPWORD_FILE, Encoding.UTF8),
 #pragma warning disable 612, 618
                         LuceneVersion.LUCENE_CURRENT);
 #pragma warning restore 612, 618
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
                     // default set should always be present as it is part of the
                     // distribution (JAR)
-                    throw new Exception("Unable to load default stopword set");
+                    throw new Exception("Unable to load default stopword set", ex);
                 }
             }
         }
@@ -137,7 +136,7 @@ namespace Lucene.Net.Analysis.It
         ///         <see cref="StandardFilter"/>, <see cref="ElisionFilter"/>, <see cref="LowerCaseFilter"/>, <see cref="StopFilter"/>,
         ///         <see cref="SetKeywordMarkerFilter"/> if a stem exclusion set is
         ///         provided and <see cref="ItalianLightStemFilter"/>. </returns>
-        protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+        protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
         {
             Tokenizer source = new StandardTokenizer(m_matchVersion, reader);
             TokenStream result = new StandardFilter(m_matchVersion, source);

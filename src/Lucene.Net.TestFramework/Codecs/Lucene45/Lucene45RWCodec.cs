@@ -1,3 +1,6 @@
+using Lucene.Net.Codecs.Lucene42;
+using Lucene.Net.Util;
+
 namespace Lucene.Net.Codecs.Lucene45
 {
     /*
@@ -17,12 +20,8 @@ namespace Lucene.Net.Codecs.Lucene45
      * limitations under the License.
      */
 
-    using Lucene42FieldInfosFormat = Lucene.Net.Codecs.Lucene42.Lucene42FieldInfosFormat;
-    using Lucene42FieldInfosWriter = Lucene.Net.Codecs.Lucene42.Lucene42FieldInfosWriter;
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-
     /// <summary>
-    /// Read-write version of <seealso cref="Lucene45Codec"/> for testing.
+    /// Read-write version of <see cref="Lucene45Codec"/> for testing.
     /// </summary>
 #pragma warning disable 612, 618
     public class Lucene45RWCodec : Lucene45Codec
@@ -35,22 +34,15 @@ namespace Lucene.Net.Codecs.Lucene45
             {
                 get
                 {
-                    if (!LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
-                    {
+                    if (!LuceneTestCase.OldFormatImpersonationIsActive)
                         return base.FieldInfosWriter;
-                    }
                     else
-                    {
                         return new Lucene42FieldInfosWriter();
-                    }
                 }
             }
         }
 
-        public override FieldInfosFormat FieldInfosFormat
-        {
-            get { return fieldInfosFormat; }
-        }
+        public override FieldInfosFormat FieldInfosFormat => fieldInfosFormat;
     }
 #pragma warning restore 612, 618
 }

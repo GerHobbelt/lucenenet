@@ -2,17 +2,13 @@
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Search;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search.Spans;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using IndexOptions = Lucene.Net.Index.IndexOptions;
 
 namespace Lucene.Net.Search.PostingsHighlight
@@ -72,10 +68,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -88,7 +84,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -121,10 +117,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -137,7 +133,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -170,10 +166,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -186,7 +182,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -219,10 +215,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -235,7 +231,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -277,10 +273,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -293,7 +289,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -384,10 +380,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -400,7 +396,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -434,10 +430,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -450,7 +446,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -473,10 +469,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -489,7 +485,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -511,10 +507,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -527,7 +523,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -550,10 +546,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -566,7 +562,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -589,10 +585,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -605,7 +601,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -629,10 +625,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -645,7 +641,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);
@@ -731,10 +727,10 @@ namespace Lucene.Net.Search.PostingsHighlight
         {
             Directory dir = NewDirectory();
             // use simpleanalyzer for more natural tokenization (else "test." is a token)
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
             FieldType offsetsType = new FieldType(TextField.TYPE_STORED);
             offsetsType.IndexOptions = (IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
@@ -745,7 +741,7 @@ namespace Lucene.Net.Search.PostingsHighlight
             body.SetStringValue("Test a one sentence document.");
             iw.AddDocument(doc);
 
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher searcher = NewSearcher(ir);

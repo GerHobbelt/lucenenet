@@ -1,11 +1,12 @@
 ﻿// commons-codec version compatibility level: 1.9
-using Lucene.Net.Support;
+using J2N;
+using J2N.Collections.Generic.Extensions;
+using J2N.Text;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text.RegularExpressions;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 {
@@ -108,16 +109,19 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
             }
         }
 
-        private static readonly IDictionary<NameType, Lang> langs = new Dictionary<NameType, Lang>();
-
+        // LUCENENET specific - need to load this first for LoadLangs() to work
         private static readonly string LANGUAGE_RULES_RN = "lang.txt";
 
-        static Lang()
+        private static readonly IDictionary<NameType, Lang> langs = LoadLangs();
+
+        private static IDictionary<NameType, Lang> LoadLangs() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
         {
+            IDictionary<NameType, Lang> langs = new Dictionary<NameType, Lang>();
             foreach (NameType s in Enum.GetValues(typeof(NameType)))
             {
                 langs[s] = LoadFromResource(LANGUAGE_RULES_RN, Languages.GetInstance(s));
             }
+            return langs;
         }
 
         /// <summary>
@@ -144,7 +148,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         public static Lang LoadFromResource(string languageRulesResourceName, Languages languages)
         {
             IList<LangRule> rules = new List<LangRule>();
-            Stream lRulesIS = typeof(Lang).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(Lang), languageRulesResourceName);
+            Stream lRulesIS = typeof(Lang).FindAndGetManifestResourceStream(languageRulesResourceName);
 
             if (lRulesIS == null)
             {
@@ -202,7 +206,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
                             string[] langs = TOKEN.Split(parts[1]).TrimEnd();
                             bool accept = parts[2].Equals("true", StringComparison.Ordinal);
 
-                            rules.Add(new LangRule(pattern, new HashSet<string>(langs), accept));
+                            rules.Add(new LangRule(pattern, new JCG.HashSet<string>(langs), accept));
                         }
                     }
                 }
@@ -215,7 +219,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 
         private Lang(IList<LangRule> rules, Languages languages)
         {
-            this.rules = Collections.UnmodifiableList(rules);
+            this.rules = rules.AsReadOnly();
             this.languages = languages;
         }
 
@@ -239,7 +243,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         {
             string text = input.ToLowerInvariant();
 
-            ISet<string> langs = new HashSet<string>(this.languages.GetLanguages());
+            ISet<string> langs = new JCG.HashSet<string>(this.languages.GetLanguages());
             foreach (LangRule rule in this.rules)
             {
                 if (rule.Matches(text))

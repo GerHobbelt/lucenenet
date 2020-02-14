@@ -1,14 +1,14 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -48,7 +48,7 @@ namespace Lucene.Net.Index
         public virtual void Test()
         {
             Directory dir = NewDirectory();
-            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             IList<long?> numbers = new List<long?>();
             IList<BytesRef> binary = new List<BytesRef>();
@@ -57,12 +57,12 @@ namespace Lucene.Net.Index
             for (int i = 0; i < numDocs; i++)
             {
                 Document d = new Document();
-                long number = Random().NextLong();
+                long number = Random.NextInt64();
                 d.Add(new NumericDocValuesField("number", number));
-                BytesRef bytes = new BytesRef(TestUtil.RandomRealisticUnicodeString(Random()));
+                BytesRef bytes = new BytesRef(TestUtil.RandomRealisticUnicodeString(Random));
                 d.Add(new BinaryDocValuesField("bytes", bytes));
                 binary.Add(bytes);
-                bytes = new BytesRef(TestUtil.RandomRealisticUnicodeString(Random()));
+                bytes = new BytesRef(TestUtil.RandomRealisticUnicodeString(Random));
                 d.Add(new SortedDocValuesField("sorted", bytes));
                 sorted.Add(bytes);
                 w.AddDocument(d);
@@ -76,20 +76,20 @@ namespace Lucene.Net.Index
             Assert.AreEqual(1, r.Leaves.Count);
             AtomicReader ar = (AtomicReader)r.Leaves[0].Reader;
 
-            int numThreads = TestUtil.NextInt(Random(), 2, 5);
-            IList<ThreadClass> threads = new List<ThreadClass>();
+            int numThreads = TestUtil.NextInt32(Random, 2, 5);
+            IList<ThreadJob> threads = new List<ThreadJob>();
             CountdownEvent startingGun = new CountdownEvent(1);
             for (int t = 0; t < numThreads; t++)
             {
-                Random threadRandom = new Random(Random().Next());
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper(this, numbers, binary, sorted, numDocs, ar, startingGun, threadRandom);
+                Random threadRandom = new Random(Random.Next());
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper(this, numbers, binary, sorted, numDocs, ar, startingGun, threadRandom);
                 thread.Start();
                 threads.Add(thread);
             }
 
             startingGun.Signal();
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -98,7 +98,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestDocValuesWithThreads OuterInstance;
 
@@ -159,11 +159,11 @@ namespace Lucene.Net.Index
                                 break;
 
                             case 4:
-                                Assert.AreEqual(Number.Int32BitsToSingle((int)Numbers[docID]), FieldCache.DEFAULT.GetSingles(Ar, "number", false).Get(docID), 0.0f);
+                                Assert.AreEqual(J2N.BitConversion.Int32BitsToSingle((int)Numbers[docID]), FieldCache.DEFAULT.GetSingles(Ar, "number", false).Get(docID), 0.0f);
                                 break;
 
                             case 5:
-                                Assert.AreEqual(BitConverter.Int64BitsToDouble((long)Numbers[docID]), FieldCache.DEFAULT.GetDoubles(Ar, "number", false).Get(docID), 0.0);
+                                Assert.AreEqual(J2N.BitConversion.Int64BitsToDouble((long)Numbers[docID]), FieldCache.DEFAULT.GetDoubles(Ar, "number", false).Get(docID), 0.0);
                                 break;
                         }
                         bdv.Get(docID, scratch);
@@ -183,12 +183,16 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void Test2()
         {
-            Random random = Random();
+            Random random = Random;
             int NUM_DOCS = AtLeast(100);
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                random, dir);
             bool allowDups = random.NextBoolean();
-            HashSet<string> seen = new HashSet<string>();
+            ISet<string> seen = new JCG.HashSet<string>();
             if (VERBOSE)
             {
                 Console.WriteLine("TEST: NUM_DOCS=" + NUM_DOCS + " allowDups=" + allowDups);
@@ -234,27 +238,27 @@ namespace Lucene.Net.Index
                 if (random.Next(40) == 17)
                 {
                     // force flush
-                    writer.Reader.Dispose();
+                    writer.GetReader().Dispose();
                 }
             }
 
             writer.ForceMerge(1);
-            DirectoryReader r = writer.Reader;
+            DirectoryReader r = writer.GetReader();
             writer.Dispose();
 
             AtomicReader sr = GetOnlySegmentReader(r);
 
             long END_TIME = Environment.TickCount + (TEST_NIGHTLY ? 30 : 1);
 
-            int NUM_THREADS = TestUtil.NextInt(Random(), 1, 10);
-            ThreadClass[] threads = new ThreadClass[NUM_THREADS];
+            int NUM_THREADS = TestUtil.NextInt32(LuceneTestCase.Random, 1, 10);
+            ThreadJob[] threads = new ThreadJob[NUM_THREADS];
             for (int thread = 0; thread < NUM_THREADS; thread++)
             {
                 threads[thread] = new ThreadAnonymousInnerClassHelper2(random, docValues, sr, END_TIME);
                 threads[thread].Start();
             }
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -263,7 +267,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper2 : ThreadClass
+        private class ThreadAnonymousInnerClassHelper2 : ThreadJob
         {
             private Random Random;
             private IList<BytesRef> DocValues;
@@ -280,7 +284,7 @@ namespace Lucene.Net.Index
 
             public override void Run()
             {
-                Random random = Random();
+                Random random = Random;
                 SortedDocValues stringDVDirect;
                 NumericDocValues docIDToID;
                 try

@@ -1,8 +1,9 @@
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -42,8 +43,8 @@ namespace Lucene.Net.Index
         public virtual void TestDeletes1()
         {
             //IndexWriter.debug2 = System.out;
-            Directory dir = new MockDirectoryWrapper(new Random(Random().Next()), new RAMDirectory());
-            IndexWriterConfig iwc = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            Directory dir = new MockDirectoryWrapper(new Random(Random.Next()), new RAMDirectory());
+            IndexWriterConfig iwc = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergeScheduler(new SerialMergeScheduler());
             iwc.SetMaxBufferedDocs(5000);
             iwc.SetRAMBufferSizeMB(100);
@@ -250,7 +251,7 @@ namespace Lucene.Net.Index
             TermsEnum ctermsEnum = cterms.GetIterator(null);
             if (ctermsEnum.SeekExact(new BytesRef(term.Text())))
             {
-                DocsEnum docsEnum = TestUtil.Docs(Random(), ctermsEnum, bits, null, DocsFlags.NONE);
+                DocsEnum docsEnum = TestUtil.Docs(Random, ctermsEnum, bits, null, DocsFlags.NONE);
                 return ToArray(docsEnum);
             }
             return null;

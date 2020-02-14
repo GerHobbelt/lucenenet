@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Benchmarks.ByTask
 {
@@ -227,7 +227,7 @@ namespace Lucene.Net.Benchmarks.ByTask
 
         public virtual long SetStartTimeMillis()
         {
-            startTimeMillis = Support.Time.CurrentTimeMilliseconds();
+            startTimeMillis = J2N.Time.CurrentTimeMilliseconds();
             return startTimeMillis;
         }
 

@@ -1,4 +1,4 @@
-using Lucene.Net.Support;
+using J2N.Threading.Atomic;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -121,7 +121,7 @@ namespace Lucene.Net.Util
                 swapped = !swapped;
 
                 // Third, reset countdown
-                countdown.Set(maxSize);
+                countdown.Value = maxSize;
             }
         }
     }

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Lucene.Net.Randomized.Generators;
+﻿using J2N.Collections.Generic.Extensions;
 using Lucene.Net.Support;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace Lucene.Net.Facet.Taxonomy
 {
@@ -26,22 +25,20 @@ namespace Lucene.Net.Facet.Taxonomy
      */
 
 
-    using MockAnalyzer = Lucene.Net.Analysis.MockAnalyzer;
-    using Document = Lucene.Net.Documents.Document;
-    using Store = Lucene.Net.Documents.Field.Store;
-    using StringField = Lucene.Net.Documents.StringField;
+    using DirectoryReader = Lucene.Net.Index.DirectoryReader;
     using DirectoryTaxonomyReader = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyReader;
     using DirectoryTaxonomyWriter = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter;
-    using DirectoryReader = Lucene.Net.Index.DirectoryReader;
+    using Document = Lucene.Net.Documents.Document;
+    using IndexSearcher = Lucene.Net.Search.IndexSearcher;
     using IndexWriter = Lucene.Net.Index.IndexWriter;
     using IndexWriterConfig = Lucene.Net.Index.IndexWriterConfig;
-    using NoMergePolicy = Lucene.Net.Index.NoMergePolicy;
-    using Term = Lucene.Net.Index.Term;
-    using IndexSearcher = Lucene.Net.Search.IndexSearcher;
-    using MatchAllDocsQuery = Lucene.Net.Search.MatchAllDocsQuery;
-    using TermQuery = Lucene.Net.Search.TermQuery;
-    using Directory = Lucene.Net.Store.Directory;
     using IOUtils = Lucene.Net.Util.IOUtils;
+    using MatchAllDocsQuery = Lucene.Net.Search.MatchAllDocsQuery;
+    using MockAnalyzer = Lucene.Net.Analysis.MockAnalyzer;
+    using Store = Lucene.Net.Documents.Field.Store;
+    using StringField = Lucene.Net.Documents.StringField;
+    using Term = Lucene.Net.Index.Term;
+    using TermQuery = Lucene.Net.Search.TermQuery;
     [TestFixture]
     public class TestTaxonomyFacetCounts2 : FacetTestCase
     {
@@ -99,19 +96,19 @@ namespace Lucene.Net.Facet.Taxonomy
             int numFacetsA = random.Next(3) + 1; // 1-3
             int numFacetsB = random.Next(2) + 1; // 1-2
             List<FacetField> categories_a = new List<FacetField>();
-            categories_a.AddRange(Arrays.AsList(CATEGORIES_A));
+            categories_a.AddRange(CATEGORIES_A);
             List<FacetField> categories_b = new List<FacetField>();
-            categories_b.AddRange(Arrays.AsList(CATEGORIES_B));
-            Collections.Shuffle(categories_a);
-            Collections.Shuffle(categories_b);
+            categories_b.AddRange(CATEGORIES_B);
+            categories_a.Shuffle(Random);
+            categories_b.Shuffle(Random);
 
             List<FacetField> categories = new List<FacetField>();
             categories.AddRange(categories_a.SubList(0, numFacetsA));
             categories.AddRange(categories_b.SubList(0, numFacetsB));
 
             // add the NO_PARENT categories
-            categories.Add(CATEGORIES_C[Random().Next(NUM_CHILDREN_CP_C)]);
-            categories.Add(CATEGORIES_D[Random().Next(NUM_CHILDREN_CP_D)]);
+            categories.Add(CATEGORIES_C[Util.LuceneTestCase.Random.Next(NUM_CHILDREN_CP_C)]);
+            categories.Add(CATEGORIES_D[Util.LuceneTestCase.Random.Next(NUM_CHILDREN_CP_D)]);
 
             return categories;
         }
@@ -123,7 +120,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         private static void AddFacets(Document doc, FacetsConfig config, bool updateTermExpectedCounts)
         {
-            IList<FacetField> docCategories = RandomCategories(Random());
+            IList<FacetField> docCategories = RandomCategories(Random);
             foreach (FacetField ff in docCategories)
             {
                 doc.Add(ff);
@@ -173,7 +170,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         private static void IndexDocsWithFacetsNoTerms(IndexWriter indexWriter, ITaxonomyWriter taxoWriter, IDictionary<string, int?> expectedCounts)
         {
-            Random random = Random();
+            Random random = Random;
             int numDocs = AtLeast(random, 2);
             FacetsConfig config = Config;
             for (int i = 0; i < numDocs; i++)
@@ -187,7 +184,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         private static void IndexDocsWithFacetsAndTerms(IndexWriter indexWriter, ITaxonomyWriter taxoWriter, IDictionary<string, int?> expectedCounts)
         {
-            Random random = Random();
+            Random random = Random;
             int numDocs = AtLeast(random, 2);
             FacetsConfig config = Config;
             for (int i = 0; i < numDocs; i++)
@@ -202,7 +199,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         private static void IndexDocsWithFacetsAndSomeTerms(IndexWriter indexWriter, ITaxonomyWriter taxoWriter, IDictionary<string, int?> expectedCounts)
         {
-            Random random = Random();
+            Random random = Random;
             int numDocs = AtLeast(random, 2);
             FacetsConfig config = Config;
             for (int i = 0; i < numDocs; i++)
@@ -260,7 +257,7 @@ namespace Lucene.Net.Facet.Taxonomy
             // 3. Segment w/ categories and results
             // 4. Segment w/ categories, but only some results
 
-            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             //conf.MergePolicy = NoMergePolicy.INSTANCE; // prevent merges, so we can control the index segments
             IndexWriter indexWriter = new IndexWriter(indexDir, conf);
             ITaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);

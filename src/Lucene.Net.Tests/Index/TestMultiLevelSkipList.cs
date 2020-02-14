@@ -1,6 +1,11 @@
+using J2N.Threading.Atomic;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
 using System;
+using System.IO;
 
 namespace Lucene.Net.Index
 {
@@ -21,10 +26,6 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using Lucene.Net.Analysis;
-    using Lucene.Net.Support;
-    using NUnit.Framework;
-    using System.IO;
     using BytesRef = Lucene.Net.Util.BytesRef;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
@@ -53,7 +54,7 @@ namespace Lucene.Net.Index
             private readonly TestMultiLevelSkipList OuterInstance;
 
             public CountingRAMDirectory(TestMultiLevelSkipList outerInstance, Directory @delegate)
-                : base(Random(), @delegate)
+                : base(Random, @delegate)
             {
                 this.OuterInstance = outerInstance;
             }

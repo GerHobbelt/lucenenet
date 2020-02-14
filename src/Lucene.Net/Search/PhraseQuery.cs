@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search
 {
@@ -29,9 +30,8 @@ namespace Lucene.Net.Search
     using ArrayUtil = Lucene.Net.Util.ArrayUtil;
     using AtomicReader = Lucene.Net.Index.AtomicReader;
     using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
-    using IBits = Lucene.Net.Util.IBits;
     using DocsAndPositionsEnum = Lucene.Net.Index.DocsAndPositionsEnum;
-    using DocsEnum = Lucene.Net.Index.DocsEnum;
+    using IBits = Lucene.Net.Util.IBits;
     using IndexReader = Lucene.Net.Index.IndexReader;
     using IndexReaderContext = Lucene.Net.Index.IndexReaderContext;
     using Similarity = Lucene.Net.Search.Similarities.Similarity;
@@ -66,8 +66,8 @@ namespace Lucene.Net.Search
     public class PhraseQuery : Query, IEnumerable<Term> // LUCENENET specific - implemented IEnumerable<Term>, which allows for use of collection initializer. See: https://stackoverflow.com/a/9195144
     {
         private string field;
-        private IList<Term> terms = new EquatableList<Term>(4);
-        private IList<int?> positions = new EquatableList<int?>(4);
+        private IList<Term> terms = new JCG.List<Term>(4);
+        private IList<int?> positions = new JCG.List<int?>(4);
         private int maxPosition = 0;
         private int slop = 0;
 
@@ -142,7 +142,7 @@ namespace Lucene.Net.Search
             }
 
             terms.Add(term);
-            positions.Add(Convert.ToInt32(position));
+            positions.Add(position);
             if (position > maxPosition)
             {
                 maxPosition = position;
@@ -524,7 +524,7 @@ namespace Lucene.Net.Search
         /// Returns a hash code value for this object. </summary>
         public override int GetHashCode()
         {
-            return Number.SingleToInt32Bits(Boost) 
+            return J2N.BitConversion.SingleToInt32Bits(Boost) 
                 ^ slop 
                 ^ terms.GetHashCode() 
                 ^ positions.GetHashCode();

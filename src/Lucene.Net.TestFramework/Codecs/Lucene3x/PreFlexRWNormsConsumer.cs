@@ -1,37 +1,33 @@
+using Lucene.Net.Index;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
+using AssertionError = Lucene.Net.Diagnostics.AssertionException;
 
 namespace Lucene.Net.Codecs.Lucene3x
 {
-    using System.Collections.Generic;
-    using BytesRef = Lucene.Net.Util.BytesRef;
-    using Directory = Lucene.Net.Store.Directory;
-
     /*
-         * Licensed to the Apache Software Foundation (ASF) under one or more
-         * contributor license agreements.  See the NOTICE file distributed with
-         * this work for additional information regarding copyright ownership.
-         * The ASF licenses this file to You under the Apache License, Version 2.0
-         * (the "License"); you may not use this file except in compliance with
-         * the License.  You may obtain a copy of the License at
-         *
-         *     http://www.apache.org/licenses/LICENSE-2.0
-         *
-         * Unless required by applicable law or agreed to in writing, software
-         * distributed under the License is distributed on an "AS IS" BASIS,
-         * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-         * See the License for the specific language governing permissions and
-         * limitations under the License.
-         */
-
-    using FieldInfo = Lucene.Net.Index.FieldInfo;
-    using IndexFileNames = Lucene.Net.Index.IndexFileNames;
-    using IndexOutput = Lucene.Net.Store.IndexOutput;
-    using IOContext = Lucene.Net.Store.IOContext;
-    using IOUtils = Lucene.Net.Util.IOUtils;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Writes and Merges Lucene 3.x norms format
+    /// <para/>
     /// @lucene.experimental
     /// </summary>
     internal class PreFlexRWNormsConsumer : DocValuesConsumer
@@ -46,12 +42,11 @@ namespace Lucene.Net.Codecs.Lucene3x
 
         /// <summary>
         /// Extension of separate norms file </summary>
-        /// @deprecated Only for reading existing 3.x indexes
         [Obsolete("Only for reading existing 3.x indexes")]
         private const string SEPARATE_NORMS_EXTENSION = "s";
 
         private readonly IndexOutput @out;
-        private int LastFieldNumber = -1; // only for assert
+        private int lastFieldNumber = -1; // only for assert
 
         public PreFlexRWNormsConsumer(Directory directory, string segment, IOContext context)
         {
@@ -80,7 +75,7 @@ namespace Lucene.Net.Codecs.Lucene3x
 
         public override void AddNumericField(FieldInfo field, IEnumerable<long?> values)
         {
-            Debug.Assert(field.Number > LastFieldNumber, "writing norms fields out of order" + LastFieldNumber + " -> " + field.Number);
+            Debug.Assert(field.Number > lastFieldNumber, "writing norms fields out of order" + lastFieldNumber + " -> " + field.Number);
             foreach (var n in values)
             {
                 if (((sbyte)(byte)(long)n) < sbyte.MinValue || ((sbyte)(byte)(long)n) > sbyte.MaxValue)
@@ -89,7 +84,7 @@ namespace Lucene.Net.Codecs.Lucene3x
                 }
                 @out.WriteByte((byte)(sbyte)n);
             }
-            LastFieldNumber = field.Number;
+            lastFieldNumber = field.Number;
         }
 
         protected override void Dispose(bool disposing)
@@ -100,17 +95,17 @@ namespace Lucene.Net.Codecs.Lucene3x
 
         public override void AddBinaryField(FieldInfo field, IEnumerable<BytesRef> values)
         {
-            throw new InvalidOperationException();
+            throw new AssertionError();
         }
 
         public override void AddSortedField(FieldInfo field, IEnumerable<BytesRef> values, IEnumerable<long?> docToOrd)
         {
-            throw new InvalidOperationException();
+            throw new AssertionError();
         }
 
         public override void AddSortedSetField(FieldInfo field, IEnumerable<BytesRef> values, IEnumerable<long?> docToOrdCount, IEnumerable<long?> ords)
         {
-            throw new InvalidOperationException();
+            throw new AssertionError();
         }
     }
 }

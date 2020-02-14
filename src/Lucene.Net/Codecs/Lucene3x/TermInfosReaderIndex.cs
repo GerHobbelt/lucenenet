@@ -1,4 +1,5 @@
-using Lucene.Net.Support;
+using J2N.Numerics;
+using J2N.Text;
 using System;
 using System.Collections.Generic;
 
@@ -122,7 +123,7 @@ namespace Lucene.Net.Codecs.Lucene3x
 
         private static int EstimatePageBits(long estSize)
         {
-            return Math.Max(Math.Min(64 - Number.NumberOfLeadingZeros(estSize), MAX_PAGE_BITS), 4);
+            return Math.Max(Math.Min(64 - estSize.LeadingZeroCount(), MAX_PAGE_BITS), 4);
         }
 
         internal virtual void SeekEnum(SegmentTermEnum enumerator, int indexOffset)

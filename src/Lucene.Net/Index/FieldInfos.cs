@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -38,8 +39,8 @@ namespace Lucene.Net.Index
         private readonly bool hasNorms;
         private readonly bool hasDocValues;
 
-        private readonly SortedDictionary<int, FieldInfo> byNumber = new SortedDictionary<int, FieldInfo>();
-        private readonly Dictionary<string, FieldInfo> byName = new Dictionary<string, FieldInfo>();
+        private readonly IDictionary<int, FieldInfo> byNumber = new JCG.SortedDictionary<int, FieldInfo>();
+        private readonly IDictionary<string, FieldInfo> byName = new JCG.Dictionary<string, FieldInfo>();
         private readonly ICollection<FieldInfo> values; // for an unmodifiable iterator
 
         /// <summary>
@@ -252,7 +253,7 @@ namespace Lucene.Net.Index
                     nameToNumber.TryGetValue(fieldName, out fieldNumber);
                     if (fieldNumber == null)
                     {
-                        int? preferredBoxed = Convert.ToInt32(preferredFieldNumber);
+                        int? preferredBoxed = preferredFieldNumber;
 
                         if (preferredFieldNumber != -1 && !numberToName.ContainsKey(preferredBoxed))
                         {
@@ -396,7 +397,7 @@ namespace Lucene.Net.Index
                     int fieldNumber = globalFieldNumbers.AddOrGet(name, preferredFieldNumber, docValues);
                     fi = new FieldInfo(name, isIndexed, fieldNumber, storeTermVector, omitNorms, storePayloads, indexOptions, docValues, normType, null);
                     Debug.Assert(!byName.ContainsKey(fi.Name));
-                    Debug.Assert(globalFieldNumbers.ContainsConsistent(Convert.ToInt32(fi.Number), fi.Name, fi.DocValuesType));
+                    Debug.Assert(globalFieldNumbers.ContainsConsistent(fi.Number, fi.Name, fi.DocValuesType));
                     byName[fi.Name] = fi;
                 }
                 else

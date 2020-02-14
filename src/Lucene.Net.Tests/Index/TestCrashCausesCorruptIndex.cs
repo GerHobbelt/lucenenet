@@ -2,7 +2,7 @@ using Lucene.Net.Documents;
 using NUnit.Framework;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -71,7 +71,7 @@ namespace Lucene.Net.Index
 
             // NOTE: cannot use RandomIndexWriter because it
             // sometimes commits:
-            IndexWriter indexWriter = new IndexWriter(crashAfterCreateOutput, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter indexWriter = new IndexWriter(crashAfterCreateOutput, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
 
             indexWriter.AddDocument(Document);
             // writes segments_1:
@@ -107,7 +107,7 @@ namespace Lucene.Net.Index
             // LUCENE-3627 (before the fix): this line fails because
             // it doesn't know what to do with the created but empty
             // segments_2 file
-            IndexWriter indexWriter = new IndexWriter(realDirectory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter indexWriter = new IndexWriter(realDirectory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
 
             // currently the test fails above.
             // however, to test the fix, the following lines should pass as well.

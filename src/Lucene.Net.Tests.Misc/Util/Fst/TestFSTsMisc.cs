@@ -24,7 +24,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Util.Fst
 {
@@ -49,13 +50,13 @@ namespace Lucene.Net.Util.Fst
         [Test]
         public void TestRandomWords()
         {
-            TestRandomWords(1000, LuceneTestCase.AtLeast(Random(), 2));
+            TestRandomWords(1000, LuceneTestCase.AtLeast(Random, 2));
             //TestRandomWords(100, 1);
         }
 
         private void TestRandomWords(int maxNumWords, int numIter)
         {
-            Random random = new Random(Random().Next());
+            Random random = new Random(Random.Next());
             for (int iter = 0; iter < numIter; iter++)
             {
                 if (VERBOSE)
@@ -65,12 +66,12 @@ namespace Lucene.Net.Util.Fst
                 for (int inputMode = 0; inputMode < 2; inputMode++)
                 {
                     int numWords = random.nextInt(maxNumWords + 1);
-                    ISet<Int32sRef> termsSet = new HashSet<Int32sRef>();
+                    ISet<Int32sRef> termsSet = new JCG.HashSet<Int32sRef>();
                     Int32sRef[] terms = new Int32sRef[numWords];
                     while (termsSet.size() < numWords)
                     {
                         string term = FSTTester<object>.GetRandomString(random);
-                        termsSet.Add(FSTTester<object>.ToIntsRef(term, inputMode));
+                        termsSet.Add(FSTTester<object>.ToInt32sRef(term, inputMode));
                     }
                     DoTest(inputMode, termsSet.ToArray());
                 }
@@ -90,25 +91,25 @@ namespace Lucene.Net.Util.Fst
                     Console.WriteLine("TEST: now test UpToTwoPositiveIntOutputs");
                 }
                 UpToTwoPositiveInt64Outputs outputs = UpToTwoPositiveInt64Outputs.GetSingleton(true);
-                List<Lucene.Net.Util.Fst.FSTTester<object>.InputOutput<object>> pairs = new List<Lucene.Net.Util.Fst.FSTTester<object>.InputOutput<object>>(terms.Length);
+                IList<InputOutput<object>> pairs = new JCG.List<InputOutput<object>>(terms.Length);
                 long lastOutput = 0;
                 for (int idx = 0; idx < terms.Length; idx++)
                 {
                     // Sometimes go backwards
-                    long value = lastOutput + TestUtil.NextInt(Random(), -100, 1000);
+                    long value = lastOutput + TestUtil.NextInt32(Random, -100, 1000);
                     while (value < 0)
                     {
-                        value = lastOutput + TestUtil.NextInt(Random(), -100, 1000);
+                        value = lastOutput + TestUtil.NextInt32(Random, -100, 1000);
                     }
                     object output;
-                    if (Random().nextInt(5) == 3)
+                    if (Random.nextInt(5) == 3)
                     {
-                        long value2 = lastOutput + TestUtil.NextInt(Random(), -100, 1000);
+                        long value2 = lastOutput + TestUtil.NextInt32(Random, -100, 1000);
                         while (value2 < 0)
                         {
-                            value2 = lastOutput + TestUtil.NextInt(Random(), -100, 1000);
+                            value2 = lastOutput + TestUtil.NextInt32(Random, -100, 1000);
                         }
-                        List<long> values = new List<long>();
+                        IList<long> values = new JCG.List<long>();
                         values.Add(value);
                         values.Add(value2);
                         output = values;
@@ -117,9 +118,9 @@ namespace Lucene.Net.Util.Fst
                     {
                         output = outputs.Get(value);
                     }
-                    pairs.Add(new FSTTester<object>.InputOutput<object>(terms[idx], output));
+                    pairs.Add(new InputOutput<object>(terms[idx], output));
                 }
-                new FSTTesterHelper<object>(Random(), dir, inputMode, pairs, outputs, false).DoTest(false);
+                new FSTTesterHelper<object>(Random, dir, inputMode, pairs, outputs, false).DoTest(false);
 
                 // ListOfOutputs(PositiveIntOutputs), generally but not
                 // monotonically increasing
@@ -130,20 +131,20 @@ namespace Lucene.Net.Util.Fst
                     }
                     PositiveInt32Outputs _outputs = PositiveInt32Outputs.Singleton; 
                     ListOfOutputs<long?> outputs2 = new ListOfOutputs<long?>(_outputs);
-                    List<FSTTester<object>.InputOutput<object>> pairs2 = new List<FSTTester<object>.InputOutput<object>>(terms.Length);
+                    IList<InputOutput<object>> pairs2 = new JCG.List<InputOutput<object>>(terms.Length);
                     long lastOutput2 = 0;
                     for (int idx = 0; idx < terms.Length; idx++)
                     {
 
-                        int outputCount = TestUtil.NextInt(Random(), 1, 7);
-                        List<long?> values = new List<long?>();
+                        int outputCount = TestUtil.NextInt32(Random, 1, 7);
+                        IList<long?> values = new JCG.List<long?>();
                         for (int i = 0; i < outputCount; i++)
                         {
                             // Sometimes go backwards
-                            long value = lastOutput2 + TestUtil.NextInt(Random(), -100, 1000);
+                            long value = lastOutput2 + TestUtil.NextInt32(Random, -100, 1000);
                             while (value < 0)
                             {
-                                value = lastOutput2 + TestUtil.NextInt(Random(), -100, 1000);
+                                value = lastOutput2 + TestUtil.NextInt32(Random, -100, 1000);
                             }
                             values.Add(value);
                             lastOutput2 = value;
@@ -159,33 +160,29 @@ namespace Lucene.Net.Util.Fst
                             output = values;
                         }
 
-                        pairs2.Add(new FSTTester<object>.InputOutput<object>(terms[idx], output));
+                        pairs2.Add(new InputOutput<object>(terms[idx], output));
                     }
-                    new FSTTester<object>(Random(), dir, inputMode, pairs2, outputs2, false).DoTest(false);
+                    new FSTTester<object>(Random, dir, inputMode, pairs2, outputs2, false).DoTest(false);
                 }
             }
         }
 
         private class FSTTesterHelper<T> : FSTTester<T>
         {
-            public FSTTesterHelper(Random random, Directory dir, int inputMode, List<InputOutput<T>> pairs, Outputs<T> outputs, bool doReverseLookup)
+            public FSTTesterHelper(Random random, Directory dir, int inputMode, IList<InputOutput<T>> pairs, Outputs<T> outputs, bool doReverseLookup)
                 : base(random, dir, inputMode, pairs, outputs, doReverseLookup)
             {
             }
 
-            protected internal override bool OutputsEqual(T output1, T output2)
+            protected override bool OutputsEqual(T output1, T output2)
             {
-                if (output1 is UpToTwoPositiveInt64Outputs.TwoInt64s && output2 is IEnumerable<long>)
+                if (output1 is UpToTwoPositiveInt64Outputs.TwoInt64s twoLongs1 && output2 is IEnumerable<long> output2Enumerable)
                 {
-                    UpToTwoPositiveInt64Outputs.TwoInt64s twoLongs1 = output1 as UpToTwoPositiveInt64Outputs.TwoInt64s;
-                    long[] list2 = (output2 as IEnumerable<long>).ToArray();
-                    return (new long[] { twoLongs1.First, twoLongs1.Second }).SequenceEqual(list2);
+                    return (new long[] { twoLongs1.First, twoLongs1.Second }).SequenceEqual(output2Enumerable);
                 }
-                else if (output2 is UpToTwoPositiveInt64Outputs.TwoInt64s && output1 is IEnumerable<long>)
+                else if (output2 is UpToTwoPositiveInt64Outputs.TwoInt64s twoLongs2 && output1 is IEnumerable<long> output1Enumerable)
                 {
-                    long[] list1 = (output1 as IEnumerable<long>).ToArray();
-                    UpToTwoPositiveInt64Outputs.TwoInt64s twoLongs2 = output2 as UpToTwoPositiveInt64Outputs.TwoInt64s;
-                    return (new long[] { twoLongs2.First, twoLongs2.Second }).SequenceEqual(list1);
+                    return (new long[] { twoLongs2.First, twoLongs2.Second }).SequenceEqual(output1Enumerable);
                 }
 
                 return output1.Equals(output2);

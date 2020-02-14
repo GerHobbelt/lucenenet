@@ -25,12 +25,12 @@ using Lucene.Net.Analysis;
 using Lucene.Net.Codecs;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries.Function;
 using Lucene.Net.Queries.Function.ValueSources;
 using Lucene.Net.Search;
 using Lucene.Net.Search.Similarities;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 
@@ -59,9 +59,9 @@ namespace Lucene.Net.Tests.Queries.Function
             base.SetUp();
 
             dir = NewDirectory();
-            IndexWriterConfig iwConfig = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwConfig = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwConfig.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwConfig);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwConfig);
             Document document = new Document();
             Field idField = new StringField("id", "", Field.Store.NO);
             document.Add(idField);
@@ -96,7 +96,7 @@ namespace Lucene.Net.Tests.Queries.Function
                 iw.AddDocument(document);
             }
 
-            reader = iw.Reader;
+            reader = iw.GetReader();
             searcher = NewSearcher(reader);
             iw.Dispose();
         }
@@ -356,7 +356,11 @@ namespace Lucene.Net.Tests.Queries.Function
                 expected[i] = new ScoreDoc(i, scores[i]);
             }
             TopDocs docs = searcher.Search(q, null, documents.Count, new Sort(new SortField("id", SortFieldType.STRING)), true, false);
-            CheckHits.DoCheckHits(Random(), q, "", searcher, expectedDocs, Similarity);
+            CheckHits.DoCheckHits(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, q, "", searcher, expectedDocs);
             CheckHits.CheckHitsQuery(q, expected, docs.ScoreDocs, expectedDocs);
             CheckHits.CheckExplanations(q, "", searcher);
         }

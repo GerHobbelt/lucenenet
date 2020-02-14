@@ -1,12 +1,13 @@
-﻿using Lucene.Net.Analysis.TokenAttributes;
+﻿using J2N.Threading.Atomic;
+using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.IO;
 using System.Reflection;
 
@@ -31,11 +32,10 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
 
     using AtomicReader = Lucene.Net.Index.AtomicReader;
     using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
-    using LockObtainFailedException = Lucene.Net.Store.LockObtainFailedException; // javadocs
     using BytesRef = Lucene.Net.Util.BytesRef;
     using Cl2oTaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.Cl2oTaxonomyWriterCache;
-    using Directory = Lucene.Net.Store.Directory;
     using CorruptIndexException = Lucene.Net.Index.CorruptIndexException; // javadocs
+    using Directory = Lucene.Net.Store.Directory;
     using DirectoryReader = Lucene.Net.Index.DirectoryReader;
     using DocsEnum = Lucene.Net.Index.DocsEnum;
     using Document = Lucene.Net.Documents.Document;
@@ -43,12 +43,13 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
     using FieldType = Lucene.Net.Documents.FieldType;
     using IndexWriter = Lucene.Net.Index.IndexWriter;
     using IndexWriterConfig = Lucene.Net.Index.IndexWriterConfig;
+    using ITaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.ITaxonomyWriterCache;
+    using LockObtainFailedException = Lucene.Net.Store.LockObtainFailedException; // javadocs
     using LogByteSizeMergePolicy = Lucene.Net.Index.LogByteSizeMergePolicy;
     using OpenMode = Lucene.Net.Index.OpenMode;
     using ReaderManager = Lucene.Net.Index.ReaderManager;
     using SegmentInfos = Lucene.Net.Index.SegmentInfos;
     using StringField = Lucene.Net.Documents.StringField;
-    using ITaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.ITaxonomyWriterCache;
     using Terms = Lucene.Net.Index.Terms;
     using TermsEnum = Lucene.Net.Index.TermsEnum;
     using TextField = Lucene.Net.Documents.TextField;
@@ -200,9 +201,9 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             {
                 string epochStr = null;
                 IDictionary<string, string> commitData = ReadCommitData(directory);
-                if (commitData != null && commitData.ContainsKey(INDEX_EPOCH))
+                if (commitData != null && commitData.TryGetValue(INDEX_EPOCH, out string value))
                 {
-                    epochStr = commitData[INDEX_EPOCH];
+                    epochStr = value;
                 }
                 // no commit data, or no epoch in it means an old taxonomy, so set its epoch to 1, for lack
                 // of a better value.
@@ -775,7 +776,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
         {
             lock (this)
             {
-                if (cacheMisses.Get() < cacheMissesUntilFill)
+                if (cacheMisses < cacheMissesUntilFill)
                 {
                     return;
                 }
@@ -1136,7 +1137,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                 cache.Clear();
                 cacheIsComplete = false;
                 shouldFillCache = true;
-                cacheMisses.Set(0);
+                cacheMisses.Value = 0;
 
                 // update indexEpoch as a taxonomy replace is just like it has be recreated
                 ++indexEpoch;

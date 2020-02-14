@@ -1,14 +1,14 @@
+using J2N.Threading;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -34,7 +34,7 @@ namespace Lucene.Net.Index
     [TestFixture]
     public class TestStressIndexing : LuceneTestCase
     {
-        private abstract class TimedThread : ThreadClass
+        private abstract class TimedThread : ThreadJob
         {
             internal volatile bool Failed;
             internal int Count;
@@ -121,9 +121,9 @@ namespace Lucene.Net.Index
                 for (int j = 0; j < 10; j++)
                 {
                     Documents.Document d = new Documents.Document();
-                    int n = Random().Next();
+                    int n = Random.Next();
                     d.Add(NewStringFieldFunc("id", Convert.ToString(NextID++), Field.Store.YES));
-                    d.Add(NewTextFieldFunc("contents", English.IntToEnglish(n), Field.Store.NO));
+                    d.Add(NewTextFieldFunc("contents", English.Int32ToEnglish(n), Field.Store.NO));
                     Writer.AddDocument(d);
                 }
 
@@ -159,7 +159,11 @@ namespace Lucene.Net.Index
                 for (int i = 0; i < 100; i++)
                 {
                     IndexReader ir = DirectoryReader.Open(Directory);
-                    IndexSearcher @is = OuterInstance.NewSearcher(ir);
+                    IndexSearcher @is =
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        OuterInstance.
+#endif
+                        NewSearcher(ir);
                     ir.Dispose();
                 }
                 Count += 100;
@@ -173,7 +177,7 @@ namespace Lucene.Net.Index
 
         public virtual void RunStressTest(Directory directory, IConcurrentMergeScheduler mergeScheduler)
         {
-            IndexWriter modifier = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetOpenMode(OpenMode.CREATE).SetMaxBufferedDocs(10).SetMergeScheduler(mergeScheduler));
+            IndexWriter modifier = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetOpenMode(OpenMode.CREATE).SetMaxBufferedDocs(10).SetMergeScheduler(mergeScheduler));
             modifier.Commit();
 
             TimedThread[] threads = new TimedThread[4];
@@ -228,7 +232,7 @@ namespace Lucene.Net.Index
             MockDirectoryWrapper wrapper = directory as MockDirectoryWrapper;
             if (wrapper != null)
             {
-                wrapper.AssertNoUnrefencedFilesOnClose = true;
+                wrapper.AssertNoUnreferencedFilesOnClose = true;
             }
 
             RunStressTest(directory, newScheduler());

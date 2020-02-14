@@ -1,9 +1,8 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using NUnit.Framework;
+using System;
 
 namespace Lucene.Net.Index
 {
@@ -42,8 +41,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestQueries()
         {
-            Single_Renamed = Single(Random(), false);
-            Parallel_Renamed = Parallel(Random(), false);
+            Single_Renamed = Single(Random, false);
+            Parallel_Renamed = Parallel(Random, false);
 
             Queries();
 
@@ -62,8 +61,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestQueriesCompositeComposite()
         {
-            Single_Renamed = Single(Random(), true);
-            Parallel_Renamed = Parallel(Random(), true);
+            Single_Renamed = Single(Random, true);
+            Parallel_Renamed = Parallel(Random, true);
 
             Queries();
 
@@ -99,8 +98,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestRefCounts1()
         {
-            Directory dir1 = GetDir1(Random());
-            Directory dir2 = GetDir2(Random());
+            Directory dir1 = GetDir1(Random);
+            Directory dir2 = GetDir2(Random);
             DirectoryReader ir1, ir2;
             // close subreaders, ParallelReader will not change refCounts, but close on its own close
             ParallelCompositeReader pr = new ParallelCompositeReader(ir1 = DirectoryReader.Open(dir1), ir2 = DirectoryReader.Open(dir2));
@@ -120,8 +119,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestRefCounts2()
         {
-            Directory dir1 = GetDir1(Random());
-            Directory dir2 = GetDir2(Random());
+            Directory dir1 = GetDir1(Random);
+            Directory dir2 = GetDir2(Random);
             DirectoryReader ir1 = DirectoryReader.Open(dir1);
             DirectoryReader ir2 = DirectoryReader.Open(dir2);
 
@@ -149,7 +148,7 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestReaderClosedListener1()
         {
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
 
             // with overlapping
@@ -191,7 +190,7 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestReaderClosedListener2()
         {
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
 
             // with overlapping
@@ -231,7 +230,7 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestCloseInnerReader()
         {
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
             Assert.AreEqual(1, ir1.GetSequentialSubReaders()[0].RefCount);
 
@@ -278,11 +277,11 @@ namespace Lucene.Net.Index
         public virtual void TestIncompatibleIndexes1()
         {
             // two documents:
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
 
             // one document only:
             Directory dir2 = NewDirectory();
-            IndexWriter w2 = new IndexWriter(dir2, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter w2 = new IndexWriter(dir2, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             Document d3 = new Document();
 
             d3.Add(NewTextField("f3", "v1", Field.Store.YES));
@@ -303,7 +302,7 @@ namespace Lucene.Net.Index
             }
             try
             {
-                new ParallelCompositeReader(Random().NextBoolean(), ir1, ir2);
+                new ParallelCompositeReader(Random.NextBoolean(), ir1, ir2);
                 Assert.Fail("didn't get expected exception: indexes don't have same number of documents");
             }
 #pragma warning disable 168
@@ -325,8 +324,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestIncompatibleIndexes2()
         {
-            Directory dir1 = GetDir1(Random());
-            Directory dir2 = GetInvalidStructuredDir2(Random());
+            Directory dir1 = GetDir1(Random);
+            Directory dir2 = GetInvalidStructuredDir2(Random);
 
             DirectoryReader ir1 = DirectoryReader.Open(dir1), ir2 = DirectoryReader.Open(dir2);
             CompositeReader[] readers = new CompositeReader[] { ir1, ir2 };
@@ -343,7 +342,7 @@ namespace Lucene.Net.Index
             }
             try
             {
-                new ParallelCompositeReader(Random().NextBoolean(), readers, readers);
+                new ParallelCompositeReader(Random.NextBoolean(), readers, readers);
                 Assert.Fail("didn't get expected exception: indexes don't have same subreader structure");
             }
 #pragma warning disable 168
@@ -365,8 +364,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestIncompatibleIndexes3()
         {
-            Directory dir1 = GetDir1(Random());
-            Directory dir2 = GetDir2(Random());
+            Directory dir1 = GetDir1(Random);
+            Directory dir2 = GetDir2(Random);
 
             CompositeReader ir1 = new MultiReader(DirectoryReader.Open(dir1), SlowCompositeReaderWrapper.Wrap(DirectoryReader.Open(dir1))), ir2 = new MultiReader(DirectoryReader.Open(dir2), DirectoryReader.Open(dir2));
             CompositeReader[] readers = new CompositeReader[] { ir1, ir2 };
@@ -383,7 +382,7 @@ namespace Lucene.Net.Index
             }
             try
             {
-                new ParallelCompositeReader(Random().NextBoolean(), readers, readers);
+                new ParallelCompositeReader(Random.NextBoolean(), readers, readers);
                 Assert.Fail("didn't get expected exception: indexes don't have same subreader structure");
             }
 #pragma warning disable 168
@@ -405,8 +404,8 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestIgnoreStoredFields()
         {
-            Directory dir1 = GetDir1(Random());
-            Directory dir2 = GetDir2(Random());
+            Directory dir1 = GetDir1(Random);
+            Directory dir2 = GetDir2(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
             CompositeReader ir2 = DirectoryReader.Open(dir2);
 
@@ -472,7 +471,7 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestToString()
         {
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
             ParallelCompositeReader pr = new ParallelCompositeReader(new CompositeReader[] { ir1 });
 
@@ -486,7 +485,7 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestToStringCompositeComposite()
         {
-            Directory dir1 = GetDir1(Random());
+            Directory dir1 = GetDir1(Random);
             CompositeReader ir1 = DirectoryReader.Open(dir1);
             ParallelCompositeReader pr = new ParallelCompositeReader(new CompositeReader[] { new MultiReader(ir1) });
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using Lucene.Net.Analysis.TokenAttributes;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Wikipedia
 {
@@ -72,7 +73,7 @@ namespace Lucene.Net.Analysis.Wikipedia
         [Test]
         public virtual void TestLucene1133()
         {
-            ISet<string> untoks = new HashSet<string>();
+            ISet<string> untoks = new JCG.HashSet<string>();
             untoks.Add(WikipediaTokenizer.CATEGORY);
             untoks.Add(WikipediaTokenizer.ITALICS);
             //should be exactly the same, regardless of untoks
@@ -86,7 +87,7 @@ namespace Lucene.Net.Analysis.Wikipedia
         [Test]
         public virtual void TestBoth()
         {
-            ISet<string> untoks = new HashSet<string>();
+            ISet<string> untoks = new JCG.HashSet<string>();
             untoks.Add(WikipediaTokenizer.CATEGORY);
             untoks.Add(WikipediaTokenizer.ITALICS);
             string test = "[[Category:a b c d]] [[Category:e f g]] [[link here]] [[link there]] ''italics here'' something ''more italics'' [[Category:h   i   j]]";
@@ -114,7 +115,7 @@ namespace Lucene.Net.Analysis.Wikipedia
         public virtual void TestRandomStrings()
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -126,7 +127,7 @@ namespace Lucene.Net.Analysis.Wikipedia
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new WikipediaTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -138,7 +139,7 @@ namespace Lucene.Net.Analysis.Wikipedia
         [Test]
         public virtual void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             Analyzer a = new AnalyzerAnonymousInnerClassHelper2(this);
             CheckRandomData(random, a, 100 * RANDOM_MULTIPLIER, 8192);
         }
@@ -152,7 +153,7 @@ namespace Lucene.Net.Analysis.Wikipedia
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new WikipediaTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);

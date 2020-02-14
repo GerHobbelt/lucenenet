@@ -52,6 +52,7 @@ a:focus {
 }
 nav.navbar {
     background-color:white;
+    min-height: 80px;
 }
 .navbar-brand  {
     height: 80px;
@@ -75,7 +76,7 @@ header ul.navbar-nav {
 }
 
 .sidefilter {
-    top:120px;
+    top: 120px;
 }
 
 .sidetoc {

@@ -1,10 +1,10 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -55,8 +55,12 @@ namespace Lucene.Net.Search
             base.SetUp();
             INDEX_SIZE = AtLeast(2000);
             Index = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Index, Similarity, TimeZone);
-            RandomGen random = new RandomGen(this, Random());
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                LuceneTestCase.Random, Index);
+            RandomGen random = new RandomGen(this, Random);
             for (int i = 0; i < INDEX_SIZE; ++i) // don't decrease; if to low the
             {
                 // problem doesn't show up
@@ -74,7 +78,7 @@ namespace Lucene.Net.Search
                 doc.Add(NewStringField("mandant", Convert.ToString(i % 3), Field.Store.YES));
                 writer.AddDocument(doc);
             }
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Query = new TermQuery(new Term("content", "test"));
         }
@@ -121,7 +125,7 @@ namespace Lucene.Net.Search
             // make a query without sorting first
             ScoreDoc[] hitsByRank = searcher.Search(Query, null, int.MaxValue).ScoreDocs;
             CheckHits(hitsByRank, "Sort by rank: "); // check for duplicates
-            IDictionary<int?, int?> resultMap = new SortedDictionary<int?, int?>();
+            IDictionary<int?, int?> resultMap = new JCG.SortedDictionary<int?, int?>();
             // store hits in TreeMap - TreeMap does not allow duplicates; existing
             // entries are silently overwritten
             for (int hitid = 0; hitid < hitsByRank.Length; ++hitid)
@@ -170,19 +174,19 @@ namespace Lucene.Net.Search
         {
             if (hits != null)
             {
-                IDictionary<int?, int?> idMap = new SortedDictionary<int?, int?>();
+                IDictionary<int?, int?> idMap = new JCG.SortedDictionary<int?, int?>();
                 for (int docnum = 0; docnum < hits.Length; ++docnum)
                 {
                     int? luceneId = null;
 
                     luceneId = Convert.ToInt32(hits[docnum].Doc);
-                    if (idMap.ContainsKey(luceneId))
+                    if (idMap.TryGetValue(luceneId, out int? value))
                     {
                         StringBuilder message = new StringBuilder(prefix);
                         message.Append("Duplicate key for hit index = ");
                         message.Append(docnum);
                         message.Append(", previous index = ");
-                        message.Append((idMap[luceneId]).ToString());
+                        message.Append(value.ToString());
                         message.Append(", Lucene ID = ");
                         message.Append(luceneId);
                         Log(message.ToString());

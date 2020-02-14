@@ -1,17 +1,12 @@
-﻿using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Facet.Taxonomy.Directory
 {
-
-
     using Directory = Lucene.Net.Store.Directory;
     using DiskOrdinalMap = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter.DiskOrdinalMap;
     using IOrdinalMap = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter.IOrdinalMap;
@@ -46,17 +41,17 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             {
                 dirs[i] = NewDirectory();
                 var tw = new DirectoryTaxonomyWriter(dirs[i]);
-                ThreadClass[] addThreads = new ThreadClass[4];
+                ThreadJob[] addThreads = new ThreadJob[4];
                 for (int j = 0; j < addThreads.Length; j++)
                 {
                     addThreads[j] = new ThreadAnonymousInnerClassHelper(this, range, numCats, tw);
                 }
 
-                foreach (ThreadClass t in addThreads)
+                foreach (ThreadJob t in addThreads)
                 {
                     t.Start();
                 }
-                foreach (ThreadClass t in addThreads)
+                foreach (ThreadJob t in addThreads)
                 {
                     t.Join();
                 }
@@ -74,7 +69,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             IOUtils.Dispose(dirs);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestAddTaxonomy outerInstance;
 
@@ -92,7 +87,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
 
             public override void Run()
             {
-                Random random = Random();
+                Random random = Random;
                 while (numCats.DecrementAndGet() > 0)
                 {
                     string cat = Convert.ToString(random.Next(range));
@@ -111,7 +106,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
 
         private IOrdinalMap randomOrdinalMap()
         {
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 return new DiskOrdinalMap(CreateTempFile("taxoMap", "").FullName);
             }
@@ -202,11 +197,11 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
         [Test]
         public virtual void TestMedium()
         {
-            Random random = Random();
+            Random random = Random;
             int numTests = AtLeast(3);
             for (int i = 0; i < numTests; i++)
             {
-                Dotest(TestUtil.NextInt(random, 2, 100), TestUtil.NextInt(random, 100, 1000));
+                Dotest(TestUtil.NextInt32(random, 2, 100), TestUtil.NextInt32(random, 100, 1000));
             }
         }
 
@@ -254,7 +249,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             // again, in parallel -- in the end, no duplicate categories should exist.
             Directory dest = NewDirectory();
             var destTw = new DirectoryTaxonomyWriter(dest);
-            ThreadClass t = new ThreadAnonymousInnerClassHelper2(this, numCategories, destTw);
+            var t = new ThreadAnonymousInnerClassHelper2(this, numCategories, destTw);
             t.Start();
 
             IOrdinalMap map = new MemoryOrdinalMap();
@@ -267,7 +262,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             var dtr = new DirectoryTaxonomyReader(dest);
             // +2 to account for the root category + "a"
             Assert.AreEqual(numCategories + 2, dtr.Count);
-            var categories = new HashSet<FacetLabel>();
+            var categories = new JCG.HashSet<FacetLabel>();
             for (int i = 1; i < dtr.Count; i++)
             {
                 FacetLabel cat = dtr.GetPath(i);
@@ -278,7 +273,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             IOUtils.Dispose(src, dest);
         }
 
-        private class ThreadAnonymousInnerClassHelper2 : ThreadClass
+        private class ThreadAnonymousInnerClassHelper2 : ThreadJob
         {
             private readonly TestAddTaxonomy outerInstance;
 

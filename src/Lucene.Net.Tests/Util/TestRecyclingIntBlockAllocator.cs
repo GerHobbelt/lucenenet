@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Util
 {
@@ -36,14 +37,14 @@ namespace Lucene.Net.Util
 
         private RecyclingInt32BlockAllocator NewAllocator()
         {
-            return new RecyclingInt32BlockAllocator(1 << (2 + Random().Next(15)), Random().Next(97), Util.Counter.NewCounter());
+            return new RecyclingInt32BlockAllocator(1 << (2 + Random.Next(15)), Random.Next(97), Util.Counter.NewCounter());
         }
 
         [Test]
         public virtual void TestAllocate()
         {
             RecyclingInt32BlockAllocator allocator = NewAllocator();
-            HashSet<int[]> set = new HashSet<int[]>();
+            ISet<int[]> set = new JCG.HashSet<int[]>();
             int[] block = allocator.GetInt32Block();
             set.Add(block);
             Assert.IsNotNull(block);
@@ -65,7 +66,7 @@ namespace Lucene.Net.Util
         public virtual void TestAllocateAndRecycle()
         {
             RecyclingInt32BlockAllocator allocator = NewAllocator();
-            HashSet<int[]> allocated = new HashSet<int[]>();
+            ISet<int[]> allocated = new JCG.HashSet<int[]>();
 
             int[] block = allocator.GetInt32Block();
             allocated.Add(block);
@@ -75,7 +76,7 @@ namespace Lucene.Net.Util
             int numIters = AtLeast(97);
             for (int i = 0; i < numIters; i++)
             {
-                int num = 1 + Random().Next(39);
+                int num = 1 + Random.Next(39);
                 for (int j = 0; j < num; j++)
                 {
                     block = allocator.GetInt32Block();
@@ -85,8 +86,8 @@ namespace Lucene.Net.Util
                     Assert.AreEqual(4 * size * (allocated.Count + allocator.NumBufferedBlocks), allocator.BytesUsed);
                 }
                 int[][] array = allocated.ToArray(/*new int[0][]*/);
-                int begin = Random().Next(array.Length);
-                int end = begin + Random().Next(array.Length - begin);
+                int begin = Random.Next(array.Length);
+                int end = begin + Random.Next(array.Length - begin);
                 IList<int[]> selected = new List<int[]>();
                 for (int j = begin; j < end; j++)
                 {
@@ -107,7 +108,7 @@ namespace Lucene.Net.Util
         public virtual void TestAllocateAndFree()
         {
             RecyclingInt32BlockAllocator allocator = NewAllocator();
-            HashSet<int[]> allocated = new HashSet<int[]>();
+            ISet<int[]> allocated = new JCG.HashSet<int[]>();
             int freeButAllocated = 0;
             int[] block = allocator.GetInt32Block();
             allocated.Add(block);
@@ -117,7 +118,7 @@ namespace Lucene.Net.Util
             int numIters = AtLeast(97);
             for (int i = 0; i < numIters; i++)
             {
-                int num = 1 + Random().Next(39);
+                int num = 1 + Random.Next(39);
                 for (int j = 0; j < num; j++)
                 {
                     block = allocator.GetInt32Block();
@@ -129,8 +130,8 @@ namespace Lucene.Net.Util
                 }
 
                 int[][] array = allocated.ToArray(/*new int[0][]*/);
-                int begin = Random().Next(array.Length);
-                int end = begin + Random().Next(array.Length - begin);
+                int begin = Random.Next(array.Length);
+                int end = begin + Random.Next(array.Length - begin);
                 for (int j = begin; j < end; j++)
                 {
                     int[] b = array[j];
@@ -143,7 +144,7 @@ namespace Lucene.Net.Util
                 }
                 // randomly free blocks
                 int numFreeBlocks = allocator.NumBufferedBlocks;
-                int freeBlocks = allocator.FreeBlocks(Random().Next(7 + allocator.MaxBufferedBlocks));
+                int freeBlocks = allocator.FreeBlocks(Random.Next(7 + allocator.MaxBufferedBlocks));
                 Assert.AreEqual(allocator.NumBufferedBlocks, numFreeBlocks - freeBlocks);
             }
         }

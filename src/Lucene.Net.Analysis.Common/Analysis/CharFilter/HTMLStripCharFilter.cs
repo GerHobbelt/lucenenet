@@ -1,5 +1,5 @@
-﻿using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
+﻿using J2N;
+using Lucene.Net.Analysis.Util;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -10,21 +10,21 @@ using System.IO;
 namespace Lucene.Net.Analysis.CharFilters
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// A <see cref="CharFilter"/> that wraps another <see cref="TextReader"/> and attempts to strip out HTML constructs.
@@ -30686,13 +30686,14 @@ namespace Lucene.Net.Analysis.CharFilters
                 {"amp", "AMP" },
             };
 
-        private static readonly CharArrayMap<char> entityValues
+        private static readonly CharArrayMap<char> entityValues = LoadEntityValues();
+
+        private static CharArrayMap<char> LoadEntityValues() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
+        {
+            CharArrayMap<char> entityValues
 #pragma warning disable 612, 618
             = new CharArrayMap<char>(LuceneVersion.LUCENE_CURRENT, 253, false);
 #pragma warning restore 612, 618
-
-        static HTMLStripCharFilter()
-        {
             string[] entities = {
                 "AElig", "\u00C6", "Aacute", "\u00C1", "Acirc", "\u00C2",
                 "Agrave", "\u00C0", "Alpha", "\u0391", "Aring", "\u00C5",
@@ -30772,12 +30773,12 @@ namespace Lucene.Net.Analysis.CharFilters
             {
                 var value = entities[i + 1][0];
                 entityValues.Put(entities[i], value);
-                string upperCaseVariant = upperCaseVariantsAccepted.ContainsKey(entities[i]) ? upperCaseVariantsAccepted[entities[i]] : null;
-                if (upperCaseVariant != null)
+                if (upperCaseVariantsAccepted.TryGetValue(entities[i], out string upperCaseVariant) && upperCaseVariant != null)
                 {
                     entityValues.Put(upperCaseVariant, value);
                 }
             }
+            return entityValues;
         }
         private static readonly int INITIAL_INPUT_SEGMENT_SIZE = 1024;
         private static readonly char BLOCK_LEVEL_START_TAG_REPLACEMENT = '\n';
@@ -31392,8 +31393,8 @@ namespace Lucene.Net.Analysis.CharFilters
                                 {
                                     outputSegment = entitySegment;
                                     outputSegment.Clear();
-                                    if (codePoint >= Character.MIN_SURROGATE
-                                        && codePoint <= Character.MAX_SURROGATE)
+                                    if (codePoint >= Character.MinSurrogate
+                                        && codePoint <= Character.MaxSurrogate)
                                     {
                                         outputSegment.UnsafeWrite(REPLACEMENT_CHARACTER);
                                     }
@@ -31652,8 +31653,8 @@ namespace Lucene.Net.Analysis.CharFilters
                                 {
                                     outputSegment = entitySegment;
                                     outputSegment.Clear();
-                                    if (codePoint >= Character.MIN_SURROGATE
-                                        && codePoint <= Character.MAX_SURROGATE)
+                                    if (codePoint >= Character.MinSurrogate
+                                        && codePoint <= Character.MaxSurrogate)
                                     {
                                         outputSegment.UnsafeWrite(REPLACEMENT_CHARACTER);
                                     }

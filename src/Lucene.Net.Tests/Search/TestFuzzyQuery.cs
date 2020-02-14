@@ -46,7 +46,11 @@ namespace Lucene.Net.Search
         public virtual void TestFuzziness()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             AddDoc("aaaaa", writer);
             AddDoc("aaaab", writer);
             AddDoc("aaabb", writer);
@@ -55,7 +59,7 @@ namespace Lucene.Net.Search
             AddDoc("bbbbb", writer);
             AddDoc("ddddd", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -87,7 +91,7 @@ namespace Lucene.Net.Search
             query = new FuzzyQuery(new Term("field", "bbbbb"), FuzzyQuery.DefaultMaxEdits, 0);
             hits = searcher.Search(query, null, 1000).ScoreDocs;
             Assert.AreEqual(3, hits.Length, "3 documents should match");
-            IList<string> order = Arrays.AsList("bbbbb", "abbbb", "aabbb");
+            IList<string> order = new List<string> { "bbbbb", "abbbb", "aabbb" };
             for (int i = 0; i < hits.Length; i++)
             {
                 string term = searcher.Doc(hits[i].Doc).Get("field");
@@ -100,7 +104,7 @@ namespace Lucene.Net.Search
             query = new FuzzyQuery(new Term("field", "bbbbb"), FuzzyQuery.DefaultMaxEdits, 0, 2, false);
             hits = searcher.Search(query, null, 1000).ScoreDocs;
             Assert.AreEqual(2, hits.Length, "only 2 documents should match");
-            order = Arrays.AsList("bbbbb", "abbbb");
+            order = new List<string> { "bbbbb", "abbbb" };
             for (int i = 0; i < hits.Length; i++)
             {
                 string term = searcher.Doc(hits[i].Doc).Get("field");
@@ -200,7 +204,11 @@ namespace Lucene.Net.Search
         public virtual void Test2()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, new MockAnalyzer(Random(), MockTokenizer.KEYWORD, false), Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory, new MockAnalyzer(Random, MockTokenizer.KEYWORD, false));
             AddDoc("LANGE", writer);
             AddDoc("LUETH", writer);
             AddDoc("PIRSING", writer);
@@ -220,7 +228,7 @@ namespace Lucene.Net.Search
             AddDoc("WOJNAROWSKI", writer);
             AddDoc("WRICKE", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -244,14 +252,22 @@ namespace Lucene.Net.Search
         public virtual void TestTieBreaker()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             AddDoc("a123456", writer);
             AddDoc("c123456", writer);
             AddDoc("d123456", writer);
             AddDoc("e123456", writer);
 
             Directory directory2 = NewDirectory();
-            RandomIndexWriter writer2 = new RandomIndexWriter(Random(), directory2, Similarity, TimeZone);
+            RandomIndexWriter writer2 = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory2);
             AddDoc("a123456", writer2);
             AddDoc("b123456", writer2);
             AddDoc("b123456", writer2);
@@ -259,8 +275,8 @@ namespace Lucene.Net.Search
             AddDoc("c123456", writer2);
             AddDoc("f123456", writer2);
 
-            IndexReader ir1 = writer.Reader;
-            IndexReader ir2 = writer2.Reader;
+            IndexReader ir1 = writer.GetReader();
+            IndexReader ir2 = writer2.GetReader();
 
             MultiReader mr = new MultiReader(ir1, ir2);
             IndexSearcher searcher = NewSearcher(mr);
@@ -282,12 +298,16 @@ namespace Lucene.Net.Search
         public virtual void TestBoostOnlyRewrite()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             AddDoc("Lucene", writer);
             AddDoc("Lucene", writer);
             AddDoc("Lucenne", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -306,9 +326,13 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestGiga()
         {
-            MockAnalyzer analyzer = new MockAnalyzer(Random());
+            MockAnalyzer analyzer = new MockAnalyzer(Random);
             Directory index = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), index, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, index);
 
             AddDoc("Lucene in Action", w);
             AddDoc("Lucene for Dummies", w);
@@ -327,7 +351,7 @@ namespace Lucene.Net.Search
             AddDoc("Willis bruce", w);
             AddDoc("Brute willis", w);
             AddDoc("B. willis", w);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             Query q = new FuzzyQuery(new Term("field", "giga"), 0);
@@ -345,11 +369,15 @@ namespace Lucene.Net.Search
         public virtual void TestDistanceAsEditsSearching()
         {
             Directory index = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), index, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, index);
             AddDoc("foobar", w);
             AddDoc("test", w);
             AddDoc("working", w);
-            IndexReader reader = w.Reader;
+            IndexReader reader = w.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             w.Dispose();
 

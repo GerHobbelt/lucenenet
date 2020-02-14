@@ -1,7 +1,8 @@
-﻿using Lucene.Net.Support;
+﻿using J2N;
 using System;
 #if FEATURE_SERIALIZABLE_EXCEPTIONS
 using System.Runtime.Serialization;
+using System.Security.Permissions;
 #endif
 using System.Text;
 
@@ -103,7 +104,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard.Parser
                     default:
                         if ((ch = str[i]) < 0x20 || ch > 0x7e)
                         {
-                            string s = "0000" + Number.ToString(ch, 16);
+                            string s = "0000" + ((int)ch).ToString(16);
                             retval.Append("\\u" + s.Substring(s.Length - 4, /*s.Length - (s.Length - 4)*/ 4));
                         }
                         else
@@ -183,9 +184,17 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard.Parser
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-        public TokenMgrError(SerializationInfo info, StreamingContext context)
+        protected TokenMgrError(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
+            errorCode = info.GetInt32("errorCode");
+        }
+
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue("errorCode", errorCode, typeof(int));
         }
 #endif
     }

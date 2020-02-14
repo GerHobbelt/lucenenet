@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -148,11 +148,15 @@ namespace Lucene.Net.Search
             // Tests that if a Filter produces a null DocIdSet, which is given to
             // IndexSearcher, everything works fine. this came up in LUCENE-1754.
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             doc.Add(NewStringField("c", "val", Field.Store.NO));
             writer.AddDocument(doc);
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
 
             // First verify the document is searchable.
@@ -186,11 +190,15 @@ namespace Lucene.Net.Search
         public virtual void TestNullIteratorFilteredDocIdSet()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             doc.Add(NewStringField("c", "val", Field.Store.NO));
             writer.AddDocument(doc);
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
 
             // First verify the document is searchable.

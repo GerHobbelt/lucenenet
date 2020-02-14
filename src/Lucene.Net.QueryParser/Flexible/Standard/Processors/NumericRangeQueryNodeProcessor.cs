@@ -8,7 +8,7 @@ using Lucene.Net.QueryParsers.Flexible.Core.Util;
 using Lucene.Net.QueryParsers.Flexible.Messages;
 using Lucene.Net.QueryParsers.Flexible.Standard.Config;
 using Lucene.Net.QueryParsers.Flexible.Standard.Nodes;
-using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 
@@ -113,19 +113,19 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard.Processors
                             switch (numericConfig.Type)
                             {
                                 case NumericType.INT64:
-                                    if (upperNumber != null) upperNumber = Convert.ToInt64(upperNumber);
+                                    if (upperNumber != null) upperNumber = Convert.ToInt64(upperNumber); // LUCENENET TODO: Find a way to pass culture
                                     if (lowerNumber != null) lowerNumber = Convert.ToInt64(lowerNumber);
                                     break;
                                 case NumericType.INT32:
-                                    if (upperNumber != null) upperNumber = Convert.ToInt32(upperNumber);
+                                    if (upperNumber != null) upperNumber = Convert.ToInt32(upperNumber); // LUCENENET TODO: Find a way to pass culture
                                     if (lowerNumber != null) lowerNumber = Convert.ToInt32(lowerNumber);
                                     break;
                                 case NumericType.DOUBLE:
-                                    if (upperNumber != null) upperNumber = Convert.ToDouble(upperNumber);
+                                    if (upperNumber != null) upperNumber = Convert.ToDouble(upperNumber); // LUCENENET TODO: Find a way to pass culture
                                     if (lowerNumber != null) lowerNumber = Convert.ToDouble(lowerNumber);
                                     break;
                                 case NumericType.SINGLE:
-                                    if (upperNumber != null) upperNumber = Convert.ToSingle(upperNumber);
+                                    if (upperNumber != null) upperNumber = Convert.ToSingle(upperNumber); // LUCENENET TODO: Find a way to pass culture
                                     if (lowerNumber != null) lowerNumber = Convert.ToSingle(lowerNumber);
                                     break;
                             }

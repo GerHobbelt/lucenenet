@@ -1,10 +1,11 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N;
+using J2N.Numerics;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.QueryParsers.Flexible.Standard;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -71,7 +72,7 @@ namespace Lucene.Net.QueryParsers.Classic
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public MethodRemovedUseAnother(SerializationInfo info, StreamingContext context)
+            protected MethodRemovedUseAnother(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
             }
@@ -295,7 +296,7 @@ namespace Lucene.Net.QueryParsers.Classic
         /// the current thread, QueryParser will utilize it. You can also explicitly set a culture.
         /// Setting the culture to <c>null</c> will restore the default behavior if you have explicitly set a culture.
         /// </summary>
-        public virtual CultureInfo Locale
+        public virtual CultureInfo Locale // LUCENENET TODO: API - Rename Culture
         {
             get { return this.locale == null ? CultureInfo.CurrentCulture : this.locale; }
             set { this.locale = value; }
@@ -364,13 +365,13 @@ namespace Lucene.Net.QueryParsers.Classic
                 return this.dateResolution;
             }
 
-            if (!fieldToDateResolution.ContainsKey(fieldName))
+            if (!fieldToDateResolution.TryGetValue(fieldName, out DateTools.Resolution resolution))
             {
                 // no date resolutions set for the given field; return default date resolution instead
                 return this.dateResolution;
             }
 
-            return fieldToDateResolution[fieldName];
+            return resolution;
         }
 
         /// <summary>
@@ -994,7 +995,7 @@ namespace Lucene.Net.QueryParsers.Classic
                 if (codePointMultiplier > 0)
                 {
                     codePoint += HexToInt32(curChar) * codePointMultiplier;
-                    codePointMultiplier = Number.URShift(codePointMultiplier, 4);
+                    codePointMultiplier = codePointMultiplier.TripleShift(4);
                     if (codePointMultiplier == 0)
                     {
                         output[length++] = (char)codePoint;

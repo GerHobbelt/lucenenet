@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Facet
 {
@@ -61,7 +62,7 @@ namespace Lucene.Net.Facet
 
         private readonly FacetsConfig config;
         private readonly BooleanQuery query;
-        private readonly IDictionary<string, int?> drillDownDims = new LinkedHashMap<string, int?>();
+        private readonly IDictionary<string, int?> drillDownDims = new JCG.LinkedDictionary<string, int?>();
 
         /// <summary>
         /// Used by <see cref="Clone"/>
@@ -69,7 +70,7 @@ namespace Lucene.Net.Facet
         internal DrillDownQuery(FacetsConfig config, BooleanQuery query, IDictionary<string, int?> drillDownDims)
         {
             this.query = (BooleanQuery)query.Clone();
-            this.drillDownDims.AddAll(drillDownDims);
+            this.drillDownDims.PutAll(drillDownDims);
             this.config = config;
         }
 
@@ -86,7 +87,7 @@ namespace Lucene.Net.Facet
                 throw new System.ArgumentException("cannot apply filter unless baseQuery isn't null; pass ConstantScoreQuery instead");
             }
             Debug.Assert(clauses.Length == 1 + other.drillDownDims.Count, clauses.Length + " vs " + (1 + other.drillDownDims.Count));
-            drillDownDims.AddAll(other.drillDownDims);
+            drillDownDims.PutAll(other.drillDownDims);
             query.Add(new FilteredQuery(clauses[0].Query, filter), Occur.MUST);
             for (int i = 1; i < clauses.Length; i++)
             {
@@ -109,7 +110,7 @@ namespace Lucene.Net.Facet
             {
                 query.Add(clause, Occur.MUST);
             }
-            this.drillDownDims.AddAll(drillDownDims);
+            this.drillDownDims.PutAll(drillDownDims);
             this.config = config;
         }
 
@@ -147,8 +148,7 @@ namespace Lucene.Net.Facet
         private void Merge(string dim, string[] path)
         {
             int index = 0;
-            int? idx;
-            if (drillDownDims.TryGetValue(dim, out idx) && idx.HasValue)
+            if (drillDownDims.TryGetValue(dim, out int? idx) && idx.HasValue)
             {
                 index = idx.Value;
             }

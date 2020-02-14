@@ -1,4 +1,9 @@
-﻿<!--
+﻿---
+uid: Lucene.Net.Expressions.JS
+summary: *content
+---
+
+<!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
  this work for additional information regarding copyright ownership.
@@ -20,14 +25,23 @@
 A Javascript expression is a numeric expression specified using an expression syntax that's based on JavaScript expressions. You can construct expressions using:
 
 *   Integer, floating point, hex and octal literals
+
 *   Arithmetic operators: `+ - * / %`
+
 *   Bitwise operators: `| & ^ ~ << >> >>>`
+
 *   Boolean operators (including the ternary operator): `&& || ! ?:`
+
 *   Comparison operators: `< <= == >= >`
+
 *   Common mathematic functions: `abs ceil exp floor ln log2 log10 logn max min sqrt pow`
+
 *   Trigonometric library functions: `acosh acos asinh asin atanh atan atan2 cosh cos sinh sin tanh tan`
+
 *   Distance functions: `haversin`
+
 *   Miscellaneous functions: `min, max`
+
 *   Arbitrary external variables - see <xref:Lucene.Net.Expressions.Bindings>
 
  JavaScript order of precedence rules apply for operators. Shortcut evaluation is used for logical operators—the second argument is only evaluated if the value of the expression cannot be determined after evaluating the first argument. For example, in the expression `a || b`, `b` is only evaluated if a is not true. 

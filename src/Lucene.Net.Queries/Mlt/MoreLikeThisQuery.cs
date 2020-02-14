@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Queries.Mlt
 {
@@ -146,9 +147,9 @@ namespace Lucene.Net.Queries.Mlt
             result = prime * result + minDocFreq;
             result = prime * result + minTermFrequency;
             result = prime * result + Arrays.GetHashCode(moreLikeFields);
-            result = prime * result + Number.SingleToInt32Bits(percentTermsToMatch);
-            // LUCENENET: wrap in Equatable to compare set contents
-            result = prime * result + ((stopWords == null) ? 0 : Equatable.Wrap(stopWords).GetHashCode());
+            result = prime * result + J2N.BitConversion.SingleToInt32Bits(percentTermsToMatch);
+            // LUCENENET specific: use structural equality comparison
+            result = prime * result + ((stopWords == null) ? 0 : JCG.SetEqualityComparer<string>.Default.GetHashCode(stopWords));
             return result;
         }
 
@@ -216,7 +217,7 @@ namespace Lucene.Net.Queries.Mlt
             {
                 return false;
             }
-            if (Number.SingleToInt32Bits(percentTermsToMatch) != Number.SingleToInt32Bits(other.percentTermsToMatch))
+            if (J2N.BitConversion.SingleToInt32Bits(percentTermsToMatch) != J2N.BitConversion.SingleToInt32Bits(other.percentTermsToMatch))
             {
                 return false;
             }
@@ -227,8 +228,8 @@ namespace Lucene.Net.Queries.Mlt
                     return false;
                 }
             }
-            // LUCENENET: wrap in Equatable to compare set contents
-            else if (!Equatable.Wrap(stopWords).Equals(other.stopWords))
+            // LUCENENET specific: use structural equality comparison
+            else if (!JCG.SetEqualityComparer<string>.Default.Equals(stopWords, other.stopWords))
             {
                 return false;
             }

@@ -1,19 +1,20 @@
+using J2N.Collections.Generic.Extensions;
 using Lucene.Net.Analysis;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
 using Lucene.Net.Util.Automaton;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.Lucene41
 {
-    using Lucene.Net.Randomized.Generators;
-    using NUnit.Framework;
-    using System.IO;
-
     /*
          * Licensed to the Apache Software Foundation (ASF) under one or more
          * contributor license agreements.  See the NOTICE file distributed with
@@ -83,7 +84,7 @@ namespace Lucene.Net.Codecs.Lucene41
             iwc.SetCodec(TestUtil.AlwaysPostingsFormat(new Lucene41PostingsFormat()));
             // TODO we could actually add more fields implemented with different PFs
             // or, just put this test into the usual rotation?
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, (IndexWriterConfig)iwc.Clone());
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, (IndexWriterConfig)iwc.Clone());
             Document doc = new Document();
             FieldType docsOnlyType = new FieldType(TextField.TYPE_NOT_STORED);
             // turn this on for a cross-check
@@ -121,7 +122,7 @@ namespace Lucene.Net.Codecs.Lucene41
             doc.Add(field8);
             for (int i = 0; i < MAXDOC; i++)
             {
-                string stringValue = Convert.ToString(i) + " verycommon " + English.IntToEnglish(i).Replace('-', ' ') + " " + TestUtil.RandomSimpleString(Random());
+                string stringValue = Convert.ToString(i) + " verycommon " + English.Int32ToEnglish(i).Replace('-', ' ') + " " + TestUtil.RandomSimpleString(Random);
                 field1.SetStringValue(stringValue);
                 field2.SetStringValue(stringValue);
                 field3.SetStringValue(stringValue);
@@ -214,7 +215,7 @@ namespace Lucene.Net.Codecs.Lucene41
                 int numIntersections = AtLeast(3);
                 for (int i = 0; i < numIntersections; i++)
                 {
-                    string re = AutomatonTestUtil.RandomRegexp(Random());
+                    string re = AutomatonTestUtil.RandomRegexp(Random);
                     CompiledAutomaton automaton = new CompiledAutomaton((new RegExp(re, RegExpSyntax.NONE)).ToAutomaton());
                     if (automaton.Type == CompiledAutomaton.AUTOMATON_TYPE.NORMAL)
                     {
@@ -234,10 +235,10 @@ namespace Lucene.Net.Codecs.Lucene41
 
             // just an upper bound
             int numTests = AtLeast(20);
-            Random random = Random();
+            Random random = Random;
 
             // collect this number of terms from the left side
-            HashSet<BytesRef> tests = new HashSet<BytesRef>();
+            ISet<BytesRef> tests = new JCG.HashSet<BytesRef>();
             int numPasses = 0;
             while (numPasses < 10 && tests.Count < numTests)
             {
@@ -273,7 +274,7 @@ namespace Lucene.Net.Codecs.Lucene41
             }
 
             List<BytesRef> shuffledTests = new List<BytesRef>(tests);
-            Collections.Shuffle(shuffledTests);
+            shuffledTests.Shuffle(Random);
 
             foreach (BytesRef b in shuffledTests)
             {
@@ -335,7 +336,7 @@ namespace Lucene.Net.Codecs.Lucene41
         public virtual void AssertTermsEnum(TermsEnum leftTermsEnum, TermsEnum rightTermsEnum, bool deep)
         {
             BytesRef term;
-            IBits randomBits = new RandomBits(MAXDOC, Random().NextDouble(), Random());
+            IBits randomBits = new RandomBits(MAXDOC, Random.NextDouble(), Random);
             DocsAndPositionsEnum leftPositions = null;
             DocsAndPositionsEnum rightPositions = null;
             DocsEnum leftDocs = null;
@@ -471,7 +472,7 @@ namespace Lucene.Net.Codecs.Lucene41
 
             while (true)
             {
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
                     // nextDoc()
                     docid = leftDocs.NextDoc();
@@ -480,7 +481,7 @@ namespace Lucene.Net.Codecs.Lucene41
                 else
                 {
                     // advance()
-                    int skip = docid + (int)Math.Ceiling(Math.Abs(skipInterval + Random().NextDouble() * averageGap));
+                    int skip = docid + (int)Math.Ceiling(Math.Abs(skipInterval + Random.NextDouble() * averageGap));
                     docid = leftDocs.Advance(skip);
                     Assert.AreEqual(docid, rightDocs.Advance(skip));
                 }
@@ -511,7 +512,7 @@ namespace Lucene.Net.Codecs.Lucene41
 
             while (true)
             {
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
                     // nextDoc()
                     docid = leftDocs.NextDoc();
@@ -520,7 +521,7 @@ namespace Lucene.Net.Codecs.Lucene41
                 else
                 {
                     // advance()
-                    int skip = docid + (int)Math.Ceiling(Math.Abs(skipInterval + Random().NextDouble() * averageGap));
+                    int skip = docid + (int)Math.Ceiling(Math.Abs(skipInterval + Random.NextDouble() * averageGap));
                     docid = leftDocs.Advance(skip);
                     Assert.AreEqual(docid, rightDocs.Advance(skip));
                 }

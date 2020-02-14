@@ -23,13 +23,13 @@ using System;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries.Function;
 using Lucene.Net.Queries.Function.ValueSources;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Tests.Queries.Function
 {
@@ -102,13 +102,13 @@ namespace Lucene.Net.Tests.Queries.Function
             }
             // prepare a small index with just a few documents.
             dir = NewDirectory();
-            anlzr = new MockAnalyzer(Random());
+            anlzr = new MockAnalyzer(Random);
             IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, anlzr).SetMergePolicy(NewLogMergePolicy());
             if (doMultiSegment)
             {
-                iwc.SetMaxBufferedDocs(TestUtil.NextInt(Random(), 2, 7));
+                iwc.SetMaxBufferedDocs(TestUtil.NextInt32(Random, 2, 7));
             }
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
             // add docs not exactly in natural ID order, to verify we do check the order of docs by scores
             int remaining = N_DOCS;
             bool[] done = new bool[N_DOCS];

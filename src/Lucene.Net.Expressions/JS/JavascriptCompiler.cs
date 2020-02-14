@@ -1,3 +1,5 @@
+using J2N.Collections.Generic.Extensions;
+using J2N.Text;
 using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using Lucene.Net.Queries.Function;
@@ -8,6 +10,8 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using JCG = J2N.Collections.Generic;
+using J2N;
 
 #if NETSTANDARD
 using System.IO;
@@ -91,19 +95,13 @@ namespace Lucene.Net.Expressions.JS
 
         private readonly string sourceText;
 
-        private readonly IDictionary<string, int> externalsMap = new LinkedHashMap<string, int>();
+        private readonly IDictionary<string, int> externalsMap = new JCG.LinkedDictionary<string, int>();
 
         private TypeBuilder dynamicType;
 
         private readonly IDictionary<string, MethodInfo> functions;
 
-        /// <summary>The default set of functions available to expressions.</summary>
-        /// <remarks>
-        /// The default set of functions available to expressions.
-        /// <para/>
-        /// See the <see cref="Lucene.Net.Expressions.JS">package documentation</see> for a list.
-        /// </remarks>
-        public static readonly IDictionary<string, MethodInfo> DEFAULT_FUNCTIONS;
+        
 
         private ILGenerator gen;
         private AssemblyBuilder asmBuilder;
@@ -267,16 +265,11 @@ namespace Lucene.Net.Expressions.JS
                     }
                 case JavascriptParser.NAMESPACE_ID:
                     {
-                        int index;
-                        if (externalsMap.ContainsKey(text))
+                        if (!externalsMap.TryGetValue(text, out int index))
                         {
-                            index = externalsMap[text];
+                            externalsMap[text] = index = externalsMap.Count;
                         }
-                        else
-                        {
-                            index = externalsMap.Count;
-                            externalsMap[text] = index;
-                        }
+
                         gen.Emit(OpCodes.Nop);
 
                         gen.Emit(OpCodes.Ldarg_2);
@@ -601,7 +594,15 @@ namespace Lucene.Net.Expressions.JS
             }
         }
 
-        static JavascriptCompiler()
+        /// <summary>The default set of functions available to expressions.</summary>
+        /// <remarks>
+        /// The default set of functions available to expressions.
+        /// <para/>
+        /// See the <see cref="Lucene.Net.Expressions.JS">package documentation</see> for a list.
+        /// </remarks>
+        public static readonly IDictionary<string, MethodInfo> DEFAULT_FUNCTIONS = LoadDefaultFunctions();
+
+        private static IDictionary<string, MethodInfo> LoadDefaultFunctions() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
         {
             IDictionary<string, MethodInfo> map = new Dictionary<string, MethodInfo>();
             try
@@ -627,21 +628,19 @@ namespace Lucene.Net.Expressions.JS
                     }
 
                     string methodName = vals[1].Trim();
-                    int arity = int.Parse(vals[2]);
+                    int arity = int.Parse(vals[2], CultureInfo.InvariantCulture);
                     Type[] args = new Type[arity];
                     Arrays.Fill(args, typeof(double));
                     MethodInfo method = clazz.GetMethod(methodName, args);
                     CheckFunction(method);
                     map[property.Key] = method;
                 }
-
-
             }
             catch (Exception e)
             {
                 throw new Exception("Cannot resolve function", e);
             }
-            DEFAULT_FUNCTIONS = map;
+            return map.AsReadOnly();
         }
 
         private static Type GetType(string typeName)
@@ -661,8 +660,7 @@ namespace Lucene.Net.Expressions.JS
 #if NETSTANDARD
             var settings = new Dictionary<string, string>();
             var type = typeof(JavascriptCompiler);
-            var assembly = type.GetTypeInfo().Assembly;
-            using (var reader = new StreamReader(assembly.FindAndGetManifestResourceStream(type, type.GetTypeInfo().Name + ".properties")))
+            using (var reader = new StreamReader(type.FindAndGetManifestResourceStream(type.GetTypeInfo().Name + ".properties")))
             {
                 string line;
                 while(!string.IsNullOrWhiteSpace(line = reader.ReadLine()))

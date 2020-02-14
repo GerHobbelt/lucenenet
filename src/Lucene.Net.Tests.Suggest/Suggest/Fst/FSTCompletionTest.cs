@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Support;
+﻿using J2N.Collections;
+using J2N.Text;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -7,7 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Suggest.Fst
 {
@@ -181,7 +182,7 @@ namespace Lucene.Net.Search.Suggest.Fst
         {
             FSTCompletionLookup lookup = new FSTCompletionLookup(10, true);
 
-            Random r = Random();
+            Random r = Random;
             List<Input> keys = new List<Input>();
             for (int i = 0; i < 5000; i++)
             {
@@ -195,7 +196,7 @@ namespace Lucene.Net.Search.Suggest.Fst
             long? previous = null;
             foreach (Input tf in keys)
             {
-                long? current = (Convert.ToInt64(lookup.Get(TestUtil.BytesToCharSequence(tf.term, Random()).ToString())));
+                long? current = (Convert.ToInt64(lookup.Get(TestUtil.BytesToCharSequence(tf.term, Random).ToString())));
                 if (previous != null)
                 {
                     assertEquals(previous, current);
@@ -214,8 +215,8 @@ namespace Lucene.Net.Search.Suggest.Fst
             assertEquals(input.size(), lookup.Count);
             foreach (Input tf in input)
             {
-                assertNotNull("Not found: " + tf.term.toString(), lookup.Get(TestUtil.BytesToCharSequence(tf.term, Random()).ToString()));
-                assertEquals(tf.term.Utf8ToString(), lookup.DoLookup(TestUtil.BytesToCharSequence(tf.term, Random()).ToString(), true, 1)[0].Key.toString());
+                assertNotNull("Not found: " + tf.term.toString(), lookup.Get(TestUtil.BytesToCharSequence(tf.term, Random).ToString()));
+                assertEquals(tf.term.Utf8ToString(), lookup.DoLookup(TestUtil.BytesToCharSequence(tf.term, Random).ToString(), true, 1)[0].Key.toString());
             }
 
             IList<Lookup.LookupResult> result = lookup.DoLookup(StringToCharSequence("wit").ToString(), true, 5);
@@ -235,7 +236,7 @@ namespace Lucene.Net.Search.Suggest.Fst
         public void TestRandom()
         {
             List<Input> freqs = new List<Input>();
-            Random rnd = Random();
+            Random rnd = Random;
             for (int i = 0; i < 2500 + rnd.nextInt(2500); i++)
             {
                 int weight = rnd.nextInt(100);
@@ -261,7 +262,7 @@ namespace Lucene.Net.Search.Suggest.Fst
 
         private ICharSequence StringToCharSequence(string prefix)
         {
-            return TestUtil.StringToCharSequence(prefix, Random());
+            return TestUtil.StringToCharSequence(prefix, Random);
         }
 
         private void AssertMatchEquals(IEnumerable<FSTCompletion.Completion> res, params string[] expected)
@@ -272,7 +273,7 @@ namespace Lucene.Net.Search.Suggest.Fst
                 result[i] = res.ElementAt(i).toString();
             }
 
-            if (!Arrays.Equals(StripScore(expected), StripScore(result)))
+            if (!ArrayEqualityComparer<string>.OneDimensional.Equals(StripScore(expected), StripScore(result)))
             {
                 int colLen = Math.Max(MaxLen(expected), MaxLen(result));
 

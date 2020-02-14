@@ -1,10 +1,10 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
+using System;
 
 namespace Lucene.Net.Index
 {
-    using NUnit.Framework;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -37,7 +37,11 @@ namespace Lucene.Net.Index
         public virtual void TestRollbackIntegrityWithBufferFlush()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter rw = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter rw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             for (int i = 0; i < 5; i++)
             {
                 Document doc = new Document();
@@ -47,7 +51,7 @@ namespace Lucene.Net.Index
             rw.Dispose();
 
             // If buffer size is small enough to cause a flush, errors ensue...
-            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMaxBufferedDocs(2).SetOpenMode(OpenMode.APPEND));
+            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMaxBufferedDocs(2).SetOpenMode(OpenMode.APPEND));
 
             for (int i = 0; i < 3; i++)
             {

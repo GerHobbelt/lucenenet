@@ -1,13 +1,15 @@
-﻿using Lucene.Net.Attributes;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Attributes;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet.Taxonomy
 {
@@ -28,8 +30,6 @@ namespace Lucene.Net.Facet.Taxonomy
      * limitations under the License.
      */
 
-
-    
     using Directory = Lucene.Net.Store.Directory;
     using DirectoryTaxonomyWriter = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter;
     using Document = Lucene.Net.Documents.Document;
@@ -41,11 +41,12 @@ namespace Lucene.Net.Facet.Taxonomy
     using SearcherAndTaxonomy = Lucene.Net.Facet.Taxonomy.SearcherTaxonomyManager.SearcherAndTaxonomy;
     using TestUtil = Lucene.Net.Util.TestUtil;
     using TieredMergePolicy = Lucene.Net.Index.TieredMergePolicy;
+
     [TestFixture]
     public class TestSearcherTaxonomyManager : FacetTestCase
     {
 
-        private class IndexerThread : ThreadClass
+        private class IndexerThread : ThreadJob
         {
 
             internal IndexWriter w;
@@ -69,19 +70,19 @@ namespace Lucene.Net.Facet.Taxonomy
             {
                 try
                 {
-                    var seen = new HashSet<string>();
+                    var seen = new JCG.HashSet<string>();
                     IList<string> paths = new List<string>();
                     while (true)
                     {
                         Document doc = new Document();
-                        int numPaths = TestUtil.NextInt(Random(), 1, 5);
+                        int numPaths = TestUtil.NextInt32(Random, 1, 5);
                         for (int i = 0; i < numPaths; i++)
                         {
                             string path;
-                            if (paths.Count > 0 && Random().Next(5) != 4)
+                            if (paths.Count > 0 && Random.Next(5) != 4)
                             {
                                 // Use previous path
-                                path = paths[Random().Next(paths.Count)];
+                                path = paths[Random.Next(paths.Count)];
                             }
                             else
                             {
@@ -89,7 +90,7 @@ namespace Lucene.Net.Facet.Taxonomy
                                 path = null;
                                 while (true)
                                 {
-                                    path = TestUtil.RandomRealisticUnicodeString(Random());
+                                    path = TestUtil.RandomRealisticUnicodeString(Random);
                                     if (path.Length != 0 && !seen.Contains(path))
                                     {
                                         seen.Add(path);
@@ -103,7 +104,7 @@ namespace Lucene.Net.Facet.Taxonomy
                         try
                         {
                             w.AddDocument(config.Build(tw, doc));
-                            if (mgr != null && Random().NextDouble() < 0.02)
+                            if (mgr != null && Random.NextDouble() < 0.02)
                             {
                                 w.Commit();
                                 tw.Commit();
@@ -128,7 +129,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 }
                 finally
                 {
-                    stop.Set(true);
+                    stop.Value = true;
                 }
             }
 
@@ -139,7 +140,7 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             // Don't allow tiny maxBufferedDocs; it can make this
             // test too slow:
             iwc.SetMaxBufferedDocs(Math.Max(500, iwc.MaxBufferedDocs));
@@ -171,7 +172,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
             try
             {
-                while (!stop.Get())
+                while (!stop)
                 {
                     SearcherAndTaxonomy pair = mgr.Acquire();
                     try
@@ -212,7 +213,7 @@ namespace Lucene.Net.Facet.Taxonomy
             IOUtils.Dispose(mgr, tw, w, taxoDir, dir);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestSearcherTaxonomyManager outerInstance;
 
@@ -228,12 +229,12 @@ namespace Lucene.Net.Facet.Taxonomy
 
             public override void Run()
             {
-                while (!stop.Get())
+                while (!stop)
                 {
                     try
                     {
                         // Sleep for up to 20 msec:
-                        Thread.Sleep(Random().Next(20));
+                        Thread.Sleep(Random.Next(20));
 
                         if (VERBOSE)
                         {
@@ -261,7 +262,7 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory indexDir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            IndexWriter w = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter w = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             var tw = new DirectoryTaxonomyWriter(taxoDir);
             // first empty commit
             w.Commit();
@@ -279,7 +280,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
             try
             {
-                while (!stop.Get())
+                while (!stop)
                 {
                     SearcherAndTaxonomy pair = mgr.Acquire();
                     try
@@ -324,7 +325,7 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory dir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             var tw = new DirectoryTaxonomyWriter(taxoDir);
 
             Store.Directory taxoDir2 = NewDirectory();
@@ -339,7 +340,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 mgr.MaybeRefresh();
-                Fail("should have hit exception");
+                fail("should have hit exception");
             }
             catch (InvalidOperationException)
             {
@@ -354,7 +355,7 @@ namespace Lucene.Net.Facet.Taxonomy
         {
             Store.Directory indexDir = NewDirectory();
             Store.Directory taxoDir = NewDirectory();
-            IndexWriter w = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter w = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             var tw = new DirectoryTaxonomyWriter(taxoDir);
             w.Commit();
             tw.Commit();

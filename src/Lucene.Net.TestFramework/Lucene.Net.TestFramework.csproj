@@ -21,30 +21,31 @@
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- This package is currently not being deployed to NuGet because it only works with NUnit and has many quality issues -->
-  <!--<Import Project="$(SolutionDir)build/NuGet.props" />-->
-  
+  <Import Project="$(SolutionDir)build/NuGet.props" />
+
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
     <AssemblyTitle>Lucene.Net.TestFramework</AssemblyTitle>
-    <Description>Framework for testing Lucene.Net-based applications from The Apache Software Foundation.</Description>
-    <PackageTags>$(PackageTags);testframework;test;framework</PackageTags>
-    <!-- LUCENENET TODO: If we ever complete the work to release this module, we should add the documentation and
-      remove all of the warnings this line produces. -->
-    <!--<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>-->
+    <RootNamespace>Lucene.Net</RootNamespace>
+    <Description>Framework for testing third-party code that uses the Lucene.Net API using NUnit.</Description>
+    <PackageTags>$(PackageTags);testframework;test;framework;nunit</PackageTags>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
+
+    <DefineConstants>$(DefineConstants);TESTFRAMEWORK_NUNIT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Util\AbstractBeforeAfterRule.cs;Util\CloseableDirectory.cs;Util\FailureMarker.cs;Util\QuickPatchThreadsFilter.cs;Util\RemoveUponClose.cs;Util\RunListenerPrintReproduceInfo.cs;Util\TestRuleAssertionsRequired.cs;Util\TestRuleDelegate.cs;Util\TestRuleFieldCacheSanity.cs;Util\TestRuleIgnoreAfterMaxFailures.cs;Util\TestRuleIgnoreTestSuites.cs;Util\TestRuleMarkFailure.cs;Util\TestRuleSetupAndRestoreInstanceEnv.cs;Util\TestRuleSetupTeardownChained.cs;Util\TestRuleStoreClassName.cs;Util\TestRuleThreadAndTestName.cs;Util\TestSecurityManager.cs" />
+    <Compile Include="..\Lucene.Net.TestFramework.NUnit\Support\TestFramework\Assert.cs" Link="Support\TestFramework\Assert.cs" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <None Remove="Util\europarl.lines.txt.gz" />
     <EmbeddedResource Include="Util\europarl.lines.txt.gz" />
+    <None Include="*.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,13 +54,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="J2N" Version="$(J2NPackageVersion)" />
     <PackageReference Include="NUnit" Version="$(NUnitPackageVersion)" />
   </ItemGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <DefineConstants>$(DefineConstants);NETSTANDARD;FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE</DefineConstants>
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
     <PackageReference Include="System.Diagnostics.StackTrace" Version="$(SystemDiagnosticsStackTracePackageVersion)" />
@@ -67,16 +64,6 @@
     <PackageReference Include="System.Net.Primitives" Version="$(SystemNetPrimitivesPackageVersion)" />
     <PackageReference Include="System.Threading.Thread" Version="$(SystemThreadingThreadPackageVersion)" />
   </ItemGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
-    <DefineConstants>$(DefineConstants);NETSTANDARD;FEATURE_STACKTRACE</DefineConstants>
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <DefineConstants>$(DefineConstants);FEATURE_CONCURRENTMERGESCHEDULER;FEATURE_SERIALIZABLE;FEATURE_SERIALIZABLE_EXCEPTIONS</DefineConstants>
-    <DebugType>full</DebugType>
-  </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
     <Reference Include="System.IO.Compression" />

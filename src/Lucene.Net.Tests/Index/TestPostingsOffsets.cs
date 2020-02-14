@@ -1,16 +1,14 @@
+using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Search;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Lucene.Net.Documents;
-using Lucene.Net.Search;
-using Lucene.Net.Support;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using NUnit.Framework;
-
     /*
          * Licensed to the Apache Software Foundation (ASF) under one or more
          * contributor license agreements.  See the NOTICE file distributed with
@@ -61,7 +59,7 @@ namespace Lucene.Net.Index
         public override void SetUp()
         {
             base.SetUp();
-            Iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            Iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
         }
 
         [Test]
@@ -69,22 +67,22 @@ namespace Lucene.Net.Index
         {
             Directory dir = NewDirectory();
 
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Iwc);
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir, Iwc);
             Document doc = new Document();
 
             FieldType ft = new FieldType(TextField.TYPE_NOT_STORED);
             ft.IndexOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS;
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 ft.StoreTermVectors = true;
-                ft.StoreTermVectorPositions = Random().NextBoolean();
-                ft.StoreTermVectorOffsets = Random().NextBoolean();
+                ft.StoreTermVectorPositions = Random.NextBoolean();
+                ft.StoreTermVectorOffsets = Random.NextBoolean();
             }
             Token[] tokens = new Token[] { MakeToken("a", 1, 0, 6), MakeToken("b", 1, 8, 9), MakeToken("a", 1, 9, 17), MakeToken("c", 1, 19, 50) };
             doc.Add(new Field("content", new CannedTokenStream(tokens), ft));
 
             w.AddDocument(doc);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             DocsAndPositionsEnum dp = MultiFields.GetTermPositionsEnum(r, null, "content", new BytesRef("a"));
@@ -136,31 +134,31 @@ namespace Lucene.Net.Index
         public virtual void DoTestNumbers(bool withPayloads)
         {
             Directory dir = NewDirectory();
-            Analyzer analyzer = withPayloads ? (Analyzer)new MockPayloadAnalyzer() : new MockAnalyzer(Random());
+            Analyzer analyzer = withPayloads ? (Analyzer)new MockPayloadAnalyzer() : new MockAnalyzer(Random);
             Iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             Iwc.SetMergePolicy(NewLogMergePolicy()); // will rely on docids a bit for skipping
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Iwc);
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir, Iwc);
 
             FieldType ft = new FieldType(TextField.TYPE_STORED);
             ft.IndexOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS;
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 ft.StoreTermVectors = true;
-                ft.StoreTermVectorOffsets = Random().NextBoolean();
-                ft.StoreTermVectorPositions = Random().NextBoolean();
+                ft.StoreTermVectorOffsets = Random.NextBoolean();
+                ft.StoreTermVectorPositions = Random.NextBoolean();
             }
 
             int numDocs = AtLeast(500);
             for (int i = 0; i < numDocs; i++)
             {
                 Document doc = new Document();
-                doc.Add(new Field("numbers", English.IntToEnglish(i), ft));
+                doc.Add(new Field("numbers", English.Int32ToEnglish(i), ft));
                 doc.Add(new Field("oddeven", (i % 2) == 0 ? "even" : "odd", ft));
                 doc.Add(new StringField("id", "" + i, Field.Store.NO));
                 w.AddDocument(doc);
             }
 
-            IndexReader reader = w.Reader;
+            IndexReader reader = w.GetReader();
             w.Dispose();
 
             string[] terms = new string[] { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "hundred" };
@@ -198,7 +196,7 @@ namespace Lucene.Net.Index
 
             for (int j = 0; j < numSkippingTests; j++)
             {
-                int num = TestUtil.NextInt(Random(), 100, Math.Min(numDocs - 1, 999));
+                int num = TestUtil.NextInt32(Random, 100, Math.Min(numDocs - 1, 999));
                 DocsAndPositionsEnum dp = MultiFields.GetTermPositionsEnum(reader, null, "numbers", new BytesRef("hundred"));
                 int doc = dp.Advance(num);
                 Assert.AreEqual(num, doc);
@@ -243,7 +241,7 @@ namespace Lucene.Net.Index
             IDictionary<string, IDictionary<int?, IList<Token>>> actualTokens = new Dictionary<string, IDictionary<int?, IList<Token>>>();
 
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Iwc);
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir, Iwc);
 
             int numDocs = AtLeast(20);
             //final int numDocs = AtLeast(5);
@@ -253,11 +251,11 @@ namespace Lucene.Net.Index
             // TODO: randomize what IndexOptions we use; also test
             // changing this up in one IW buffered segment...:
             ft.IndexOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS;
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 ft.StoreTermVectors = true;
-                ft.StoreTermVectorOffsets = Random().NextBoolean();
-                ft.StoreTermVectorPositions = Random().NextBoolean();
+                ft.StoreTermVectorOffsets = Random.NextBoolean();
+                ft.StoreTermVectorPositions = Random.NextBoolean();
             }
 
             for (int docCount = 0; docCount < numDocs; docCount++)
@@ -273,15 +271,15 @@ namespace Lucene.Net.Index
                 for (int tokenCount = 0; tokenCount < numTokens; tokenCount++)
                 {
                     string text;
-                    if (Random().NextBoolean())
+                    if (Random.NextBoolean())
                     {
                         text = "a";
                     }
-                    else if (Random().NextBoolean())
+                    else if (Random.NextBoolean())
                     {
                         text = "b";
                     }
-                    else if (Random().NextBoolean())
+                    else if (Random.NextBoolean())
                     {
                         text = "c";
                     }
@@ -290,25 +288,24 @@ namespace Lucene.Net.Index
                         text = "d";
                     }
 
-                    int posIncr = Random().NextBoolean() ? 1 : Random().Next(5);
+                    int posIncr = Random.NextBoolean() ? 1 : Random.Next(5);
                     if (tokenCount == 0 && posIncr == 0)
                     {
                         posIncr = 1;
                     }
-                    int offIncr = Random().NextBoolean() ? 0 : Random().Next(5);
-                    int tokenOffset = Random().Next(5);
+                    int offIncr = Random.NextBoolean() ? 0 : Random.Next(5);
+                    int tokenOffset = Random.Next(5);
 
                     Token token = MakeToken(text, posIncr, offset + offIncr, offset + offIncr + tokenOffset);
-                    if (!actualTokens.ContainsKey(text))
+                    if (!actualTokens.TryGetValue(text, out IDictionary<int?, IList<Token>> postingsByDoc))
                     {
-                        actualTokens[text] = new Dictionary<int?, IList<Token>>();
+                        actualTokens[text] = postingsByDoc = new Dictionary<int?, IList<Token>>();
                     }
-                    IDictionary<int?, IList<Token>> postingsByDoc = actualTokens[text];
-                    if (!postingsByDoc.ContainsKey(docCount))
+                    if (!postingsByDoc.TryGetValue(docCount, out IList<Token> postings))
                     {
-                        postingsByDoc[docCount] = new List<Token>();
+                        postingsByDoc[docCount] = postings = new List<Token>();
                     }
-                    postingsByDoc[docCount].Add(token);
+                    postings.Add(token);
                     tokens.Add(token);
                     pos += posIncr;
                     // stuff abs position into type:
@@ -319,7 +316,7 @@ namespace Lucene.Net.Index
                 doc.Add(new Field("content", new CannedTokenStream(tokens.ToArray()), ft));
                 w.AddDocument(doc);
             }
-            DirectoryReader r = w.Reader;
+            DirectoryReader r = w.GetReader();
             w.Dispose();
 
             string[] terms = new string[] { "a", "b", "c", "d" };
@@ -398,12 +395,12 @@ namespace Lucene.Net.Index
         public virtual void TestWithUnindexedFields()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter riw = new RandomIndexWriter(Random(), dir, Iwc);
+            RandomIndexWriter riw = new RandomIndexWriter(Random, dir, Iwc);
             for (int i = 0; i < 100; i++)
             {
                 Document doc = new Document();
                 // ensure at least one doc is indexed with offsets
-                if (i < 99 && Random().Next(2) == 0)
+                if (i < 99 && Random.Next(2) == 0)
                 {
                     // stored only
                     FieldType ft = new FieldType();
@@ -415,7 +412,7 @@ namespace Lucene.Net.Index
                 {
                     FieldType ft = new FieldType(TextField.TYPE_STORED);
                     ft.IndexOptions = IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS;
-                    if (Random().NextBoolean())
+                    if (Random.NextBoolean())
                     {
                         // store some term vectors for the checkindex cross-check
                         ft.StoreTermVectors = true;
@@ -426,7 +423,7 @@ namespace Lucene.Net.Index
                 }
                 riw.AddDocument(doc);
             }
-            CompositeReader ir = riw.Reader;
+            CompositeReader ir = riw.GetReader();
             AtomicReader slow = SlowCompositeReaderWrapper.Wrap(ir);
             FieldInfos fis = slow.FieldInfos;
             Assert.AreEqual(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS, fis.FieldInfo("foo").IndexOptions);
@@ -440,7 +437,11 @@ namespace Lucene.Net.Index
         public virtual void TestAddFieldTwice()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             FieldType customType3 = new FieldType(TextField.TYPE_STORED);
             customType3.StoreTermVectors = true;
@@ -516,7 +517,7 @@ namespace Lucene.Net.Index
             IndexWriter iw = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, null));
             Document doc = new Document();
             Token t1 = new Token("foo", 0, int.MaxValue - 500);
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 t1.Payload = new BytesRef("test");
             }
@@ -540,7 +541,7 @@ namespace Lucene.Net.Index
         private void CheckTokens(Token[] tokens)
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter riw = new RandomIndexWriter(Random(), dir, Iwc);
+            RandomIndexWriter riw = new RandomIndexWriter(Random, dir, Iwc);
             bool success = false;
             try
             {

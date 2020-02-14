@@ -3,8 +3,6 @@ using Lucene.Net.Analysis.Compound.Hyphenation;
 using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Attributes;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System.IO;
@@ -12,28 +10,28 @@ using System.IO;
 namespace Lucene.Net.Analysis.Compound
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     public class TestCompoundWordTokenFilter : BaseTokenStreamTestCase
     {
 
         private static CharArraySet makeDictionary(params string[] dictionary)
         {
-            return new CharArraySet(TEST_VERSION_CURRENT, Arrays.AsList(dictionary), true);
+            return new CharArraySet(TEST_VERSION_CURRENT, dictionary, true);
         }
 
         [Test]
@@ -264,14 +262,14 @@ namespace Lucene.Net.Analysis.Compound
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filter = new DictionaryCompoundWordTokenFilter(TEST_VERSION_CURRENT, tokenizer, dict);
                 return new TokenStreamComponents(tokenizer, filter);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(normMap, reader);
             }
@@ -284,14 +282,14 @@ namespace Lucene.Net.Analysis.Compound
         {
             CharArraySet dict = makeDictionary("a", "e", "i", "o", "u", "y", "bc", "def");
             Analyzer a = new AnalyzerAnonymousInnerClassHelper2(this, dict);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
 
             //InputSource @is = new InputSource(this.GetType().getResource("da_UTF8.xml").toExternalForm());
             using (var @is = this.GetType().getResourceAsStream("da_UTF8.xml"))
             {
                 HyphenationTree hyphenator = HyphenationCompoundWordTokenFilter.GetHyphenationTree(@is);
                 Analyzer b = new AnalyzerAnonymousInnerClassHelper3(this, hyphenator);
-                CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER);
+                CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER);
             }
         }
 
@@ -308,7 +306,7 @@ namespace Lucene.Net.Analysis.Compound
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new DictionaryCompoundWordTokenFilter(TEST_VERSION_CURRENT, tokenizer, dict));
@@ -328,7 +326,7 @@ namespace Lucene.Net.Analysis.Compound
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filter = new HyphenationCompoundWordTokenFilter(TEST_VERSION_CURRENT, tokenizer, hyphenator);
@@ -366,7 +364,7 @@ namespace Lucene.Net.Analysis.Compound
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new DictionaryCompoundWordTokenFilter(TEST_VERSION_CURRENT, tokenizer, dict));
@@ -386,7 +384,7 @@ namespace Lucene.Net.Analysis.Compound
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 TokenFilter filter = new HyphenationCompoundWordTokenFilter(TEST_VERSION_CURRENT, tokenizer, hyphenator);

@@ -1,14 +1,15 @@
-using System.Collections.Generic;
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Store;
+using Lucene.Net.Support;
+using Lucene.Net.Util;
+using NUnit.Framework;
+using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search
 {
-    
-    using Lucene.Net.Index;
-    using Lucene.Net.Store;
-    using Lucene.Net.Support;
-    using Lucene.Net.Util;
-    using NUnit.Framework;
     using ChildScorer = Lucene.Net.Search.Scorer.ChildScorer;
 
     /*
@@ -42,7 +43,7 @@ namespace Lucene.Net.Search
             base.BeforeClass();
 
             Dir = new RAMDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), Dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter w = new RandomIndexWriter(Random, Dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
             // make sure we have more than one segment occationally
             int num = AtLeast(31);
             for (int i = 0; i < num; i++)
@@ -56,7 +57,7 @@ namespace Lucene.Net.Search
                 w.AddDocument(doc);
             }
 
-            s = NewSearcher(w.Reader);
+            s = NewSearcher(w.GetReader());
             w.Dispose();
         }
 
@@ -82,7 +83,7 @@ namespace Lucene.Net.Search
             internal readonly ISet<string> Relationships;
 
             public CountingCollector(ICollector other)
-                : this(other, new HashSet<string> { "MUST", "SHOULD", "MUST_NOT" })
+                : this(other, new JCG.HashSet<string> { "MUST", "SHOULD", "MUST_NOT" })
             {
             }
 
@@ -177,7 +178,7 @@ namespace Lucene.Net.Search
 
             // Only needed in Java6; Java7+ has a @SafeVarargs annotated Arrays#asList()!
             // see http://docs.oracle.com/javase/7/docs/api/java/lang/SafeVarargs.html
-            IEnumerable<ISet<string>> occurList = Arrays.AsList(Collections.Singleton("MUST"), new HashSet<string>(Arrays.AsList("MUST", "SHOULD")));
+            IEnumerable<ISet<string>> occurList = new ISet<string>[] { new JCG.HashSet<string> { "MUST" }, new JCG.HashSet<string> { "MUST", "SHOULD" } };
 
             foreach (var occur in occurList)
             {

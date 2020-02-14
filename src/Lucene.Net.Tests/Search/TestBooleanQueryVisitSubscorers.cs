@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search
 {
@@ -53,15 +54,15 @@ namespace Lucene.Net.Search
         public override void SetUp()
         {
             base.SetUp();
-            Analyzer = new MockAnalyzer(Random());
+            Analyzer = new MockAnalyzer(Random);
             Dir = NewDirectory();
             IndexWriterConfig config = NewIndexWriterConfig(TEST_VERSION_CURRENT, Analyzer);
             config.SetMergePolicy(NewLogMergePolicy()); // we will use docids to validate
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Dir, config);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, Dir, config);
             writer.AddDocument(Doc("lucene", "lucene is a very popular search engine library"));
             writer.AddDocument(Doc("solr", "solr is a very popular search server and is using lucene"));
             writer.AddDocument(Doc("nutch", "nutch is an internet search engine with web crawler and is using lucene and hadoop"));
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Searcher = NewSearcher(Reader);
         }
@@ -138,7 +139,7 @@ namespace Lucene.Net.Search
             internal int DocBase;
 
             public readonly IDictionary<int, int> DocCounts = new Dictionary<int, int>();
-            internal readonly HashSet<Scorer> TqsSet = new HashSet<Scorer>();
+            internal readonly ISet<Scorer> TqsSet = new JCG.HashSet<Scorer>();
 
             internal MyCollector()
             {

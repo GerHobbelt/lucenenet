@@ -1,10 +1,10 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -53,7 +53,7 @@ namespace Lucene.Net.Index
         [SetUp]
         public static void Setup()
         {
-            ANALYZER = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            ANALYZER = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
         }
 
         private void SetFailed()
@@ -78,13 +78,13 @@ namespace Lucene.Net.Index
                 {
                     Document d = new Document();
                     d.Add(NewField("id", Convert.ToString(i), customType));
-                    d.Add(NewField("contents", English.IntToEnglish(i), customType));
+                    d.Add(NewField("contents", English.Int32ToEnglish(i), customType));
                     writer.AddDocument(d);
                 }
 
                 ((LogMergePolicy)writer.Config.MergePolicy).MergeFactor = 4;
 
-                ThreadClass[] threads = new ThreadClass[NUM_THREADS];
+                ThreadJob[] threads = new ThreadJob[NUM_THREADS];
 
                 for (int i = 0; i < NUM_THREADS; i++)
                 {
@@ -121,7 +121,7 @@ namespace Lucene.Net.Index
             writer.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestThreadedForceMerge OuterInstance;
 
@@ -149,8 +149,8 @@ namespace Lucene.Net.Index
                         for (int k = 0; k < 17 * (1 + IFinal); k++)
                         {
                             Document d = new Document();
-                            d.Add(OuterInstance.NewField("id", IterFinal + "_" + IFinal + "_" + j + "_" + k, CustomType));
-                            d.Add(OuterInstance.NewField("contents", English.IntToEnglish(IFinal + k), CustomType));
+                            d.Add(NewField("id", IterFinal + "_" + IFinal + "_" + j + "_" + k, CustomType));
+                            d.Add(NewField("contents", English.Int32ToEnglish(IFinal + k), CustomType));
                             WriterFinal.AddDocument(d);
                         }
                         for (int k = 0; k < 9 * (1 + IFinal); k++)
@@ -178,7 +178,7 @@ namespace Lucene.Net.Index
         public virtual void TestThreadedForceMerge_Mem()
         {
             Directory directory = NewDirectory();
-            RunTest(Random(), directory);
+            RunTest(Random, directory);
             directory.Dispose();
         }
     }

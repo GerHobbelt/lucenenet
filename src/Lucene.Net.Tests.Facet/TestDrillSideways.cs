@@ -1,10 +1,11 @@
-﻿using System;
+﻿using J2N.Text;
+using Lucene.Net.Support;
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet
 {
@@ -83,7 +84,11 @@ namespace Lucene.Net.Facet
             FacetsConfig config = new FacetsConfig();
             config.SetHierarchical("Publish Date", true);
 
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(new FacetField("Author", "Bob"));
@@ -111,7 +116,7 @@ namespace Lucene.Net.Facet
             writer.AddDocument(config.Build(taxoWriter, doc));
 
             // NRT open
-            IndexSearcher searcher = NewSearcher(writer.Reader);
+            IndexSearcher searcher = NewSearcher(writer.GetReader());
 
             //System.out.println("searcher=" + searcher);
 
@@ -254,7 +259,11 @@ namespace Lucene.Net.Facet
         {
             Directory dir = NewDirectory();
             Directory taxoDir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             // Writes facet ords to a separate directory from the
             // main index:
@@ -282,7 +291,7 @@ namespace Lucene.Net.Facet
             writer.AddDocument(config.Build(taxoWriter, doc));
 
             // NRT open
-            IndexSearcher searcher = NewSearcher(writer.Reader);
+            IndexSearcher searcher = NewSearcher(writer.GetReader());
 
             //System.out.println("searcher=" + searcher);
 
@@ -310,7 +319,11 @@ namespace Lucene.Net.Facet
         {
             Directory dir = NewDirectory();
             Directory taxoDir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             // Writes facet ords to a separate directory from the
             // main index:
@@ -344,7 +357,7 @@ namespace Lucene.Net.Facet
             writer.AddDocument(config.Build(taxoWriter, doc));
 
             // NRT open
-            IndexSearcher searcher = NewSearcher(writer.Reader);
+            IndexSearcher searcher = NewSearcher(writer.GetReader());
 
             //System.out.println("searcher=" + searcher);
 
@@ -390,7 +403,7 @@ namespace Lucene.Net.Facet
 
         private string randomContentToken(bool isQuery)
         {
-            double d = Random().NextDouble();
+            double d = Random.NextDouble();
             if (isQuery)
             {
                 if (d < 0.33)
@@ -427,19 +440,19 @@ namespace Lucene.Net.Facet
         public virtual void TestRandom()
         {
 
-            bool canUseDV = DefaultCodecSupportsSortedSet();
+            bool canUseDV = DefaultCodecSupportsSortedSet;
 
             while (aChance == 0.0)
             {
-                aChance = Random().NextDouble();
+                aChance = Random.NextDouble();
             }
             while (bChance == 0.0)
             {
-                bChance = Random().NextDouble();
+                bChance = Random.NextDouble();
             }
             while (cChance == 0.0)
             {
-                cChance = Random().NextDouble();
+                cChance = Random.NextDouble();
             }
             //aChance = .01;
             //bChance = 0.5;
@@ -449,7 +462,7 @@ namespace Lucene.Net.Facet
             bChance /= sum;
             cChance /= sum;
 
-            int numDims = TestUtil.NextInt(Random(), 2, 5);
+            int numDims = TestUtil.NextInt32(Random, 2, 5);
             //int numDims = 3;
             int numDocs = AtLeast(3000);
             //int numDocs = 20;
@@ -462,10 +475,10 @@ namespace Lucene.Net.Facet
 
             for (int dim = 0; dim < numDims; dim++)
             {
-                var values = new HashSet<string>();
+                var values = new JCG.HashSet<string>();
                 while (values.Count < valueCount)
                 {
-                    var str = TestUtil.RandomRealisticUnicodeString(Random());
+                    var str = TestUtil.RandomRealisticUnicodeString(Random);
                     //String s = TestUtil.randomString(Random());
                     if (str.Length > 0)
                     {
@@ -486,7 +499,7 @@ namespace Lucene.Net.Facet
                 doc.dims2 = new int[numDims];
                 for (int dim = 0; dim < numDims; dim++)
                 {
-                    if (Random().Next(5) == 3)
+                    if (Random.Next(5) == 3)
                     {
                         // This doc is missing this dim:
                         doc.dims[dim] = -1;
@@ -497,7 +510,7 @@ namespace Lucene.Net.Facet
                         doc.dims[dim] = dimValues[dim].Length - 1;
                         while (dimUpto < dimValues[dim].Length)
                         {
-                            if (Random().NextBoolean())
+                            if (Random.NextBoolean())
                             {
                                 doc.dims[dim] = dimUpto;
                                 break;
@@ -507,13 +520,13 @@ namespace Lucene.Net.Facet
                     }
                     else
                     {
-                        doc.dims[dim] = Random().Next(dimValues[dim].Length);
+                        doc.dims[dim] = Random.Next(dimValues[dim].Length);
                     }
 
-                    if (Random().Next(5) == 3)
+                    if (Random.Next(5) == 3)
                     {
                         // 2nd value:
-                        doc.dims2[dim] = Random().Next(dimValues[dim].Length);
+                        doc.dims2[dim] = Random.Next(dimValues[dim].Length);
                     }
                     else
                     {
@@ -526,9 +539,9 @@ namespace Lucene.Net.Facet
             Directory d = NewDirectory();
             Directory td = NewDirectory();
 
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetInfoStream(InfoStream.NO_OUTPUT);
-            var w = new RandomIndexWriter(Random(), d, iwc);
+            var w = new RandomIndexWriter(Random, d, iwc);
             var tw = new DirectoryTaxonomyWriter(td, OpenMode.CREATE);
             FacetsConfig config = new FacetsConfig();
             for (int i = 0; i < numDims; i++)
@@ -536,7 +549,7 @@ namespace Lucene.Net.Facet
                 config.SetMultiValued("dim" + i, true);
             }
 
-            bool doUseDV = canUseDV && Random().NextBoolean();
+            bool doUseDV = canUseDV && Random.NextBoolean();
 
             foreach (Doc rawDoc in docs)
             {
@@ -589,10 +602,10 @@ namespace Lucene.Net.Facet
                 w.AddDocument(config.Build(tw, doc));
             }
 
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 // Randomly delete a few docs:
-                int numDel = TestUtil.NextInt(Random(), 1, (int)(numDocs * 0.05));
+                int numDel = TestUtil.NextInt32(Random, 1, (int)(numDocs * 0.05));
                 if (VERBOSE)
                 {
                     Console.WriteLine("delete " + numDel);
@@ -600,7 +613,7 @@ namespace Lucene.Net.Facet
                 int delCount = 0;
                 while (delCount < numDel)
                 {
-                    Doc doc = docs[Random().Next(docs.Count)];
+                    Doc doc = docs[Random.Next(docs.Count)];
                     if (!doc.deleted)
                     {
                         if (VERBOSE)
@@ -614,7 +627,7 @@ namespace Lucene.Net.Facet
                 }
             }
 
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 if (VERBOSE)
                 {
@@ -622,7 +635,7 @@ namespace Lucene.Net.Facet
                 }
                 w.ForceMerge(1);
             }
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
 
             SortedSetDocValuesReaderState sortedSetDVState;
             IndexSearcher s = NewSearcher(r);
@@ -649,8 +662,8 @@ namespace Lucene.Net.Facet
             for (int iter = 0; iter < numIters; iter++)
             {
 
-                string contentToken = Random().Next(30) == 17 ? null : randomContentToken(true);
-                int numDrillDown = TestUtil.NextInt(Random(), 1, Math.Min(4, numDims));
+                string contentToken = Random.Next(30) == 17 ? null : randomContentToken(true);
+                int numDrillDown = TestUtil.NextInt32(Random, 1, Math.Min(4, numDims));
                 if (VERBOSE)
                 {
                     Console.WriteLine("\nTEST: iter=" + iter + " baseQuery=" + contentToken + " numDrillDown=" + numDrillDown + " useSortedSetDV=" + doUseDV);
@@ -662,24 +675,24 @@ namespace Lucene.Net.Facet
                 bool anyMultiValuedDrillDowns = false;
                 while (count < numDrillDown)
                 {
-                    int dim = Random().Next(numDims);
+                    int dim = Random.Next(numDims);
                     if (drillDowns[dim] == null)
                     {
-                        if (Random().NextBoolean())
+                        if (Random.NextBoolean())
                         {
                             // Drill down on one value:
-                            drillDowns[dim] = new string[] { dimValues[dim][Random().Next(dimValues[dim].Length)] };
+                            drillDowns[dim] = new string[] { dimValues[dim][Random.Next(dimValues[dim].Length)] };
                         }
                         else
                         {
-                            int orCount = TestUtil.NextInt(Random(), 1, Math.Min(5, dimValues[dim].Length));
+                            int orCount = TestUtil.NextInt32(Random, 1, Math.Min(5, dimValues[dim].Length));
                             drillDowns[dim] = new string[orCount];
                             anyMultiValuedDrillDowns |= orCount > 1;
                             for (int i = 0; i < orCount; i++)
                             {
                                 while (true)
                                 {
-                                    string value = dimValues[dim][Random().Next(dimValues[dim].Length)];
+                                    string value = dimValues[dim][Random.Next(dimValues[dim].Length)];
                                     for (int j = 0; j < i; j++)
                                     {
                                         if (value.Equals(drillDowns[dim][j], StringComparison.Ordinal))
@@ -733,7 +746,7 @@ namespace Lucene.Net.Facet
                 }
 
                 Filter filter;
-                if (Random().Next(7) == 6)
+                if (Random.Next(7) == 6)
                 {
                     if (VERBOSE)
                     {
@@ -1192,7 +1205,7 @@ namespace Lucene.Net.Facet
 
             for (int dim = 0; dim < expected.Counts.Length; dim++)
             {
-                int topN = Random().NextBoolean() ? dimValues[dim].Length : TestUtil.NextInt(Random(), 1, dimValues[dim].Length);
+                int topN = Random.NextBoolean() ? dimValues[dim].Length : TestUtil.NextInt32(Random, 1, dimValues[dim].Length);
                 FacetResult fr = actual.Facets.GetTopChildren(topN, "dim" + dim);
                 if (VERBOSE)
                 {
@@ -1301,9 +1314,13 @@ namespace Lucene.Net.Facet
             // LUCENE-5045: make sure DrillSideways works with an empty index
             Directory dir = NewDirectory();
             Directory taxoDir = NewDirectory();
-            var writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            var writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             var taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE);
-            IndexSearcher searcher = NewSearcher(writer.Reader);
+            IndexSearcher searcher = NewSearcher(writer.GetReader());
             var taxoReader = new DirectoryTaxonomyReader(taxoWriter);
 
             // Count "Author"

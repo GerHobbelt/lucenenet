@@ -70,13 +70,13 @@ namespace Lucene.Net.Analysis.Cn.Smart
         /// </summary>
         private class DefaultSetHolder
         {
-            internal static readonly CharArraySet DEFAULT_STOP_SET;
+            internal static readonly CharArraySet DEFAULT_STOP_SET = LoadDefaultStopSet();
 
-            static DefaultSetHolder()
+            private static CharArraySet LoadDefaultStopSet() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    DEFAULT_STOP_SET = LoadDefaultStopWordSet();
+                    return LoadDefaultStopWordSet();
                 }
                 catch (IOException ex)
                 {
@@ -142,7 +142,7 @@ namespace Lucene.Net.Analysis.Cn.Smart
             this.matchVersion = matchVersion;
         }
 
-        protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+        protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
         {
             Tokenizer tokenizer;
             TokenStream result;

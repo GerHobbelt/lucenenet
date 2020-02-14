@@ -3,10 +3,10 @@ using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Search.Similarities;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Sandbox.Queries
 {
@@ -50,7 +50,7 @@ namespace Lucene.Net.Sandbox.Queries
         // provided to TermQuery, so that the general idea is agnostic to any scoring system...
         internal static TFIDFSimilarity sim = new DefaultSimilarity();
         private Query rewrittenQuery = null;
-        private IList<FieldVals> fieldVals = new EquatableList<FieldVals>();
+        private IList<FieldVals> fieldVals = new JCG.List<FieldVals>();
         private Analyzer analyzer;
 
         private ScoreTermQueue q;
@@ -136,7 +136,7 @@ namespace Lucene.Net.Sandbox.Queries
                 int result = 1;
                 result = prime * result
                     + ((fieldName == null) ? 0 : fieldName.GetHashCode());
-                result = prime * result + Number.SingleToInt32Bits(minSimilarity);
+                result = prime * result + J2N.BitConversion.SingleToInt32Bits(minSimilarity);
                 result = prime * result + prefixLength;
                 result = prime * result
                     + ((queryString == null) ? 0 : queryString.GetHashCode());
@@ -159,7 +159,7 @@ namespace Lucene.Net.Sandbox.Queries
                 }
                 else if (!fieldName.Equals(other.fieldName, StringComparison.Ordinal))
                     return false;
-                if (Number.SingleToInt32Bits(minSimilarity) != Number
+                if (J2N.BitConversion.SingleToInt32Bits(minSimilarity) != J2N.BitConversion
                     .SingleToInt32Bits(other.minSimilarity))
                     return false;
                 if (prefixLength != other.prefixLength)
@@ -202,7 +202,7 @@ namespace Lucene.Net.Sandbox.Queries
                 ICharTermAttribute termAtt = ts.AddAttribute<ICharTermAttribute>();
 
                 int corpusNumDocs = reader.NumDocs;
-                HashSet<string> processedTerms = new HashSet<string>();
+                ISet<string> processedTerms = new JCG.HashSet<string>();
                 ts.Reset();
                 while (ts.IncrementToken())
                 {
@@ -363,7 +363,7 @@ namespace Lucene.Net.Sandbox.Queries
             /// (non-Javadoc)
             /// <see cref="Util.PriorityQueue{T}.LessThan(T, T)"/>
             /// </summary>
-            protected override bool LessThan(ScoreTerm termA, ScoreTerm termB)
+            protected internal override bool LessThan(ScoreTerm termA, ScoreTerm termB)
             {
                 if (termA.Score == termB.Score)
                     return termA.Term.CompareTo(termB.Term) > 0;

@@ -1,14 +1,15 @@
+using J2N.Collections.Generic.Extensions;
+using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -55,10 +56,10 @@ namespace Lucene.Net.Index
         {
             IList<string> postingsList = new List<string>();
             int numTerms = AtLeast(300);
-            int maxTermsPerDoc = TestUtil.NextInt(Random(), 10, 20);
+            int maxTermsPerDoc = TestUtil.NextInt32(Random, 10, 20);
             bool isSimpleText = "SimpleText".Equals(TestUtil.GetPostingsFormat("field"), StringComparison.Ordinal);
 
-            IndexWriterConfig iwc = NewIndexWriterConfig(Random(), TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(Random, TEST_VERSION_CURRENT, new MockAnalyzer(Random));
 
             if ((isSimpleText || iwc.MergePolicy is MockRandomMergePolicy) && (TEST_NIGHTLY || RANDOM_MULTIPLIER > 1))
             {
@@ -72,35 +73,35 @@ namespace Lucene.Net.Index
             }
             for (int i = 0; i < numTerms; i++)
             {
-                string term = Convert.ToString(i);
+                string term = Convert.ToString(i, CultureInfo.InvariantCulture);
                 for (int j = 0; j < i; j++)
                 {
                     postingsList.Add(term);
                 }
             }
 
-            Collections.Shuffle(postingsList);
+            postingsList.Shuffle(Random);
 
             ConcurrentQueue<string> postings = new ConcurrentQueue<string>(postingsList);
 
             Directory dir = NewFSDirectory(CreateTempDir(GetFullMethodName()));
 
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter iw = new RandomIndexWriter(Random, dir, iwc);
 
-            int threadCount = TestUtil.NextInt(Random(), 1, 5);
+            int threadCount = TestUtil.NextInt32(Random, 1, 5);
             if (VERBOSE)
             {
-                Console.WriteLine("config: " + iw.w.Config);
+                Console.WriteLine("config: " + iw.IndexWriter.Config);
                 Console.WriteLine("threadCount=" + threadCount);
             }
 
             Field prototype = NewTextField("field", "", Field.Store.NO);
             FieldType fieldType = new FieldType(prototype.FieldType);
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 fieldType.OmitNorms = true;
             }
-            int options = Random().Next(3);
+            int options = Random.Next(3);
             if (options == 0)
             {
                 fieldType.IndexOptions = IndexOptions.DOCS_AND_FREQS; // we dont actually need positions
@@ -112,12 +113,12 @@ namespace Lucene.Net.Index
             }
             // else just positions
 
-            ThreadClass[] threads = new ThreadClass[threadCount];
+            ThreadJob[] threads = new ThreadJob[threadCount];
             CountdownEvent startingGun = new CountdownEvent(1);
 
             for (int threadID = 0; threadID < threadCount; threadID++)
             {
-                Random threadRandom = new Random(Random().Next());
+                Random threadRandom = new Random(Random.Next());
                 Document document = new Document();
                 Field field = new Field("field", "", fieldType);
                 document.Add(field);
@@ -125,13 +126,13 @@ namespace Lucene.Net.Index
                 threads[threadID].Start();
             }
             startingGun.Signal();
-            foreach (ThreadClass t in threads)
+            foreach (ThreadJob t in threads)
             {
                 t.Join();
             }
 
             iw.ForceMerge(1);
-            DirectoryReader ir = iw.Reader;
+            DirectoryReader ir = iw.GetReader();
             Assert.AreEqual(1, ir.Leaves.Count);
             AtomicReader air = (AtomicReader)ir.Leaves[0].Reader;
             Terms terms = air.GetTerms("field");
@@ -141,7 +142,7 @@ namespace Lucene.Net.Index
             BytesRef termBR;
             while ((termBR = termsEnum.Next()) != null)
             {
-                int value = Convert.ToInt32(termBR.Utf8ToString());
+                int value = Convert.ToInt32(termBR.Utf8ToString(), CultureInfo.InvariantCulture);
                 Assert.AreEqual(value, termsEnum.TotalTermFreq);
                 // don't really need to check more than this, as CheckIndex
                 // will verify that totalTermFreq == total number of positions seen
@@ -152,7 +153,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestBagOfPositions OuterInstance;
 

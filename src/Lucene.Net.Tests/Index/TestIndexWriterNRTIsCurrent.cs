@@ -1,12 +1,10 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -49,12 +47,12 @@ namespace Lucene.Net.Index
         public virtual void TestIsCurrentWithThreads()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             IndexWriter writer = new IndexWriter(dir, conf);
             ReaderHolder holder = new ReaderHolder();
             ReaderThread[] threads = new ReaderThread[AtLeast(3)];
             CountdownEvent latch = new CountdownEvent(1);
-            WriterThread writerThread = new WriterThread(holder, writer, AtLeast(500), Random(), latch);
+            WriterThread writerThread = new WriterThread(holder, writer, AtLeast(500), Random, latch);
             for (int i = 0; i < threads.Length; i++)
             {
                 threads[i] = new ReaderThread(holder, latch);
@@ -84,7 +82,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        public class WriterThread : ThreadClass
+        public class WriterThread : ThreadJob
         {
             internal readonly ReaderHolder Holder;
             internal readonly IndexWriter Writer;
@@ -105,7 +103,7 @@ namespace Lucene.Net.Index
             public override void Run()
             {
                 DirectoryReader currentReader = null;
-                Random random = LuceneTestCase.Random();
+                Random random = LuceneTestCase.Random;
                 try
                 {
                     Document doc = new Document();
@@ -186,7 +184,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        public sealed class ReaderThread : ThreadClass
+        public sealed class ReaderThread : ThreadJob
         {
             internal readonly ReaderHolder Holder;
             internal readonly CountdownEvent Latch;

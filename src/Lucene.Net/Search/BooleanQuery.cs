@@ -1,3 +1,4 @@
+using J2N;
 using Lucene.Net.Support;
 using System;
 using System.Collections;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 #endif
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search
 {
@@ -94,7 +96,7 @@ namespace Lucene.Net.Search
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public TooManyClausesException(SerializationInfo info, StreamingContext context)
+            protected TooManyClausesException(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
             }
@@ -121,7 +123,7 @@ namespace Lucene.Net.Search
             }
         }
 
-        private EquatableList<BooleanClause> clauses = new EquatableList<BooleanClause>();
+        private IList<BooleanClause> clauses = new JCG.List<BooleanClause>();
         private readonly bool disableCoord;
 
         /// <summary>
@@ -629,7 +631,7 @@ namespace Lucene.Net.Search
         public override object Clone()
         {
             BooleanQuery clone = (BooleanQuery)base.Clone();
-            clone.clauses = (EquatableList<BooleanClause>)this.clauses.Clone();
+            clone.clauses = new JCG.List<BooleanClause>(this.clauses);
             return clone;
         }
 
@@ -719,7 +721,7 @@ namespace Lucene.Net.Search
         /// Returns a hash code value for this object. </summary>
         public override int GetHashCode()
         {
-            return Number.SingleToInt32Bits(Boost) ^ clauses.GetHashCode()
+            return BitConversion.SingleToInt32Bits(Boost) ^ clauses.GetHashCode()
                 + MinimumNumberShouldMatch + (disableCoord ? 17 : 0);
         }
     }

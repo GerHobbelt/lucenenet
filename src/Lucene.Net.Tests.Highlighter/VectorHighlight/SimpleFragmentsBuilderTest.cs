@@ -1,6 +1,7 @@
 ﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search.Highlight;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
@@ -8,27 +9,29 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 using OpenMode = Lucene.Net.Index.OpenMode;
 
 namespace Lucene.Net.Search.VectorHighlight
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     public class SimpleFragmentsBuilderTest : AbstractTestCase
     {
@@ -236,24 +239,23 @@ namespace Lucene.Net.Search.VectorHighlight
         [Test]
         public void TestRandomDiscreteMultiValueHighlighting()
         {
-            String[]
-            randomValues = new String[3 + Random().nextInt(10 * RANDOM_MULTIPLIER)];
+            String[] randomValues = new String[3 + Random.nextInt(10 * RANDOM_MULTIPLIER)];
             for (int i = 0; i < randomValues.Length; i++)
             {
                 String randomValue;
                 do
                 {
-                    randomValue = TestUtil.RandomSimpleString(Random());
+                    randomValue = TestUtil.RandomSimpleString(Random);
                 } while ("".Equals(randomValue, StringComparison.Ordinal));
                 randomValues[i] = randomValue;
             }
 
             Directory dir = NewDirectory();
             RandomIndexWriter writer = new RandomIndexWriter(
-                Random(),
+                Random,
                 dir,
                 NewIndexWriterConfig(TEST_VERSION_CURRENT,
-                    new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+                    new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             FieldType customType = new FieldType(TextField.TYPE_STORED);
             customType.StoreTermVectors = (true);
@@ -261,11 +263,11 @@ namespace Lucene.Net.Search.VectorHighlight
             customType.StoreTermVectorPositions = (true);
 
             int numDocs = randomValues.Length * 5;
-            int numFields = 2 + Random().nextInt(5);
-            int numTerms = 2 + Random().nextInt(3);
+            int numFields = 2 + Random.nextInt(5);
+            int numTerms = 2 + Random.nextInt(3);
             List<Doc> docs = new List<Doc>(numDocs);
             List<Document> documents = new List<Document>(numDocs);
-            IDictionary<String, ISet<int>> valueToDocId = new HashMap<String, ISet<int>>();
+            IDictionary<String, ISet<int>> valueToDocId = new JCG.Dictionary<String, ISet<int>>();
             for (int i = 0; i < numDocs; i++)
             {
                 Document document = new Document();
@@ -278,9 +280,9 @@ namespace Lucene.Net.Search.VectorHighlight
                     for (int k = 1; k < numTerms; k++)
                     {
                         fieldValues[k] = getRandomValue(randomValues, valueToDocId, i);
-                        builder.append(' ').append(fieldValues[k]);
+                        builder.Append(' ').Append(fieldValues[k]);
                     }
-                    document.Add(new Field(F, builder.toString(), customType));
+                    document.Add(new Field(F, builder.ToString(), customType));
                     fields[j] = fieldValues;
                 }
                 docs.Add(new Doc(fields));
@@ -292,13 +294,13 @@ namespace Lucene.Net.Search.VectorHighlight
 
             try
             {
-                int highlightIters = 1 + Random().nextInt(120 * RANDOM_MULTIPLIER);
+                int highlightIters = 1 + Random.nextInt(120 * RANDOM_MULTIPLIER);
                 for (int highlightIter = 0; highlightIter < highlightIters; highlightIter++)
                 {
-                    String queryTerm = randomValues[Random().nextInt(randomValues.Length)];
-                    var iter = valueToDocId[queryTerm].GetEnumerator();
-                    iter.MoveNext();
-                    int randomHit = iter.Current;
+                    Console.WriteLine($"Highlighter iter: {highlightIter}");
+
+                    String queryTerm = randomValues[Random.nextInt(randomValues.Length)];
+                    int randomHit = valueToDocId[queryTerm].First();
                     List<StringBuilder> builders = new List<StringBuilder>();
                     foreach (String[] fieldValues in docs[randomHit].fieldValues)
                     {
@@ -308,16 +310,16 @@ namespace Lucene.Net.Search.VectorHighlight
                         {
                             if (queryTerm.Equals(fieldValues[i], StringComparison.Ordinal))
                             {
-                                builder.append("<b>").append(queryTerm).append("</b>");
+                                builder.Append("<b>").Append(queryTerm).Append("</b>");
                                 hit = true;
                             }
                             else
                             {
-                                builder.append(fieldValues[i]);
+                                builder.Append(fieldValues[i]);
                             }
                             if (i != fieldValues.Length - 1)
                             {
-                                builder.append(' ');
+                                builder.Append(' ');
                             }
                         }
                         if (hit)
@@ -336,10 +338,10 @@ namespace Lucene.Net.Search.VectorHighlight
                     SimpleFragmentsBuilder sfb = new SimpleFragmentsBuilder();
                     sfb.IsDiscreteMultiValueHighlighting = (true);
                     String[] actualFragments = sfb.CreateFragments(reader, randomHit, F, ffl, numFields);
-                    assertEquals(builders.size(), actualFragments.Length);
+                    assertEquals(builders.Count, actualFragments.Length);
                     for (int i = 0; i < actualFragments.Length; i++)
                     {
-                        assertEquals(builders[i].toString(), actualFragments[i]);
+                        assertEquals(builders[i].ToString(), actualFragments[i]);
                     }
                 }
             }
@@ -352,12 +354,12 @@ namespace Lucene.Net.Search.VectorHighlight
 
         private String getRandomValue(String[] randomValues, IDictionary<String, ISet<int>> valueToDocId, int docId)
         {
-            String value = randomValues[Random().nextInt(randomValues.Length)];
-            if (!valueToDocId.ContainsKey(value))
+            String value = randomValues[Random.nextInt(randomValues.Length)];
+            if (!valueToDocId.TryGetValue(value, out ISet<int> docIds))
             {
-                valueToDocId.Put(value, new HashSet<int>());
+                valueToDocId[value] = docIds = new JCG.HashSet<int>();
             }
-            valueToDocId[value].Add(docId);
+            docIds.Add(docId);
             return value;
         }
 

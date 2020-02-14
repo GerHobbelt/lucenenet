@@ -44,9 +44,13 @@ namespace Lucene.Net.Search.Spans
 
             // mimic StopAnalyzer
             CharacterRunAutomaton stopSet = new CharacterRunAutomaton((new RegExp("the|a|of")).ToAutomaton());
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, stopSet);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, stopSet);
 
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, analyzer, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir, analyzer);
             Document doc = new Document();
             doc.Add(NewTextField("field", "the quick brown fox", Field.Store.NO));
             writer.AddDocument(doc);
@@ -54,7 +58,7 @@ namespace Lucene.Net.Search.Spans
             doc2.Add(NewTextField("field", "quick brown fox", Field.Store.NO));
             writer.AddDocument(doc2);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
 
             // user queries on "starts-with quick"

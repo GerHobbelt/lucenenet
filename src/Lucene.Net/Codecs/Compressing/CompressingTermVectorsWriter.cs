@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using JCG = J2N.Collections.Generic;
 using ArrayUtil = Lucene.Net.Util.ArrayUtil;
 
 namespace Lucene.Net.Codecs.Compressing
@@ -449,7 +450,7 @@ namespace Lucene.Net.Codecs.Compressing
         /// Returns a sorted array containing unique field numbers. </summary>
         private int[] FlushFieldNums()
         {
-            SortedSet<int> fieldNums = new SortedSet<int>();
+            JCG.SortedSet<int> fieldNums = new JCG.SortedSet<int>();
             foreach (DocData dd in pendingDocs)
             {
                 foreach (FieldData fd in dd.fields)
@@ -700,7 +701,7 @@ namespace Lucene.Net.Codecs.Compressing
             // start offsets
             for (int i = 0; i < fieldNums.Length; ++i)
             {
-                vectorsStream.WriteInt32(Number.SingleToInt32Bits(charsPerTerm[i]));
+                vectorsStream.WriteInt32(J2N.BitConversion.SingleToInt32Bits(charsPerTerm[i]));
             }
 
             writer.Reset(vectorsStream);

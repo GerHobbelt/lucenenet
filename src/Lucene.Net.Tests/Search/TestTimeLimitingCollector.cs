@@ -1,16 +1,16 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Text;
+using J2N.Threading;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -80,13 +80,13 @@ namespace Lucene.Net.Search
                 "blueberry pizza",
             };
             directory = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter iw = new RandomIndexWriter(Random, directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             for (int i = 0; i < N_DOCS; i++)
             {
                 Add(docText[i % docText.Length], iw);
             }
-            reader = iw.Reader;
+            reader = iw.GetReader();
             iw.Dispose();
             searcher = NewSearcher(reader);
 
@@ -320,7 +320,7 @@ namespace Lucene.Net.Search
 
         private void DoTestMultiThreads(bool withTimeout)
         {
-            ThreadClass[] threadArray = new ThreadClass[N_THREADS];
+            ThreadJob[] threadArray = new ThreadJob[N_THREADS];
             OpenBitSet success = new OpenBitSet(N_THREADS);
             for (int i = 0; i < threadArray.Length; ++i)
             {
@@ -338,7 +338,7 @@ namespace Lucene.Net.Search
             assertEquals("some threads failed!", N_THREADS, success.Cardinality());
         }
 
-        internal class ThreadClassAnonymousHelper : ThreadClass
+        internal class ThreadClassAnonymousHelper : ThreadJob
         {
             private readonly TestTimeLimitingCollector outerInstance;
             private readonly OpenBitSet success;
@@ -409,7 +409,7 @@ namespace Lucene.Net.Search
                 {
                     //try
                     //{
-                        ThreadClass.Sleep(slowdown);
+                    ThreadJob.Sleep(slowdown);
 //                    }
 //#if NETSTANDARD1_6
 //                    catch (Exception)

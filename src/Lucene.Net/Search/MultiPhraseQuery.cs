@@ -3,8 +3,8 @@ using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search
 {
@@ -43,6 +43,7 @@ namespace Lucene.Net.Search
     using TermState = Lucene.Net.Index.TermState;
     using ToStringUtils = Lucene.Net.Util.ToStringUtils;
     using System.Collections;
+    using J2N.Collections.Generic.Extensions;
 
     /// <summary>
     /// <see cref="MultiPhraseQuery"/> is a generalized version of <see cref="PhraseQuery"/>, with an added
@@ -70,8 +71,8 @@ namespace Lucene.Net.Search
     public class MultiPhraseQuery : Query, IEnumerable<Term[]> // LUCENENET specific - implemented IEnumerable<Term[]>, which allows for use of collection initializer. See: https://stackoverflow.com/a/9195144
     {
         private string field;
-        private List<Term[]> termArrays = new List<Term[]>();
-        private readonly IList<int> positions = new EquatableList<int>();
+        private IList<Term[]> termArrays = new JCG.List<Term[]>();
+        private readonly IList<int> positions = new JCG.List<int>();
 
         private int slop = 0;
 
@@ -138,16 +139,16 @@ namespace Lucene.Net.Search
             }
 
             termArrays.Add(terms);
-            positions.Add(Convert.ToInt32(position));
+            positions.Add(position);
         }
 
         /// <summary>
         /// Returns a List of the terms in the multiphrase.
         /// Do not modify the List or its contents.
         /// </summary>
-        public virtual IList<Term[]> GetTermArrays()
+        public virtual IList<Term[]> GetTermArrays() // LUCENENET TODO: API - make into a property
         {
-            return termArrays.AsReadOnly();// Collections.unmodifiableList(TermArrays_Renamed);
+            return termArrays.AsReadOnly();
         }
 
         /// <summary>
@@ -466,7 +467,7 @@ namespace Lucene.Net.Search
         public override int GetHashCode()
         {
             //If this doesn't work hash all elements of positions. This was used to reduce time overhead
-            return Number.SingleToInt32Bits(Boost) 
+            return J2N.BitConversion.SingleToInt32Bits(Boost) 
                 ^ slop 
                 ^ TermArraysHashCode() 
                 ^ ((positions.Count == 0) ? 0 : positions.GetHashCode() 

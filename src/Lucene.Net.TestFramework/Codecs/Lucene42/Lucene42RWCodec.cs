@@ -1,3 +1,5 @@
+using Lucene.Net.Util;
+
 namespace Lucene.Net.Codecs.Lucene42
 {
     /*
@@ -17,16 +19,14 @@ namespace Lucene.Net.Codecs.Lucene42
      * limitations under the License.
      */
 
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-
     /// <summary>
-    /// Read-write version of <seealso cref="Lucene42Codec"/> for testing.
+    /// Read-write version of <see cref="Lucene42Codec"/> for testing.
     /// </summary>
 #pragma warning disable 612, 618
     public class Lucene42RWCodec : Lucene42Codec
     {
-        private readonly DocValuesFormat Dv = new Lucene42RWDocValuesFormat();
-        private readonly NormsFormat Norms = new Lucene42NormsFormat();
+        private readonly DocValuesFormat dv = new Lucene42RWDocValuesFormat();
+        private readonly NormsFormat norms = new Lucene42NormsFormat();
 
         private readonly FieldInfosFormat fieldInfosFormat = new Lucene42FieldInfosFormatAnonymousInnerClassHelper();
 
@@ -36,32 +36,20 @@ namespace Lucene.Net.Codecs.Lucene42
             {
                 get
                 {
-                    if (!LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
-                    {
+                    if (!LuceneTestCase.OldFormatImpersonationIsActive)
                         return base.FieldInfosWriter;
-                    }
                     else
-                    {
                         return new Lucene42FieldInfosWriter();
-                    }
                 }
             }
         }
 
         public override DocValuesFormat GetDocValuesFormatForField(string field)
-        {
-            return Dv;
-        }
+            => dv;
 
-        public override NormsFormat NormsFormat
-        {
-            get { return Norms; }
-        }
+        public override NormsFormat NormsFormat => norms;
 
-        public override FieldInfosFormat FieldInfosFormat
-        {
-            get { return fieldInfosFormat; }
-        }
+        public override FieldInfosFormat FieldInfosFormat => fieldInfosFormat;
     }
 #pragma warning restore 612, 618
 }

@@ -28,17 +28,18 @@ namespace Lucene.Net.Codecs
     /// <para/>
     /// The most common use cases are:
     /// <list type="bullet">
-    ///     <item><description>subclass <see cref="DefaultCodecFactory"/> and override
+    ///     <item><description>Initialize <see cref="DefaultCodecFactory"/> with a set of <see cref="CustomCodecTypes"/>.</description></item>
+    ///     <item><description>Subclass <see cref="DefaultCodecFactory"/> and override
     ///         <see cref="DefaultCodecFactory.GetCodec(Type)"/> so an external dependency injection
     ///         container can be used to supply the instances (lifetime should be singleton). Note that you could 
     ///         alternately use the "named type" feature that many DI containers have to supply the type based on name by 
     ///         overriding <see cref="GetCodec(string)"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultCodecFactory"/> and override
+    ///     <item><description>Subclass <see cref="DefaultCodecFactory"/> and override
     ///         <see cref="DefaultCodecFactory.GetCodecType(string)"/> so a type new type can be
     ///         supplied that is not in the <see cref="DefaultCodecFactory.codecNameToTypeMap"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultCodecFactory"/> to add new or override the default <see cref="Codec"/> 
+    ///     <item><description>Subclass <see cref="DefaultCodecFactory"/> to add new or override the default <see cref="Codec"/> 
     ///         types by overriding <see cref="Initialize()"/> and calling <see cref="PutCodecType(Type)"/>.</description></item>
-    ///     <item><description>subclass <see cref="DefaultCodecFactory"/> to scan additional assemblies for <see cref="Codec"/>
+    ///     <item><description>Subclass <see cref="DefaultCodecFactory"/> to scan additional assemblies for <see cref="Codec"/>
     ///         subclasses in by overriding <see cref="Initialize()"/> and calling <see cref="ScanForCodecs(Assembly)"/>. 
     ///         For performance reasons, the default behavior only loads Lucene.Net codecs.</description></item>
     /// </list>
@@ -47,7 +48,7 @@ namespace Lucene.Net.Codecs
     /// </summary>
     public class DefaultCodecFactory : NamedServiceFactory<Codec>, ICodecFactory, IServiceListable
     {
-        private static Type[] localCodecTypes = new Type[] {
+        private static readonly Type[] localCodecTypes = new Type[] {
             typeof(Lucene46.Lucene46Codec),
 #pragma warning disable 612, 618
             typeof(Lucene3x.Lucene3xCodec), // Optimize 3.x codec over < 4.6 codecs
@@ -60,9 +61,28 @@ namespace Lucene.Net.Codecs
 
         // NOTE: The following 2 dictionaries are static, since this instance is stored in a static
         // variable in the Codec class.
-        private readonly IDictionary<string, Type> codecNameToTypeMap = new Dictionary<string, Type>();
-        private readonly IDictionary<Type, Codec> codecInstanceCache = new Dictionary<Type, Codec>();
-        private object syncLock = new object();
+        private readonly IDictionary<string, Type> codecNameToTypeMap;
+        private readonly IDictionary<Type, Codec> codecInstanceCache;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="DefaultCodecFactory"/>.
+        /// </summary>
+        public DefaultCodecFactory()
+        {
+            codecNameToTypeMap = new Dictionary<string, Type>();
+            codecInstanceCache = new Dictionary<Type, Codec>();
+        }
+
+        /// <summary>
+        /// An array of custom <see cref="Codec"/>-derived types to be registered. This property
+        /// can be initialized during construction of <see cref="DefaultCodecFactory"/>
+        /// to make your custom codecs known to Lucene.
+        /// <para/>
+        /// These types will be registered after the default Lucene types, so if a custom type has the same
+        /// name as a Lucene <see cref="Codec"/> (via <see cref="CodecNameAttribute"/>) 
+        /// the custom type will replace the Lucene type with the same name.
+        /// </summary>
+        public IEnumerable<Type> CustomCodecTypes { get; set; }
 
         /// <summary>
         /// Initializes the codec type cache with the known <see cref="Codec"/> types.
@@ -76,11 +96,13 @@ namespace Lucene.Net.Codecs
         protected override void Initialize()
         {
             foreach (var codecType in localCodecTypes)
-            {
                 PutCodecTypeImpl(codecType);
-            }
             ScanForCodecs(this.CodecsAssembly);
-
+            if (CustomCodecTypes != null)
+            {
+                foreach (var codecType in CustomCodecTypes)
+                    PutCodecType(codecType);
+            }
         }
 
         /// <summary>
@@ -129,13 +151,9 @@ namespace Lucene.Net.Codecs
         protected virtual void PutCodecType(Type codec)
         {
             if (codec == null)
-            {
-                throw new ArgumentNullException("codec", "codec may not be null");
-            }
+                throw new ArgumentNullException(nameof(codec));
             if (!typeof(Codec).GetTypeInfo().IsAssignableFrom(codec))
-            {
-                throw new ArgumentException("The supplied codec does not subclass Codec.");
-            }
+                throw new ArgumentException($"The supplied type {codec.AssemblyQualifiedName} does not subclass {nameof(Codec)}.");
 
             PutCodecTypeImpl(codec);
         }
@@ -143,7 +161,10 @@ namespace Lucene.Net.Codecs
         private void PutCodecTypeImpl(Type codec)
         {
             string name = GetServiceName(codec);
-            codecNameToTypeMap[name] = codec;
+            lock (m_initializationLock)
+            {
+                codecNameToTypeMap[name] = codec;
+            }
         }
 
         /// <summary>
@@ -154,8 +175,11 @@ namespace Lucene.Net.Codecs
         public virtual Codec GetCodec(string name)
         {
             EnsureInitialized(); // Safety in case a subclass doesn't call it
-            Type codecType = GetCodecType(name);
-            return GetCodec(codecType);
+            lock (m_initializationLock)
+            {
+                Type codecType = GetCodecType(name);
+                return GetCodec(codecType);
+            }
         }
 
         /// <summary>
@@ -165,14 +189,15 @@ namespace Lucene.Net.Codecs
         /// <returns>The <see cref="Codec"/> instance.</returns>
         protected virtual Codec GetCodec(Type type)
         {
-            Codec instance;
-            if (!codecInstanceCache.TryGetValue(type, out instance))
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+            if (!codecInstanceCache.TryGetValue(type, out Codec instance))
             {
-                lock (syncLock)
+                lock (m_initializationLock)
                 {
                     if (!codecInstanceCache.TryGetValue(type, out instance))
                     {
-                        instance = (Codec)Activator.CreateInstance(type, IsFullyTrusted);
+                        instance = NewCodec(type);
                         codecInstanceCache[type] = instance;
                     }
                 }
@@ -182,20 +207,31 @@ namespace Lucene.Net.Codecs
         }
 
         /// <summary>
+        /// Instantiates a <see cref="Codec"/> based on the provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="Type"/> of <see cref="Codec"/> to instantiate.</param>
+        /// <returns>The new instance.</returns>
+        protected virtual Codec NewCodec(Type type)
+        {
+            return (Codec)Activator.CreateInstance(type, IsFullyTrusted);
+        }
+
+        /// <summary>
         /// Gets the <see cref="Codec"/> <see cref="Type"/> from the provided <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the <see cref="Codec"/> <see cref="Type"/> to retrieve.</param>
         /// <returns>The <see cref="Codec"/> <see cref="Type"/>.</returns>
         protected virtual Type GetCodecType(string name)
         {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
             EnsureInitialized();
-            Type codecType;
-            if (!codecNameToTypeMap.TryGetValue(name, out codecType) && codecType == null)
+            if (!codecNameToTypeMap.TryGetValue(name, out Type codecType) && codecType == null)
             {
                 throw new ArgumentException($"Codec '{name}' cannot be loaded. If the codec is not " +
                     $"in a Lucene.Net assembly, you must subclass {typeof(DefaultCodecFactory).FullName}, " +
                     "override the Initialize() method, and call PutCodecType() or ScanForCodecs() to add " +
-                    $"the type manually. Call {typeof(Codec).FullName}.SetCodecFactory() at application " + 
+                    $"the type manually. Call {typeof(Codec).FullName}.SetCodecFactory() at application " +
                     "startup to initialize your custom codec.");
             }
 
@@ -206,10 +242,13 @@ namespace Lucene.Net.Codecs
         /// Gets a list of the available <see cref="Codec"/>s (by name).
         /// </summary>
         /// <returns>A <see cref="T:ICollection{string}"/> of <see cref="Codec"/> names.</returns>
-        public virtual ICollection<string> AvailableServices()
+        public virtual ICollection<string> AvailableServices
         {
-            EnsureInitialized();
-            return codecNameToTypeMap.Keys;
+            get
+            {
+                EnsureInitialized();
+                return codecNameToTypeMap.Keys;
+            }
         }
     }
 }

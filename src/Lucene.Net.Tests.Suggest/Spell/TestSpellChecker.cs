@@ -1,9 +1,10 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -49,13 +50,13 @@ namespace Lucene.Net.Search.Spell
             //create a user index
             userindex = NewDirectory();
             IndexWriter writer = new IndexWriter(userindex, new IndexWriterConfig(
-                TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+                TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
 
             for (int i = 0; i < 1000; i++)
             {
                 Document doc = new Document();
-                doc.Add(NewTextField("field1", English.IntToEnglish(i), Field.Store.YES));
-                doc.Add(NewTextField("field2", English.IntToEnglish(i + 1), Field.Store.YES)); // + word thousand
+                doc.Add(NewTextField("field1", English.Int32ToEnglish(i), Field.Store.YES));
+                doc.Add(NewTextField("field2", English.Int32ToEnglish(i + 1), Field.Store.YES)); // + word thousand
                 doc.Add(NewTextField("field3", "fvei" + (i % 2 == 0 ? " five" : ""), Field.Store.YES)); // + word thousand
                 writer.AddDocument(doc);
             }
@@ -479,7 +480,7 @@ namespace Lucene.Net.Search.Spell
                 assertEquals(4, searchers.Count);
                 int num_field2 = this.NumDoc();
                 assertEquals(num_field2, num_field1 + 1);
-                int numThreads = 5 + Random().nextInt(5);
+                int numThreads = 5 + Random.nextInt(5);
                 SpellCheckWorker[] workers = new SpellCheckWorker[numThreads];
                 var stop = new AtomicBoolean(false);
                 for (int i = 0; i < numThreads; i++)
@@ -488,7 +489,7 @@ namespace Lucene.Net.Search.Spell
                     workers[i] = spellCheckWorker;
                     spellCheckWorker.Start();
                 }
-                int iterations = 5 + Random().nextInt(5);
+                int iterations = 5 + Random.nextInt(5);
                 for (int i = 0; i < iterations; i++)
                 {
                     Thread.Sleep(100);
@@ -499,7 +500,7 @@ namespace Lucene.Net.Search.Spell
                 }
 
                 spellChecker.Dispose();
-                stop.Set(true);
+                stop.Value = true;
 
                 // wait for 60 seconds - usually this is very fast but coverage runs could take quite long
                 //executor.awaitTermination(60L, TimeUnit.SECONDS);
@@ -565,7 +566,7 @@ namespace Lucene.Net.Search.Spell
         //    System.out.println(count);
         //  }
 
-        private class SpellCheckWorker : ThreadClass
+        private class SpellCheckWorker : ThreadJob
         {
             private readonly TestSpellChecker outerInstance;
 
@@ -593,7 +594,7 @@ namespace Lucene.Net.Search.Spell
 #endif
                 try
                 {
-                    while (!stop.Get())
+                    while (!stop)
                     {
                         try
                         {

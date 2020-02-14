@@ -2,7 +2,7 @@
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -68,9 +68,9 @@ namespace Lucene.Net.Search.VectorHighlight
         public override void SetUp()
         {
             base.SetUp();
-            analyzerW = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
+            analyzerW = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
             analyzerB = new BigramAnalyzer();
-            analyzerK = new MockAnalyzer(Random(), MockTokenizer.KEYWORD, false);
+            analyzerK = new MockAnalyzer(Random, MockTokenizer.KEYWORD, false);
             dir = NewDirectory();
         }
 
@@ -209,7 +209,7 @@ namespace Lucene.Net.Search.VectorHighlight
 
         internal sealed class BigramAnalyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(String fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(String fieldName, TextReader reader)
             {
                 return new TokenStreamComponents(new BasicNGramTokenizer(reader));
             }
@@ -277,7 +277,7 @@ namespace Lucene.Net.Search.VectorHighlight
                 if (!GetNextPartialSnippet())
                     return false;
                 ClearAttributes();
-                termAtt.SetEmpty().Append(snippet, startTerm, startTerm + lenTerm);
+                termAtt.SetEmpty().Append(snippet, startTerm, lenTerm); // LUCENENET: Corrected 3rd parameter
                 offsetAtt.SetOffset(CorrectOffset(startOffset), CorrectOffset(startOffset + lenTerm));
                 return true;
             }

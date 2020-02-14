@@ -1,18 +1,15 @@
-﻿using Lucene.Net.Attributes;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Attributes;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Threading;
 
 namespace Lucene.Net.Facet.Taxonomy
 {
-
-
-    using Directory = Lucene.Net.Store.Directory;
     using DirectoryTaxonomyReader = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyReader;
     using DirectoryTaxonomyWriter = Lucene.Net.Facet.Taxonomy.Directory.DirectoryTaxonomyWriter;
     using LockObtainFailedException = Lucene.Net.Store.LockObtainFailedException;
@@ -108,7 +105,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 int expectedOrdinal = ExpectedPaths[i][ExpectedPaths[i].Length - 1];
                 if (ordinal != expectedOrdinal)
                 {
-                    Fail("For category " + Showcat(categories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
+                    fail("For category " + Showcat(categories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
                 }
             }
         }
@@ -372,7 +369,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 FacetLabel category = tr.GetPath(i);
                 if (!expectedCategory.Equals(category))
                 {
-                    Fail("For ordinal " + i + " expected category " + Showcat(expectedCategory) + ", but got " + Showcat(category));
+                    fail("For ordinal " + i + " expected category " + Showcat(expectedCategory) + ", but got " + Showcat(category));
                 }
             }
             //  (also test invalid ordinals:)
@@ -387,7 +384,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 int ordinal = tr.GetOrdinal(new FacetLabel(ExpectedCategories[i]));
                 if (expectedOrdinal != ordinal)
                 {
-                    Fail("For category " + Showcat(ExpectedCategories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
+                    fail("For category " + Showcat(ExpectedCategories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
                 }
             }
             // (also test invalid categories:)
@@ -432,12 +429,12 @@ namespace Lucene.Net.Facet.Taxonomy
                 FacetLabel parent = tr.GetPath(parentOrdinal);
                 if (parent == null)
                 {
-                    Fail("Parent of " + ordinal + " is " + parentOrdinal + ", but this is not a valid category.");
+                    fail("Parent of " + ordinal + " is " + parentOrdinal + ", but this is not a valid category.");
                 }
                 // verify that the parent is indeed my parent, according to the strings
                 if (!me.Subpath(me.Length - 1).Equals(parent))
                 {
-                    Fail("Got parent " + parentOrdinal + " for ordinal " + ordinal + " but categories are " + Showcat(parent) + " and " + Showcat(me) + " respectively.");
+                    fail("Got parent " + parentOrdinal + " for ordinal " + ordinal + " but categories are " + Showcat(parent) + " and " + Showcat(me) + " respectively.");
                 }
             }
 
@@ -504,13 +501,13 @@ namespace Lucene.Net.Facet.Taxonomy
                 FacetLabel parent = tr.GetPath(parentOrdinal);
                 if (parent == null)
                 {
-                    Fail("Parent of " + ordinal + " is " + parentOrdinal + ", but this is not a valid category.");
+                    fail("Parent of " + ordinal + " is " + parentOrdinal + ", but this is not a valid category.");
                 }
                 // verify that the parent is indeed my parent, according to the
                 // strings
                 if (!me.Subpath(me.Length - 1).Equals(parent))
                 {
-                    Fail("Got parent " + parentOrdinal + " for ordinal " + ordinal + " but categories are " + Showcat(parent) + " and " + Showcat(me) + " respectively.");
+                    fail("Got parent " + parentOrdinal + " for ordinal " + ordinal + " but categories are " + Showcat(parent) + " and " + Showcat(me) + " respectively.");
                 }
             }
 
@@ -518,7 +515,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 tw.GetParent(-1);
-                Fail("getParent for -1 should throw exception");
+                fail("getParent for -1 should throw exception");
             }
             catch (System.IndexOutOfRangeException)
             {
@@ -527,7 +524,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 tw.GetParent(TaxonomyReader.INVALID_ORDINAL);
-                Fail("getParent for INVALID_ORDINAL should throw exception");
+                fail("getParent for INVALID_ORDINAL should throw exception");
             }
             catch (System.IndexOutOfRangeException)
             {
@@ -536,7 +533,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 int parent = tw.GetParent(tr.Count);
-                Fail("getParent for getSize() should throw exception, but returned " + parent);
+                fail("getParent for getSize() should throw exception, but returned " + parent);
             }
             catch (System.IndexOutOfRangeException)
             {
@@ -833,14 +830,14 @@ namespace Lucene.Net.Facet.Taxonomy
                 newTaxoReader.Dispose();
             }
 
-            stop.Set(true);
+            stop.Value = true;
             thread.Join();
             Assert.Null(error[0], "Unexpcted exception at retry " + retry + " retrieval " + retrieval[0] + ": \n" + stackTraceStr(error[0]));
 
             tr.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestTaxonomyCombined outerInstance;
 
@@ -876,7 +873,7 @@ namespace Lucene.Net.Facet.Taxonomy
 #endif 
                 try
                 {
-                    while (!stop.Get())
+                    while (!stop)
                     {
                         int lastOrd = tr.ParallelTaxonomyArrays.Parents.Length - 1;
                         Assert.NotNull(tr.GetPath(lastOrd), "path of last-ord " + lastOrd + " is not found!");
@@ -887,7 +884,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 catch (Exception e)
                 {
                     error[0] = e;
-                    stop.Set(true);
+                    stop.Value = true;
                 }
             }
 
@@ -957,7 +954,7 @@ namespace Lucene.Net.Facet.Taxonomy
             }
             catch (System.IndexOutOfRangeException)
             {
-                Fail("After category addition, commit() and refresh(), getParent for " + author + " should NOT throw exception");
+                fail("After category addition, commit() and refresh(), getParent for " + author + " should NOT throw exception");
             }
             Assert.AreEqual(2, tr.Count); // finally, see there are two categories
 
@@ -1039,7 +1036,7 @@ namespace Lucene.Net.Facet.Taxonomy
             try
             {
                 Assert.Null(new DirectoryTaxonomyWriter(indexDir));
-                Fail("should have failed to write in locked directory");
+                fail("should have failed to write in locked directory");
             }
             catch (LockObtainFailedException)
             {
@@ -1079,7 +1076,7 @@ namespace Lucene.Net.Facet.Taxonomy
                 int expectedOrdinal = ExpectedPaths[i][ExpectedPaths[i].Length - 1];
                 if (ordinal != expectedOrdinal)
                 {
-                    Fail("For category " + Showcat(categories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
+                    fail("For category " + Showcat(categories[i]) + " expected ordinal " + expectedOrdinal + ", but got " + ordinal);
                 }
                 for (int j = ExpectedPaths[i].Length - 2; j >= 0; j--)
                 {
@@ -1087,7 +1084,7 @@ namespace Lucene.Net.Facet.Taxonomy
                     expectedOrdinal = ExpectedPaths[i][j];
                     if (ordinal != expectedOrdinal)
                     {
-                        Fail("For category " + Showcat(categories[i]) + " expected ancestor level " + (ExpectedPaths[i].Length - 1 - j) + " was " + expectedOrdinal + ", but got " + ordinal);
+                        fail("For category " + Showcat(categories[i]) + " expected ancestor level " + (ExpectedPaths[i].Length - 1 - j) + " was " + expectedOrdinal + ", but got " + ordinal);
                     }
                 }
             }
@@ -1106,7 +1103,7 @@ namespace Lucene.Net.Facet.Taxonomy
                     int expectedOrdinal = ExpectedPaths[i][j];
                     if (ordinal != expectedOrdinal)
                     {
-                        Fail("For category " + Showcat(categories[i]) + " expected ancestor level " + (ExpectedPaths[i].Length - 1 - j) + " was " + expectedOrdinal + ", but got " + ordinal);
+                        fail("For category " + Showcat(categories[i]) + " expected ancestor level " + (ExpectedPaths[i].Length - 1 - j) + " was " + expectedOrdinal + ", but got " + ordinal);
                     }
                 }
                 Assert.AreEqual(TaxonomyReader.ROOT_ORDINAL, tw.GetParent(ExpectedPaths[i][0]));

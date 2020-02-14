@@ -51,19 +51,19 @@ namespace Lucene.Net.Analysis.Id
         /// </summary>
         private class DefaultSetHolder
         {
-            internal static readonly CharArraySet DEFAULT_STOP_SET;
+            internal static readonly CharArraySet DEFAULT_STOP_SET = LoadDefaultStopSet();
 
-            static DefaultSetHolder()
+            private static CharArraySet LoadDefaultStopSet() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    DEFAULT_STOP_SET = LoadStopwordSet(false, typeof(IndonesianAnalyzer), DEFAULT_STOPWORD_FILE, "#");
+                    return LoadStopwordSet(false, typeof(IndonesianAnalyzer), DEFAULT_STOPWORD_FILE, "#");
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
                     // default set should always be present as it is part of the
                     // distribution (JAR)
-                    throw new Exception("Unable to load default stopword set");
+                    throw new Exception("Unable to load default stopword set", ex);
                 }
             }
         }
@@ -117,7 +117,7 @@ namespace Lucene.Net.Analysis.Id
         ///         <see cref="StandardFilter"/>, <see cref="LowerCaseFilter"/>,
         ///         <see cref="StopFilter"/>, <see cref="SetKeywordMarkerFilter"/>
         ///         if a stem exclusion set is provided and <see cref="IndonesianStemFilter"/>. </returns>
-        protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+        protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
         {
             Tokenizer source = new StandardTokenizer(m_matchVersion, reader);
             TokenStream result = new StandardFilter(m_matchVersion, source);

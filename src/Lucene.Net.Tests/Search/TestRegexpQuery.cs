@@ -53,11 +53,15 @@ namespace Lucene.Net.Search
         {
             base.SetUp();
             Directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Directory);
             Document doc = new Document();
             doc.Add(NewTextField(FN, "the quick brown fox jumps over the lazy ??? dog 493432 49344", Field.Store.NO));
             writer.AddDocument(doc);
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Searcher = NewSearcher(Reader);
         }
@@ -129,7 +133,7 @@ namespace Lucene.Net.Search
             public AutomatonProviderAnonymousInnerClassHelper(TestRegexpQuery outerInstance)
             {
                 this.OuterInstance = outerInstance;
-                quickBrownAutomaton = BasicOperations.Union(Arrays.AsList(BasicAutomata.MakeString("quick"), BasicAutomata.MakeString("brown"), BasicAutomata.MakeString("bob")));
+                quickBrownAutomaton = BasicOperations.Union(new Automaton[] { BasicAutomata.MakeString("quick"), BasicAutomata.MakeString("brown"), BasicAutomata.MakeString("bob") });
             }
 
             // automaton that matches quick or brown

@@ -1,13 +1,12 @@
 ﻿using Lucene.Net.Index;
 using Lucene.Net.Queries.Function.DocValues;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Mutable;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Queries.Function.ValueSources
 {
@@ -52,23 +51,17 @@ namespace Lucene.Net.Queries.Function.ValueSources
         /// <summary>
         /// NOTE: This was tryParseInt() in Lucene
         /// </summary>
-        private static int? TryParseInt32(string valueStr) 
+        private static int? TryParseInt32(string valueStr) // LUCENENET TODO: API - Add overload to include CultureInfo ?
         {
-            int? intValue = null;
-            try
-            {
-                intValue = Convert.ToInt32(valueStr);
-            }
-            catch (FormatException)
-            {
-            }
-            return intValue;
+            if (int.TryParse(valueStr, out int intValue))
+                return intValue;
+            return null;
         }
 
         /// <summary>
         /// NOTE: This was intValueToStringValue() in Lucene
         /// </summary>
-        private string Int32ValueToStringValue(int? intVal)
+        private string Int32ValueToStringValue(int? intVal) // LUCENENET TODO: API - Add overload to include CultureInfo
         {
             if (intVal == null)
             {
@@ -87,7 +80,7 @@ namespace Lucene.Net.Queries.Function.ValueSources
         /// <summary>
         /// NOTE: This was stringValueToIntValue() in Lucene
         /// </summary>
-        private int? StringValueToInt32Value(string stringVal)
+        private int? StringValueToInt32Value(string stringVal) // LUCENENET TODO: API - Add overload to include CultureInfo
         {
             if (stringVal == null)
             {
@@ -199,7 +192,7 @@ namespace Lucene.Net.Queries.Function.ValueSources
             }
 
 
-            public override ValueSourceScorer GetRangeScorer(IndexReader reader, string lowerVal, string upperVal, bool includeLower, bool includeUpper)
+            public override ValueSourceScorer GetRangeScorer(IndexReader reader, string lowerVal, string upperVal, bool includeLower, bool includeUpper) // LUCENENET TODO: API - Add overload to include CultureInfo ?
             {
                 int? lower = outerInstance.StringValueToInt32Value(lowerVal);
                 int? upper = outerInstance.StringValueToInt32Value(upperVal);
@@ -310,13 +303,13 @@ namespace Lucene.Net.Queries.Function.ValueSources
 
             EnumFieldSource that = (EnumFieldSource)o;
 
-            // LUCENENET specific: must use Collections.Equals() to ensure values
+            // LUCENENET specific: must use DictionaryEqualityComparer.Equals() to ensure values
             // contained within the dictionaries are compared for equality
-            if (!Collections.Equals(enumIntToStringMap, that.enumIntToStringMap))
+            if (!JCG.DictionaryEqualityComparer<int?, string>.Default.Equals(enumIntToStringMap, that.enumIntToStringMap))
             {
                 return false;
             }
-            if (!Collections.Equals(enumStringToIntMap, that.enumStringToIntMap))
+            if (!JCG.DictionaryEqualityComparer<string, int?>.Default.Equals(enumStringToIntMap, that.enumStringToIntMap))
             {
                 return false;
             }
@@ -332,10 +325,10 @@ namespace Lucene.Net.Queries.Function.ValueSources
         {
             int result = base.GetHashCode();
             result = 31 * result + parser.GetHashCode();
-            // LUCENENET specific: must use Collections.GetHashCode() to ensure values
+            // LUCENENET specific: must use DictionaryEqualityComparer.GetHashCode() to ensure values
             // contained within the dictionaries are compared for equality
-            result = 31 * result + Collections.GetHashCode(enumIntToStringMap);
-            result = 31 * result + Collections.GetHashCode(enumStringToIntMap);
+            result = 31 * result + JCG.DictionaryEqualityComparer<int?, string>.Default.GetHashCode(enumIntToStringMap);
+            result = 31 * result + JCG.DictionaryEqualityComparer<string, int?>.Default.GetHashCode(enumStringToIntMap);
             return result;
         }
     }

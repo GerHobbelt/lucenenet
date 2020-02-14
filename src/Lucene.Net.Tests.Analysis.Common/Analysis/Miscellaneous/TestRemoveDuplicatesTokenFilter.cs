@@ -1,16 +1,14 @@
-﻿using Lucene.Net.Analysis;
-using System.Collections.Generic;
-using NUnit.Framework;
-using Lucene.Net.Support;
-using Lucene.Net.Analysis.Miscellaneous;
-using Lucene.Net.Util;
+﻿using J2N.Text;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Synonym;
+using Lucene.Net.Analysis.TokenAttributes;
+using Lucene.Net.Attributes;
+using Lucene.Net.Util;
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using Lucene.Net.Analysis.TokenAttributes;
-using Lucene.Net.Analysis.Core;
-using Lucene.Net.Attributes;
 
 namespace Lucene.Net.Analysis.Miscellaneous
 {
@@ -49,7 +47,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         public virtual void TestDups(string expected, params Token[] tokens)
         {
 
-            IEnumerator<Token> toks = Arrays.AsList(tokens).GetEnumerator();
+            IEnumerator<Token> toks = ((IEnumerable<Token>)tokens).GetEnumerator();
             TokenStream ts = new RemoveDuplicatesTokenFilter((new TokenStreamAnonymousInnerClassHelper(this, toks)));
 
             AssertTokenStreamContents(ts, Regex.Split(expected, "\\s").TrimEnd());
@@ -122,7 +120,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         {
             while (true)
             {
-                string s = TestUtil.RandomUnicodeString(Random()).Trim();
+                string s = TestUtil.RandomUnicodeString(Random).Trim();
                 if (s.Length != 0 && s.IndexOf('\u0000') == -1)
                 {
                     return s;
@@ -143,18 +141,18 @@ namespace Lucene.Net.Analysis.Miscellaneous
             int numIters = AtLeast(10);
             for (int i = 0; i < numIters; i++)
             {
-                SynonymMap.Builder b = new SynonymMap.Builder(Random().nextBoolean());
+                SynonymMap.Builder b = new SynonymMap.Builder(Random.nextBoolean());
                 int numEntries = AtLeast(10);
                 for (int j = 0; j < numEntries; j++)
                 {
-                    Add(b, RandomNonEmptyString(), RandomNonEmptyString(), Random().nextBoolean());
+                    Add(b, RandomNonEmptyString(), RandomNonEmptyString(), Random.nextBoolean());
                 }
                 SynonymMap map = b.Build();
-                bool ignoreCase = Random().nextBoolean();
+                bool ignoreCase = Random.nextBoolean();
 
                 Analyzer analyzer = new AnalyzerAnonymousInnerClassHelper(this, map, ignoreCase);
 
-                CheckRandomData(Random(), analyzer, 200);
+                CheckRandomData(Random, analyzer, 200);
             }
         }
 
@@ -172,7 +170,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.ignoreCase = ignoreCase;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 TokenStream stream = new SynonymFilter(tokenizer, map, ignoreCase);
@@ -196,7 +194,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new RemoveDuplicatesTokenFilter(tokenizer));

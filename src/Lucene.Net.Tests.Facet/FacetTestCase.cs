@@ -1,12 +1,9 @@
-﻿using System;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
-using Lucene.Net.Facet;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
+﻿using Lucene.Net.Support;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet
 {
@@ -29,14 +26,14 @@ namespace Lucene.Net.Facet
      */
 
 
+    using BytesRef = Lucene.Net.Util.BytesRef;
     using CachedOrdinalsReader = Lucene.Net.Facet.Taxonomy.CachedOrdinalsReader;
     using DocValuesOrdinalsReader = Lucene.Net.Facet.Taxonomy.DocValuesOrdinalsReader;
     using FastTaxonomyFacetCounts = Lucene.Net.Facet.Taxonomy.FastTaxonomyFacetCounts;
+    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
     using OrdinalsReader = Lucene.Net.Facet.Taxonomy.OrdinalsReader;
     using TaxonomyFacetCounts = Lucene.Net.Facet.Taxonomy.TaxonomyFacetCounts;
     using TaxonomyReader = Lucene.Net.Facet.Taxonomy.TaxonomyReader;
-    using BytesRef = Lucene.Net.Util.BytesRef;
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
     using TestUtil = Lucene.Net.Util.TestUtil;
 
     [SuppressCodecs("Lucene3x")]
@@ -50,14 +47,14 @@ namespace Lucene.Net.Facet
         public virtual Facets GetTaxonomyFacetCounts(TaxonomyReader taxoReader, FacetsConfig config, FacetsCollector c, string indexFieldName)
         {
             Facets facets;
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 facets = new FastTaxonomyFacetCounts(indexFieldName, taxoReader, config, c);
             }
             else
             {
                 OrdinalsReader ordsReader = new DocValuesOrdinalsReader(indexFieldName);
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
                     ordsReader = new CachedOrdinalsReader(ordsReader);
                 }
@@ -72,7 +69,7 @@ namespace Lucene.Net.Facet
             string[] tokens = new string[count];
             for (int i = 0; i < tokens.Length; i++)
             {
-                tokens[i] = TestUtil.RandomRealisticUnicodeString(Random(), 1, 10);
+                tokens[i] = TestUtil.RandomRealisticUnicodeString(Random, 1, 10);
                 //tokens[i] = TestUtil.RandomSimpleString(Random(), 1, 10);
             }
             return tokens;
@@ -82,7 +79,7 @@ namespace Lucene.Net.Facet
         {
             for (int i = 0; i < tokens.Length; i++)
             {
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
                     return tokens[i];
                 }
@@ -111,7 +108,7 @@ namespace Lucene.Net.Facet
                 for (int j = 0; j < numDims; j++)
                 {
                     doc.dims[j] = PickToken(tokens);
-                    if (Random().Next(10) < 3)
+                    if (Random.Next(10) < 3)
                     {
                         break;
                     }

@@ -1,72 +1,66 @@
+using Lucene.Net.Codecs;
 using Lucene.Net.Codecs.Asserting;
+using Lucene.Net.Codecs.CheapBastard;
 using Lucene.Net.Codecs.Compressing;
 using Lucene.Net.Codecs.Lucene3x;
 using Lucene.Net.Codecs.Lucene40;
 using Lucene.Net.Codecs.Lucene41;
 using Lucene.Net.Codecs.Lucene42;
 using Lucene.Net.Codecs.Lucene45;
-using Lucene.Net.JavaCompatibility;
-using Lucene.Net.Randomized.Generators;
+using Lucene.Net.Codecs.Lucene46;
+using Lucene.Net.Codecs.MockRandom;
+using Lucene.Net.Codecs.SimpleText;
+using Lucene.Net.Index;
+using Lucene.Net.Search;
+using Lucene.Net.Search.Similarities;
 using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
+using Debug = Lucene.Net.Diagnostics.Debug;
+
+// LUCENENET NOTE: These are primarily here because they are referred to
+// in the XML documentation. Be sure to add a new option if a new test framework
+// is being supported.
+#if TESTFRAMEWORK_MSTEST
+using AssumptionViolatedException = Microsoft.VisualStudio.TestTools.UnitTesting.AssertInconclusiveException;
+#elif TESTFRAMEWORK_NUNIT
+using AssumptionViolatedException = NUnit.Framework.InconclusiveException;
+#elif TESTFRAMEWORK_XUNIT
+using AssumptionViolatedException = Lucene.Net.TestFramework.SkipTestException;
+#endif
 
 namespace Lucene.Net.Util
 {
     /*
-    * Licensed to the Apache Software Foundation (ASF) under one or more
-    * contributor license agreements.  See the NOTICE file distributed with
-    * this work for additional information regarding copyright ownership.
-    * The ASF licenses this file to You under the Apache License, Version 2.0
-    * (the "License"); you may not use this file except in compliance with
-    * the License.  You may obtain a copy of the License at
-    *
-    *     http://www.apache.org/licenses/LICENSE-2.0
-    *
-    * Unless required by applicable law or agreed to in writing, software
-    * distributed under the License is distributed on an "AS IS" BASIS,
-    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    * See the License for the specific language governing permissions and
-    * limitations under the License.
-    */
-
-    /*
-	import static Lucene.Net.Util.LuceneTestCase.INFOSTREAM;
-	import static Lucene.Net.Util.LuceneTestCase.TEST_CODEC;
-	import static Lucene.Net.Util.LuceneTestCase.TEST_DOCVALUESFORMAT;
-	import static Lucene.Net.Util.LuceneTestCase.TEST_POSTINGSFORMAT;
-	import static Lucene.Net.Util.LuceneTestCase.VERBOSE;
-	import static Lucene.Net.Util.LuceneTestCase.assumeFalse;
-	import static Lucene.Net.Util.LuceneTestCase.localeForName;
-	import static Lucene.Net.Util.LuceneTestCase.random;
-	import static Lucene.Net.Util.LuceneTestCase.randomLocale;
-	import static Lucene.Net.Util.LuceneTestCase.randomTimeZone;*/
-
-    using CheapBastardCodec = Lucene.Net.Codecs.CheapBastard.CheapBastardCodec;
-    using Codec = Lucene.Net.Codecs.Codec;
-    using DefaultSimilarity = Lucene.Net.Search.Similarities.DefaultSimilarity;
-    using DocValuesFormat = Lucene.Net.Codecs.DocValuesFormat;
-    using Lucene46Codec = Lucene.Net.Codecs.Lucene46.Lucene46Codec;
-    using MockRandomPostingsFormat = Lucene.Net.Codecs.MockRandom.MockRandomPostingsFormat;
-    using PostingsFormat = Lucene.Net.Codecs.PostingsFormat;
-    using RandomCodec = Lucene.Net.Index.RandomCodec;
-    using RandomSimilarityProvider = Lucene.Net.Search.RandomSimilarityProvider;
-    using Similarity = Lucene.Net.Search.Similarities.Similarity;
-    using SimpleTextCodec = Lucene.Net.Codecs.SimpleText.SimpleTextCodec;
-
-    //using RandomizedContext = com.carrotsearch.randomizedtesting.RandomizedContext;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Setup and restore suite-level environment (fine grained junk that
     /// doesn't fit anywhere else).
     /// </summary>
+    // LUCENENET specific: This class was refactored to be called directly from LuceneTestCase, since
+    // we didn't port over the entire test suite from Java.
     internal sealed class TestRuleSetupAndRestoreClassEnv : AbstractBeforeAfterRule
     {
         /// <summary>
@@ -84,21 +78,51 @@ namespace Lucene.Net.Util
         internal Similarity similarity;
         internal Codec codec;
 
-        /// <seealso cref= SuppressCodecs </seealso>
-        internal HashSet<string> avoidCodecs;
+        /// <seealso cref="LuceneTestCase.SuppressCodecsAttribute"/>
+        internal ISet<string> avoidCodecs;
+
+        internal class ThreadNameFixingPrintStreamInfoStream : TextWriterInfoStream
+        {
+            public ThreadNameFixingPrintStreamInfoStream(TextWriter @out)
+                : base(@out)
+            {
+            }
+
+            public override void Message(string component, string message)
+            {
+                if ("TP".Equals(component, StringComparison.Ordinal))
+                {
+                    return; // ignore test points!
+                }
+                string name;
+                if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith("TEST-", StringComparison.Ordinal))
+                {
+                    // The name of the main thread is way too
+                    // long when looking at IW verbose output...
+                    name = "main";
+                }
+                else
+                {
+                    name = Thread.CurrentThread.Name;
+                }
+                m_stream.WriteLine(component + " " + m_messageID + " [" + DateTime.Now + "; " + name + "]: " + message);
+            }
+        }
 
         public override void Before(LuceneTestCase testInstance)
         {
+            // LUCENENET specific - SOLR setup code removed
+
             // if verbose: print some debugging stuff about which codecs are loaded.
             if (LuceneTestCase.VERBOSE)
             {
-                ICollection<string> codecs = Codec.AvailableCodecs();
+                ICollection<string> codecs = Codec.AvailableCodecs;
                 foreach (string codec in codecs)
                 {
                     Console.WriteLine("Loaded codec: '" + codec + "': " + Codec.ForName(codec).GetType().Name);
                 }
 
-                ICollection<string> postingsFormats = PostingsFormat.AvailablePostingsFormats();
+                ICollection<string> postingsFormats = PostingsFormat.AvailablePostingsFormats;
                 foreach (string postingsFormat in postingsFormats)
                 {
                     Console.WriteLine("Loaded postingsFormat: '" + postingsFormat + "': " + PostingsFormat.ForName(postingsFormat).GetType().Name);
@@ -106,7 +130,7 @@ namespace Lucene.Net.Util
             }
 
             savedInfoStream = InfoStream.Default;
-            Random random = LuceneTestCase.Random(); 
+            Random random = LuceneTestCase.Random; 
             bool v = random.NextBoolean();
             if (LuceneTestCase.INFOSTREAM)
             {
@@ -117,16 +141,16 @@ namespace Lucene.Net.Util
                 InfoStream.Default = new NullInfoStream();
             }
 
-            Type targetClass = testInstance.GetType();
-            avoidCodecs = new HashSet<string>();
+            Type targetClass = testInstance?.GetType() ?? LuceneTestCase.GetTestClass();
+            avoidCodecs = new JCG.HashSet<string>();
             var suppressCodecsAttribute = targetClass.GetTypeInfo().GetCustomAttribute<LuceneTestCase.SuppressCodecsAttribute>();
             if (suppressCodecsAttribute != null)
             {
-                avoidCodecs.AddAll(suppressCodecsAttribute.Value);
+                avoidCodecs.UnionWith(suppressCodecsAttribute.Value);
             }
 
             // set back to default
-            LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = false;
+            LuceneTestCase.OldFormatImpersonationIsActive = false;
 
             savedCodec = Codec.Default;
             int randomVal = random.Next(10);
@@ -138,7 +162,7 @@ namespace Lucene.Net.Util
             {
                 codec = Codec.ForName("Lucene3x");
                 Debug.Assert((codec is PreFlexRWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
             }
             else if ("Lucene40".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
                                                                     "random".Equals(LuceneTestCase.TEST_POSTINGSFORMAT, StringComparison.Ordinal) &&
@@ -146,7 +170,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene40"))) // 4.0 setup
             {
                 codec = Codec.ForName("Lucene40");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene40RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
                 Debug.Assert((PostingsFormat.ForName("Lucene40") is Lucene40RWPostingsFormat), "fix your IPostingsFormatFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
@@ -157,7 +181,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene41")))
             {
                 codec = Codec.ForName("Lucene41");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene41RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if ("Lucene42".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
@@ -167,7 +191,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene42")))
             {
                 codec = Codec.ForName("Lucene42");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene42RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if ("Lucene45".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) || ("random".Equals(LuceneTestCase.TEST_CODEC, StringComparison.Ordinal) &&
@@ -177,7 +201,7 @@ namespace Lucene.Net.Util
                                                                     !ShouldAvoidCodec("Lucene45")))
             {
                 codec = Codec.ForName("Lucene45");
-                LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                LuceneTestCase.OldFormatImpersonationIsActive = true;
                 Debug.Assert((codec is Lucene45RWCodec), "fix your ICodecFactory to scan Lucene.Net.Tests before Lucene.Net.TestFramework");
             }
             else if (("random".Equals(LuceneTestCase.TEST_POSTINGSFORMAT, StringComparison.Ordinal) == false) 
@@ -253,8 +277,8 @@ namespace Lucene.Net.Util
 
             // Always pick a random one for consistency (whether tests.locale was specified or not).
             savedLocale = CultureInfo.CurrentCulture;
-            CultureInfo randomLocale = LuceneTestCase.RandomLocale(random);
-            locale = testLocale.Equals("random", StringComparison.Ordinal) ? randomLocale : LuceneTestCase.LocaleForName(testLocale);
+            CultureInfo randomLocale = LuceneTestCase.RandomCulture(random);
+            locale = testLocale.Equals("random", StringComparison.Ordinal) ? randomLocale : LuceneTestCase.CultureForName(testLocale);
 #if NETSTANDARD
             CultureInfo.CurrentCulture = locale;
 #else
@@ -264,11 +288,10 @@ namespace Lucene.Net.Util
             // TimeZone.getDefault will set user.timezone to the default timezone of the user's locale.
             // So store the original property value and restore it at end.
             restoreProperties["user.timezone"] = SystemProperties.GetProperty("user.timezone");
-            savedTimeZone = testInstance.TimeZone;
+            savedTimeZone = TimeZoneInfo.Local;
             TimeZoneInfo randomTimeZone = LuceneTestCase.RandomTimeZone(random);
             timeZone = testTimeZone.Equals("random", StringComparison.Ordinal) ? randomTimeZone : TimeZoneInfo.FindSystemTimeZoneById(testTimeZone);
             //TimeZone.Default = TimeZone; // LUCENENET NOTE: There doesn't seem to be an equivalent to this, but I don't think we need it.
-
             similarity = random.NextBoolean() ? (Similarity)new DefaultSimilarity() : new RandomSimilarityProvider(random);
 
             // Check codec restrictions once at class level.
@@ -280,34 +303,6 @@ namespace Lucene.Net.Util
             {
                 Console.Error.WriteLine("NOTE: " + e.Message + " Suppressed codecs: " + Arrays.ToString(avoidCodecs.ToArray()));
                 throw; // LUCENENET: CA2200: Rethrow to preserve stack details (https://docs.microsoft.com/en-us/visualstudio/code-quality/ca2200-rethrow-to-preserve-stack-details)
-            }
-        }
-
-        internal class ThreadNameFixingPrintStreamInfoStream : TextWriterInfoStream
-        {
-            public ThreadNameFixingPrintStreamInfoStream(TextWriter @out)
-                : base(@out)
-            {
-            }
-
-            public override void Message(string component, string message)
-            {
-                if ("TP".Equals(component, StringComparison.Ordinal))
-                {
-                    return; // ignore test points!
-                }
-                string name;
-                if (Thread.CurrentThread.Name != null && Thread.CurrentThread.Name.StartsWith("TEST-", StringComparison.Ordinal))
-                {
-                    // The name of the main thread is way too
-                    // long when looking at IW verbose output...
-                    name = "main";
-                }
-                else
-                {
-                    name = Thread.CurrentThread.Name;
-                }
-                m_stream.WriteLine(component + " " + m_messageID + " [" + DateTime.Now + "; " + name + "]: " + message);
             }
         }
 
@@ -351,7 +346,7 @@ namespace Lucene.Net.Util
 
             if (codec is RandomCodec && avoidCodecs.Count > 0)
             {
-                foreach (string name in ((RandomCodec)codec).formatNames)
+                foreach (string name in ((RandomCodec)codec).FormatNames)
                 {
                     LuceneTestCase.AssumeFalse("Class not allowed to use postings format: " + name + ".", ShouldAvoidCodec(name));
                 }

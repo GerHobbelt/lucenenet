@@ -1,8 +1,7 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -44,7 +43,7 @@ namespace Lucene.Net.Search
         public virtual void TestDocBoost_Mem()
         {
             Directory store = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), store, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, store, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             Field f1 = NewTextField("field", "word", Field.Store.YES);
             Field f2 = NewTextField("field", "word", Field.Store.YES);
@@ -59,7 +58,7 @@ namespace Lucene.Net.Search
             writer.AddDocument(d1);
             writer.AddDocument(d2);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
 
             float[] scores = new float[4];

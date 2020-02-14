@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -60,9 +60,21 @@ namespace Lucene.Net.Search
             Dir = NewDirectory();
             Sdir1 = NewDirectory();
             Sdir2 = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Dir, new MockAnalyzer(Random()), Similarity, TimeZone);
-            RandomIndexWriter swriter1 = new RandomIndexWriter(Random(), Sdir1, new MockAnalyzer(Random()), Similarity, TimeZone);
-            RandomIndexWriter swriter2 = new RandomIndexWriter(Random(), Sdir2, new MockAnalyzer(Random()), Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Dir, new MockAnalyzer(Random));
+            RandomIndexWriter swriter1 = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Sdir1, new MockAnalyzer(Random));
+            RandomIndexWriter swriter2 = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Sdir2, new MockAnalyzer(Random));
 
             for (int i = 0; i < 10; i++)
             {

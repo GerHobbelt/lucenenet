@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements.  See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership.  The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied.  See the License for the
+ specific language governing permissions and limitations
+ under the License.
+
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(SolutionDir)TestTargetFramework.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net48</TargetFramework>
+
+    <AssemblyTitle>Lucene.Net.Tests.Analysis.OpenNLP</AssemblyTitle>
+    <RootNamespace>Lucene.Net.Analysis.OpenNlp</RootNamespace>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <RuntimeIdentifiers>win7-x86;win7-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- OpenNLP is not strong-named -->
+  <PropertyGroup Label="Assembly Signing">
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="en-test-chunker.bin" />
+    <None Remove="en-test-lemmas.dict" />
+    <None Remove="en-test-lemmatizer.bin" />
+    <None Remove="en-test-ner.bin" />
+    <None Remove="en-test-pos-maxent.bin" />
+    <None Remove="en-test-sent.bin" />
+    <None Remove="en-test-tokenizer.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="en-test-chunker.bin" />
+    <EmbeddedResource Include="en-test-lemmas.dict" />
+    <EmbeddedResource Include="en-test-lemmatizer.bin" />
+    <EmbeddedResource Include="en-test-ner.bin" />
+    <EmbeddedResource Include="en-test-pos-maxent.bin" />
+    <EmbeddedResource Include="en-test-sent.bin" />
+    <EmbeddedResource Include="en-test-tokenizer.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lucene.Net.Analysis.OpenNLP\Lucene.Net.Analysis.OpenNLP.csproj" />
+    <ProjectReference Include="..\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(SolutionDir)build/TestReferences.Common.targets" />
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+</Project>

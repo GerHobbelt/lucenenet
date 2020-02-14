@@ -1,5 +1,5 @@
+using J2N.Text;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Text.RegularExpressions;
@@ -168,10 +168,14 @@ namespace Lucene.Net.Search
             query.Slop = slop;
 
             Directory ramDir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), ramDir, new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false), Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, ramDir, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false));
             writer.AddDocument(doc);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
 
             IndexSearcher searcher = NewSearcher(reader);
             MaxFreqCollector c = new MaxFreqCollector();
@@ -243,7 +247,11 @@ namespace Lucene.Net.Search
         private void AssertSaneScoring(PhraseQuery pq, IndexSearcher searcher)
         {
             searcher.Search(pq, new CollectorAnonymousInnerClassHelper(this));
-            QueryUtils.Check(Random(), pq, searcher, Similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, pq, searcher);
         }
 
         private class CollectorAnonymousInnerClassHelper : ICollector
@@ -284,7 +292,11 @@ namespace Lucene.Net.Search
         public virtual void TestSlopWithHoles()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             FieldType customType = new FieldType(TextField.TYPE_NOT_STORED);
             customType.OmitNorms = true;
             Field f = new Field("lyrics", "", customType);
@@ -298,7 +310,7 @@ namespace Lucene.Net.Search
             iw.AddDocument(doc);
             f.SetStringValue("drug druggy drug druggy drug");
             iw.AddDocument(doc);
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
             IndexSearcher @is = NewSearcher(ir);
 
@@ -323,11 +335,15 @@ namespace Lucene.Net.Search
             string document = "drug druggy drug drug drug";
 
             Directory dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             doc.Add(NewField("lyrics", document, new FieldType(TextField.TYPE_NOT_STORED)));
             iw.AddDocument(doc);
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher @is = NewSearcher(ir);
@@ -349,11 +365,15 @@ namespace Lucene.Net.Search
 
             Directory dir = NewDirectory();
 
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             doc.Add(NewField("lyrics", document, new FieldType(TextField.TYPE_NOT_STORED)));
             iw.AddDocument(doc);
-            IndexReader ir = iw.Reader;
+            IndexReader ir = iw.GetReader();
             iw.Dispose();
 
             IndexSearcher @is = NewSearcher(ir);

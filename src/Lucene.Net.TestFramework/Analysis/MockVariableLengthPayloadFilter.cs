@@ -1,4 +1,5 @@
 using Lucene.Net.Analysis.TokenAttributes;
+using Lucene.Net.Util;
 using System;
 
 namespace Lucene.Net.Analysis
@@ -20,35 +21,33 @@ namespace Lucene.Net.Analysis
      * limitations under the License.
      */
 
-    using BytesRef = Lucene.Net.Util.BytesRef;
-
     /// <summary>
-    /// TokenFilter that adds random variable-length payloads.
+    /// <see cref="TokenFilter"/> that adds random variable-length payloads.
     /// </summary>
     public sealed class MockVariableLengthPayloadFilter : TokenFilter
     {
         private const int MAXLENGTH = 129;
 
-        private readonly IPayloadAttribute PayloadAtt;
-        private readonly Random Random;
-        private readonly byte[] Bytes = new byte[MAXLENGTH];
-        private readonly BytesRef Payload;
+        private readonly IPayloadAttribute payloadAtt;
+        private readonly Random random;
+        private readonly byte[] bytes = new byte[MAXLENGTH];
+        private readonly BytesRef payload;
 
         public MockVariableLengthPayloadFilter(Random random, TokenStream @in)
             : base(@in)
         {
-            this.Random = random;
-            this.Payload = new BytesRef(Bytes);
-            this.PayloadAtt = AddAttribute<IPayloadAttribute>();
+            this.random = random;
+            this.payload = new BytesRef(bytes);
+            this.payloadAtt = AddAttribute<IPayloadAttribute>();
         }
 
         public override bool IncrementToken()
         {
             if (m_input.IncrementToken())
             {
-                Random.NextBytes(Bytes);
-                Payload.Length = Random.Next(MAXLENGTH);
-                PayloadAtt.Payload = Payload;
+                random.NextBytes(bytes);
+                payload.Length = random.Next(MAXLENGTH);
+                payloadAtt.Payload = payload;
                 return true;
             }
             else

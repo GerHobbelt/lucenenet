@@ -1,11 +1,12 @@
+using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
+using NUnit.Framework;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using Lucene.Net.Documents;
-using Lucene.Net.Support;
-using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net
 {
@@ -43,7 +44,6 @@ namespace Lucene.Net
     using MockDirectoryWrapper = Lucene.Net.Store.MockDirectoryWrapper;
     using RAMDirectory = Lucene.Net.Store.RAMDirectory;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-    using Util;
 
     /// <summary>
     /// Holds tests cases to verify external APIs are accessible
@@ -82,7 +82,7 @@ namespace Lucene.Net
             {
                 MergeThread thread = new MyMergeThread(this, writer, merge);
                 thread.SetThreadPriority((ThreadPriority)MergeThreadPriority);
-                thread.SetDaemon(true);
+                thread.IsBackground = (true);
                 thread.Name = "MyMergeThread";
                 return thread;
             }
@@ -99,7 +99,7 @@ namespace Lucene.Net
             }
         }
 
-        private class FailOnlyOnMerge : MockDirectoryWrapper.Failure
+        private class FailOnlyOnMerge : Failure
         {
             public override void Eval(MockDirectoryWrapper dir)
             {
@@ -122,7 +122,7 @@ namespace Lucene.Net
             Field idField = NewStringField("id", "", Field.Store.YES);
             doc.Add(idField);
 
-            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergeScheduler(new MyMergeScheduler(this)).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy()));
+            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergeScheduler(new MyMergeScheduler(this)).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy()));
             LogMergePolicy logMP = (LogMergePolicy)writer.Config.MergePolicy;
             logMP.MergeFactor = 10;
             for (int i = 0; i < 20; i++)

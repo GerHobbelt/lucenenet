@@ -1,5 +1,5 @@
-using Lucene.Net.Index;
-using Lucene.Net.Support;
+using J2N.Collections.Generic.Extensions;
+using J2N.Text;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Text;
@@ -43,7 +43,7 @@ namespace Lucene.Net.Util.Automaton
                 terms.Clear();
                 for (int j = 0; j < 5000; j++)
                 {
-                    string randomString = TestUtil.RandomUnicodeString(Random());
+                    string randomString = TestUtil.RandomUnicodeString(Random);
                     terms.Add(randomString);
                     automata.Add(BasicAutomata.MakeString(randomString));
                 }
@@ -53,7 +53,7 @@ namespace Lucene.Net.Util.Automaton
 
         public void AssertLexicon()
         {
-            Collections.Shuffle(automata, Random());
+            automata.Shuffle(Random);
             var lex = BasicOperations.Union(automata);
             lex.Determinize();
             Assert.IsTrue(SpecialOperations.IsFinite(lex));

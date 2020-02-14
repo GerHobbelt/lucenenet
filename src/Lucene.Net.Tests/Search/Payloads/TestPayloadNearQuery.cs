@@ -1,9 +1,13 @@
-using System.Text.RegularExpressions;
+using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
-using Console = Lucene.Net.Support.SystemConsole;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Payloads
 {
@@ -24,9 +28,9 @@ namespace Lucene.Net.Search.Payloads
      * limitations under the License.
      */
 
-    using Lucene.Net.Analysis;
-    using NUnit.Framework;
-    using System.IO;
+    
+    
+    
     using BytesRef = Lucene.Net.Util.BytesRef;
     using DefaultSimilarity = Lucene.Net.Search.Similarities.DefaultSimilarity;
     using Directory = Lucene.Net.Store.Directory;
@@ -122,17 +126,17 @@ namespace Lucene.Net.Search.Payloads
             base.BeforeClass();
 
             Directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new PayloadAnalyzer()).SetSimilarity(similarity));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new PayloadAnalyzer()).SetSimilarity(similarity));
             //writer.infoStream = System.out;
             for (int i = 0; i < 1000; i++)
             {
                 Document doc = new Document();
-                doc.Add(NewTextField("field", English.IntToEnglish(i), Field.Store.YES));
-                string txt = English.IntToEnglish(i) + ' ' + English.IntToEnglish(i + 1);
+                doc.Add(NewTextField("field", English.Int32ToEnglish(i), Field.Store.YES));
+                string txt = English.Int32ToEnglish(i) + ' ' + English.Int32ToEnglish(i + 1);
                 doc.Add(NewTextField("field2", txt, Field.Store.YES));
                 writer.AddDocument(doc);
             }
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
 
             Searcher = NewSearcher(Reader);
@@ -172,7 +176,7 @@ namespace Lucene.Net.Search.Payloads
             }
             for (int i = 1; i < 10; i++)
             {
-                query = NewPhraseQuery("field", English.IntToEnglish(i) + " hundred", true, new AveragePayloadFunction());
+                query = NewPhraseQuery("field", English.Int32ToEnglish(i) + " hundred", true, new AveragePayloadFunction());
                 if (VERBOSE)
                 {
                     Console.WriteLine("TEST: run query=" + query);

@@ -34,7 +34,7 @@ namespace Lucene.Net.Analysis.Es
             {
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer source = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(source, new SpanishLightStemFilter(source));
@@ -54,7 +54,7 @@ namespace Lucene.Net.Analysis.Es
         [Test]
         public virtual void TestRandomStrings()
         {
-            CheckRandomData(Random(), analyzer, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, analyzer, 1000 * RANDOM_MULTIPLIER);
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace Lucene.Net.Analysis.Es
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new SpanishLightStemFilter(tokenizer));

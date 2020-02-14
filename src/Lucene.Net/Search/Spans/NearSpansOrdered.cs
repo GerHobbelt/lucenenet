@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search.Spans
 {
@@ -367,7 +368,7 @@ namespace Lucene.Net.Search.Spans
         {
             matchStart = subSpans[subSpans.Length - 1].Start;
             matchEnd = subSpans[subSpans.Length - 1].End;
-            var possibleMatchPayloads = new HashSet<byte[]>();
+            var possibleMatchPayloads = new JCG.HashSet<byte[]>();
             if (subSpans[subSpans.Length - 1].IsPayloadAvailable)
             {
                 possibleMatchPayloads.UnionWith(subSpans[subSpans.Length - 1].GetPayload());
@@ -383,9 +384,7 @@ namespace Lucene.Net.Search.Spans
                 Spans prevSpans = subSpans[i];
                 if (collectPayloads && prevSpans.IsPayloadAvailable)
                 {
-                    var payload = prevSpans.GetPayload();
-                    possiblePayload = new List<byte[]>(payload.Count);
-                    possiblePayload.AddRange(payload);
+                    possiblePayload = new List<byte[]>(prevSpans.GetPayload()); // LUCENENET specific - using copy constructor instead of AddRange()
                 }
 
                 int prevStart = prevSpans.Start;
@@ -417,9 +416,7 @@ namespace Lucene.Net.Search.Spans
                             prevEnd = ppEnd;
                             if (collectPayloads && prevSpans.IsPayloadAvailable)
                             {
-                                var payload = prevSpans.GetPayload();
-                                possiblePayload = new List<byte[]>(payload.Count);
-                                possiblePayload.AddRange(payload);
+                                possiblePayload = new List<byte[]>(prevSpans.GetPayload()); // LUCENENET specific - using copy constructor instead of AddRange()
                             }
                         }
                     }

@@ -1,3 +1,6 @@
+using Lucene.Net.Index;
+using Lucene.Net.Util;
+
 namespace Lucene.Net.Codecs.Lucene40
 {
     /*
@@ -17,18 +20,14 @@ namespace Lucene.Net.Codecs.Lucene40
      * limitations under the License.
      */
 
-    using IndexFileNames = Lucene.Net.Index.IndexFileNames;
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-    using SegmentWriteState = Lucene.Net.Index.SegmentWriteState;
-
     /// <summary>
-    /// Read-write version of <seealso cref="Lucene40DocValuesFormat"/> for testing </summary>
+    /// Read-write version of <see cref="Lucene40DocValuesFormat"/> for testing. </summary>
 #pragma warning disable 612, 618
     public class Lucene40RWDocValuesFormat : Lucene40DocValuesFormat
     {
         public override DocValuesConsumer FieldsConsumer(SegmentWriteState state)
         {
-            if (!LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
+            if (!LuceneTestCase.OldFormatImpersonationIsActive)
             {
                 return base.FieldsConsumer(state);
             }

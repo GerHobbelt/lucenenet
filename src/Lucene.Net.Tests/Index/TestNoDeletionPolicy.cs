@@ -1,10 +1,11 @@
-using System.Reflection;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Support;
+using NUnit.Framework;
+using System.Reflection;
 
 namespace Lucene.Net.Index
 {
-    using NUnit.Framework;
-    using Support;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
@@ -79,7 +80,7 @@ namespace Lucene.Net.Index
         public virtual void TestAllCommitsRemain()
         {
             Directory dir = NewDirectory();
-            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetIndexDeletionPolicy(NoDeletionPolicy.INSTANCE));
+            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetIndexDeletionPolicy(NoDeletionPolicy.INSTANCE));
             for (int i = 0; i < 10; i++)
             {
                 Document doc = new Document();

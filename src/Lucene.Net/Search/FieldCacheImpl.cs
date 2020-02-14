@@ -2,10 +2,13 @@ using Lucene.Net.Index;
 using Lucene.Net.Support;
 using Lucene.Net.Support.IO;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Lucene.Net.Search
 {
@@ -28,7 +31,6 @@ namespace Lucene.Net.Search
 
     using AtomicReader = Lucene.Net.Index.AtomicReader;
     using BinaryDocValues = Lucene.Net.Index.BinaryDocValues;
-    using IBits = Lucene.Net.Util.IBits;
     using BytesRef = Lucene.Net.Util.BytesRef;
     using DocsEnum = Lucene.Net.Index.DocsEnum;
     using DocTermOrds = Lucene.Net.Index.DocTermOrds;
@@ -37,6 +39,7 @@ namespace Lucene.Net.Search
     using FieldInfo = Lucene.Net.Index.FieldInfo;
     using FixedBitSet = Lucene.Net.Util.FixedBitSet;
     using GrowableWriter = Lucene.Net.Util.Packed.GrowableWriter;
+    using IBits = Lucene.Net.Util.IBits;
     using IndexReader = Lucene.Net.Index.IndexReader;
     using MonotonicAppendingInt64Buffer = Lucene.Net.Util.Packed.MonotonicAppendingInt64Buffer;
     using NumericDocValues = Lucene.Net.Index.NumericDocValues;
@@ -113,9 +116,11 @@ namespace Lucene.Net.Search
                 {
                     Cache cache = cacheEntry.Value;
                     Type cacheType = cacheEntry.Key;
+#if !FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
                     lock (cache.readerCache)
                     {
-                        foreach (KeyValuePair<object, IDictionary<CacheKey, object>> readerCacheEntry in cache.readerCache)
+#endif
+                        foreach (var readerCacheEntry in cache.readerCache)
                         {
                             object readerKey = readerCacheEntry.Key;
                             if (readerKey == null)
@@ -129,7 +134,9 @@ namespace Lucene.Net.Search
                                 result.Add(new FieldCache.CacheEntry(readerKey, entry.field, cacheType, entry.custom, mapEntry.Value));
                             }
                         }
+#if !FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
                     }
+#endif
                 }
                 return result.ToArray();
             }
@@ -206,7 +213,11 @@ namespace Lucene.Net.Search
 
             internal readonly FieldCacheImpl wrapper;
 
-            internal IDictionary<object, IDictionary<CacheKey, object>> readerCache = new WeakDictionary<object, IDictionary<CacheKey, object>>();
+#if FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
+            internal ConditionalWeakTable<object, ConcurrentDictionary<CacheKey, object>> readerCache = new ConditionalWeakTable<object, ConcurrentDictionary<CacheKey, object>>();
+#else
+            internal WeakDictionary<object, ConcurrentDictionary<CacheKey, object>> readerCache = new WeakDictionary<object, ConcurrentDictionary<CacheKey, object>>();
+#endif
 
             protected abstract object CreateValue(AtomicReader reader, CacheKey key, bool setDocsWithField);
 
@@ -214,10 +225,10 @@ namespace Lucene.Net.Search
             /// Remove this reader from the cache, if present. </summary>
             public virtual void PurgeByCacheKey(object coreCacheKey)
             {
+#if !FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
                 lock (readerCache)
-                {
+#endif
                     readerCache.Remove(coreCacheKey);
-                }
             }
 
             /// <summary>
@@ -226,81 +237,87 @@ namespace Lucene.Net.Search
             /// </summary>
             public virtual void Put(AtomicReader reader, CacheKey key, object value)
             {
+                ConcurrentDictionary<CacheKey, object> innerCache;
                 object readerKey = reader.CoreCacheKey;
-                lock (readerCache)
+#if FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
+                innerCache = readerCache.GetValue(readerKey, (readerKey) =>
                 {
-                    IDictionary<CacheKey, object> innerCache = readerCache[readerKey];
-                    if (innerCache == null)
+                    // First time this reader is using FieldCache
+                    wrapper.InitReader(reader);
+                    return new ConcurrentDictionary<CacheKey, object>
                     {
-                        // First time this reader is using FieldCache
-                        innerCache = new Dictionary<CacheKey, object>();
-                        readerCache[readerKey] = innerCache;
-                        wrapper.InitReader(reader);
-                    }
-                    // LUCENENET NOTE: We declare a temp variable here so we 
-                    // don't overwrite value variable with the null
-                    // that will result when this if block succeeds; otherwise
-                    // we won't have a value to put in the cache.
-                    object temp;
-                    if (!innerCache.TryGetValue(key, out temp))
-                    {
-                        innerCache[key] = value;
-                    }
-                    else
-                    {
-                        // Another thread beat us to it; leave the current
-                        // value
-                    }
-                }
-            }
-
-            public virtual object Get(AtomicReader reader, CacheKey key, bool setDocsWithField)
-            {
-                IDictionary<CacheKey, object> innerCache;
-                object value;
-                object readerKey = reader.CoreCacheKey;
+                        [key] = value
+                    };
+                });
+#else
                 lock (readerCache)
                 {
                     if (!readerCache.TryGetValue(readerKey, out innerCache) || innerCache == null)
                     {
                         // First time this reader is using FieldCache
-                        innerCache = new Dictionary<CacheKey, object>();
-                        readerCache[readerKey] = innerCache;
+                        innerCache = new ConcurrentDictionary<CacheKey, object>
+                        {
+                            [key] = value
+                        };
+                        readerCache.Add(readerKey, innerCache);
                         wrapper.InitReader(reader);
-                        value = null;
-                    }
-                    else
-                    {
-                        innerCache.TryGetValue(key, out value);
-                    }
-                    if (value == null)
-                    {
-                        value = new FieldCache.CreationPlaceholder();
-                        innerCache[key] = value;
                     }
                 }
-                if (value is FieldCache.CreationPlaceholder)
+#endif
+                // If another thread beat us to it, leave the current value
+                innerCache.TryAdd(key, value);
+            }
+
+            public virtual object Get(AtomicReader reader, CacheKey key, bool setDocsWithField)
+            {
+                ConcurrentDictionary<CacheKey, object> innerCache;
+                object readerKey = reader.CoreCacheKey;
+#if FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
+                innerCache = readerCache.GetValue(readerKey, (readerKey) =>
+                {
+                    // First time this reader is using FieldCache
+                    wrapper.InitReader(reader);
+                    return new ConcurrentDictionary<CacheKey, object>
+                    {
+                        [key] = new FieldCache.CreationPlaceholder()
+                    };
+                });
+
+#else
+                lock (readerCache)
+                {
+                    if (!readerCache.TryGetValue(readerKey, out innerCache) || innerCache == null)
+                    {
+                        // First time this reader is using FieldCache
+                        innerCache = new ConcurrentDictionary<CacheKey, object>
+                        {
+                            [key] = new FieldCache.CreationPlaceholder()
+                        };
+                        readerCache[readerKey] = innerCache;
+                        wrapper.InitReader(reader);
+                    }
+                }
+#endif
+                object value = innerCache.GetOrAdd(key, (cacheKey) => new FieldCache.CreationPlaceholder());
+                if (value is FieldCache.CreationPlaceholder progress)
                 {
                     lock (value)
                     {
-                        FieldCache.CreationPlaceholder progress = (FieldCache.CreationPlaceholder)value;
                         if (progress.Value == null)
                         {
                             progress.Value = CreateValue(reader, key, setDocsWithField);
-                            lock (readerCache)
+                            if (innerCache.TryUpdate(key, progress.Value, value))
                             {
-                                innerCache[key] = progress.Value;
-                            }
-
-                            // Only check if key.custom (the parser) is
-                            // non-null; else, we check twice for a single
-                            // call to FieldCache.getXXX
-                            if (key.custom != null && wrapper != null)
-                            {
-                                TextWriter infoStream = wrapper.InfoStream;
-                                if (infoStream != null)
+                                // Only check if key.custom (the parser) is
+                                // non-null; else, we check twice for a single
+                                // call to FieldCache.getXXX
+                                if (key.custom != null && wrapper != null)
                                 {
-                                    PrintNewInsanity(infoStream, progress.Value);
+                                    TextWriter infoStream = wrapper.InfoStream;
+                                    if (infoStream != null)
+                                    {
+                                        PrintNewInsanity(infoStream, progress.Value);
+                                    }
                                 }
                             }
                         }
@@ -1181,7 +1198,7 @@ namespace Lucene.Net.Search
 
             public override float Get(int docID)
             {
-                return Number.Int32BitsToSingle((int)valuesIn.Get(docID));
+                return J2N.BitConversion.Int32BitsToSingle((int)valuesIn.Get(docID));
             }
         }
 
@@ -1535,7 +1552,7 @@ namespace Lucene.Net.Search
 
             public override double Get(int docID)
             {
-                return BitConverter.Int64BitsToDouble(valuesIn.Get(docID));
+                return J2N.BitConversion.Int64BitsToDouble(valuesIn.Get(docID));
             }
         }
 

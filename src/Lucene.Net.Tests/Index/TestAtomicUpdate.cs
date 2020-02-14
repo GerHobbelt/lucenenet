@@ -1,13 +1,12 @@
-using Lucene.Net.Attributes;
+using J2N.Threading;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -33,7 +32,7 @@ namespace Lucene.Net.Index
     [TestFixture]
     public class TestAtomicUpdate : LuceneTestCase
     {
-        private abstract class TimedThread : ThreadClass
+        private abstract class TimedThread : ThreadJob
         {
             internal volatile bool Failed;
             internal int Count;
@@ -103,7 +102,7 @@ namespace Lucene.Net.Index
                 {
                     Documents.Document d = new Documents.Document();
                     d.Add(new StringField("id", Convert.ToString(i), Field.Store.YES));
-                    d.Add(new TextField("contents", English.IntToEnglish(i + 10 * Count), Field.Store.NO));
+                    d.Add(new TextField("contents", English.Int32ToEnglish(i + 10 * Count), Field.Store.NO));
                     Writer.UpdateDocument(new Term("id", Convert.ToString(i)), d);
                 }
             }
@@ -136,16 +135,16 @@ namespace Lucene.Net.Index
         {
             TimedThread[] threads = new TimedThread[4];
 
-            IndexWriterConfig conf = (new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))).SetMaxBufferedDocs(7);
+            IndexWriterConfig conf = (new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))).SetMaxBufferedDocs(7);
             ((TieredMergePolicy)conf.MergePolicy).MaxMergeAtOnce = 3;
-            IndexWriter writer = RandomIndexWriter.MockIndexWriter(directory, conf, Random());
+            IndexWriter writer = RandomIndexWriter.MockIndexWriter(directory, conf, Random);
 
             // Establish a base index of 100 docs:
             for (int i = 0; i < 100; i++)
             {
                 Documents.Document d = new Documents.Document();
                 d.Add(NewStringField("id", Convert.ToString(i), Field.Store.YES));
-                d.Add(NewTextField("contents", English.IntToEnglish(i), Field.Store.NO));
+                d.Add(NewTextField("contents", English.Int32ToEnglish(i), Field.Store.NO));
                 if ((i - 1) % 7 == 0)
                 {
                     writer.Commit();
@@ -201,7 +200,7 @@ namespace Lucene.Net.Index
             Directory directory;
 
             // First in a RAM directory:
-            using (directory = new MockDirectoryWrapper(Random(), new RAMDirectory()))
+            using (directory = new MockDirectoryWrapper(Random, new RAMDirectory()))
             {
                 RunTest(directory);
             }

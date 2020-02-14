@@ -1,15 +1,14 @@
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
-    using Lucene.Net.Index;
-    using Lucene.Net.Randomized.Generators;
-    using NUnit.Framework;
     using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
     using IBits = Lucene.Net.Util.IBits;
     using BytesRef = Lucene.Net.Util.BytesRef;
@@ -51,14 +50,18 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestRandomStringSort()
         {
-            Random random = new Random(Random().Next());
+            Random random = new Random(Random.Next());
 
             int NUM_DOCS = AtLeast(100);
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(random, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                random, dir);
             bool allowDups = random.NextBoolean();
-            HashSet<string> seen = new HashSet<string>();
-            int maxLength = TestUtil.NextInt(random, 5, 100);
+            ISet<string> seen = new JCG.HashSet<string>();
+            int maxLength = TestUtil.NextInt32(random, 5, 100);
             if (VERBOSE)
             {
                 Console.WriteLine("TEST: NUM_DOCS=" + NUM_DOCS + " maxLength=" + maxLength + " allowDups=" + allowDups);
@@ -73,7 +76,7 @@ namespace Lucene.Net.Search
 
                 // 10% of the time, the document is missing the value:
                 BytesRef br;
-                if (Random().Next(10) != 7)
+                if (LuceneTestCase.Random.Next(10) != 7)
                 {
                     string s;
                     if (random.NextBoolean())
@@ -100,7 +103,7 @@ namespace Lucene.Net.Search
                     }
 
                     br = new BytesRef(s);
-                    if (DefaultCodecSupportsDocValues())
+                    if (DefaultCodecSupportsDocValues)
                     {
                         doc.Add(new SortedDocValuesField("stringdv", br));
                         doc.Add(new NumericDocValuesField("id", numDocs));
@@ -120,7 +123,7 @@ namespace Lucene.Net.Search
                         Console.WriteLine("  " + numDocs + ": <missing>");
                     }
                     docValues.Add(null);
-                    if (DefaultCodecSupportsDocValues())
+                    if (DefaultCodecSupportsDocValues)
                     {
                         doc.Add(new NumericDocValuesField("id", numDocs));
                     }
@@ -137,18 +140,22 @@ namespace Lucene.Net.Search
                 if (random.Next(40) == 17)
                 {
                     // force flush
-                    writer.Reader.Dispose();
+                    writer.GetReader().Dispose();
                 }
             }
 
-            IndexReader r = writer.Reader;
+            IndexReader r = writer.GetReader();
             writer.Dispose();
             if (VERBOSE)
             {
                 Console.WriteLine("  reader=" + r);
             }
 
-            IndexSearcher idxS = NewSearcher(r, false, Similarity);
+            IndexSearcher idxS = NewSearcher(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                r, false);
             int ITERS = AtLeast(100);
             for (int iter = 0; iter < ITERS; iter++)
             {
@@ -158,18 +165,18 @@ namespace Lucene.Net.Search
                 SortField sf;
                 bool sortMissingLast;
                 bool missingIsNull;
-                if (DefaultCodecSupportsDocValues() && random.NextBoolean())
+                if (DefaultCodecSupportsDocValues && random.NextBoolean())
                 {
                     sf = new SortField("stringdv", SortFieldType.STRING, reverse);
                     // Can only use sort missing if the DVFormat
                     // supports docsWithField:
-                    sortMissingLast = DefaultCodecSupportsDocsWithField() && Random().NextBoolean();
-                    missingIsNull = DefaultCodecSupportsDocsWithField();
+                    sortMissingLast = DefaultCodecSupportsDocsWithField && Random.NextBoolean();
+                    missingIsNull = DefaultCodecSupportsDocsWithField;
                 }
                 else
                 {
                     sf = new SortField("string", SortFieldType.STRING, reverse);
-                    sortMissingLast = Random().NextBoolean();
+                    sortMissingLast = Random.NextBoolean();
                     missingIsNull = true;
                 }
                 if (sortMissingLast)
@@ -186,7 +193,7 @@ namespace Lucene.Net.Search
                 {
                     sort = new Sort(sf, SortField.FIELD_DOC);
                 }
-                int hitCount = TestUtil.NextInt(random, 1, r.MaxDoc + 20);
+                int hitCount = TestUtil.NextInt32(random, 1, r.MaxDoc + 20);
                 RandomFilter f = new RandomFilter(random, (float)random.NextDouble(), docValues);
                 int queryType = random.Next(3);
                 if (queryType == 0)

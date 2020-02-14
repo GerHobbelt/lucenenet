@@ -1,11 +1,12 @@
-﻿using System;
+﻿using J2N;
+using J2N.Text;
+using System;
 using System.IO;
 using System.Text;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 
@@ -44,7 +45,7 @@ namespace Lucene.Net.Analysis.Util
         {
             var builder = new StringBuilder();
             // create random input
-            var num = 1024 + Random().Next(1024);
+            var num = 1024 + Random.Next(1024);
             num *= RANDOM_MULTIPLIER;
             for (var i = 1; i < num; i++)
             {
@@ -123,7 +124,7 @@ namespace Lucene.Net.Analysis.Util
             var num = 1000 * RANDOM_MULTIPLIER;
             for (var i = 0; i < num; i++)
             {
-                var s = TestUtil.RandomUnicodeString(Random());
+                var s = TestUtil.RandomUnicodeString(Random);
                 var ts = analyzer.GetTokenStream("foo", s);
                 try
                 {
@@ -146,12 +147,12 @@ namespace Lucene.Net.Analysis.Util
                 }
             }
             // just for fun
-            CheckRandomData(Random(), analyzer, num);
+            CheckRandomData(Random, analyzer, num);
         }
 
         private sealed class AnalyzerAnonymousInnerClassHelper : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizerAnonymousInnerClassHelper(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -186,7 +187,7 @@ namespace Lucene.Net.Analysis.Util
             var num = 1000 * RANDOM_MULTIPLIER;
             for (var i = 0; i < num; i++)
             {
-                var s = TestUtil.RandomUnicodeString(Random());
+                var s = TestUtil.RandomUnicodeString(Random);
                 var ts = analyzer.GetTokenStream("foo", s);
                 try
                 {
@@ -209,12 +210,12 @@ namespace Lucene.Net.Analysis.Util
                 }
             }
             // just for fun
-            CheckRandomData(Random(), analyzer, num);
+            CheckRandomData(Random, analyzer, num);
         }
 
         private sealed class AnalyzerAnonymousInnerClassHelper2 : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizerAnonymousInnerClassHelper2(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -260,7 +261,7 @@ namespace Lucene.Net.Analysis.Util
             public AnalyzerAnonymousInnerClassHelper3()
             { }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new NumberAndSurrogatePairTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);

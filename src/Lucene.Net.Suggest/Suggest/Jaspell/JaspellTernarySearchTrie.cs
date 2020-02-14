@@ -25,7 +25,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-using Lucene.Net.Support;
+using J2N.Text;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -200,7 +200,7 @@ namespace Lucene.Net.Search.Suggest.Jaspell
         /// </summary>
         public JaspellTernarySearchTrie(CultureInfo culture)
         {
-            this.culture = culture;
+            this.culture = culture ?? throw new ArgumentNullException(nameof(culture));
         }
 
         // for loading
@@ -299,7 +299,7 @@ namespace Lucene.Net.Search.Suggest.Jaspell
                     occur = one;
                     if (pos != -1)
                     {
-                        occur = Convert.ToSingle(word.Substring(pos + 1).Trim());
+                        occur = Convert.ToSingle(word.Substring(pos + 1).Trim(), CultureInfo.InvariantCulture);
                         word = word.Substring(0, pos);
                     }
                     string key = culture.TextInfo.ToLower(word);

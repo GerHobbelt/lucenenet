@@ -1,31 +1,32 @@
-﻿using Lucene.Net.Attributes;
-using Lucene.Net.Support;
+﻿using J2N.Text;
+using Lucene.Net.Attributes;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 using Version = Lucene.Net.Util.LuceneVersion;
 
 namespace Lucene.Net.Analysis.Util
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     [TestFixture]
     public class TestCharArraySet : LuceneTestCase
@@ -54,7 +55,7 @@ namespace Lucene.Net.Analysis.Util
             string[] words = new string[] { "Hello", "World", "this", "is", "a", "test" };
             char[] findme = "xthisy".ToCharArray();
             CharArraySet set = new CharArraySet(TEST_VERSION_CURRENT, 10, true);
-            set.AddAll(words);
+            set.UnionWith(words);
             assertTrue(set.Contains(findme, 1, 4));
             assertTrue(set.Contains(new string(findme, 1, 4)));
 
@@ -86,7 +87,7 @@ namespace Lucene.Net.Analysis.Util
         public virtual void TestClear()
         {
             var set = new CharArraySet(TEST_VERSION_CURRENT, 10, true);
-            set.AddAll(TEST_STOP_WORDS);
+            set.UnionWith(TEST_STOP_WORDS);
             assertEquals("Not all words added", TEST_STOP_WORDS.Length, set.size());
             set.Clear();
             assertEquals("not empty", 0, set.size());
@@ -94,7 +95,7 @@ namespace Lucene.Net.Analysis.Util
             {
                 assertFalse(set.Contains(TEST_STOP_WORDS[i]));
             }
-            set.AddAll(TEST_STOP_WORDS);
+            set.UnionWith(TEST_STOP_WORDS);
             assertEquals("Not all words added", TEST_STOP_WORDS.Length, set.size());
             for (var i = 0; i < TEST_STOP_WORDS.Length; i++)
             {
@@ -106,7 +107,7 @@ namespace Lucene.Net.Analysis.Util
         public virtual void TestModifyOnUnmodifiable()
         {
             CharArraySet set = new CharArraySet(TEST_VERSION_CURRENT, 10, true);
-            set.AddAll(TEST_STOP_WORDS);
+            set.UnionWith(TEST_STOP_WORDS);
             int size = set.size();
             set = CharArraySet.UnmodifiableSet(set);
             assertEquals("Set size changed due to unmodifiableSet call", size, set.size());
@@ -249,7 +250,7 @@ namespace Lucene.Net.Analysis.Util
         public virtual void TestUnmodifiableSet()
         {
             var set = new CharArraySet(TEST_VERSION_CURRENT, 10, true);
-            set.AddAll(TEST_STOP_WORDS);
+            set.UnionWith(TEST_STOP_WORDS);
             set.Add(Convert.ToInt32(1));
             int size = set.size();
             set = CharArraySet.UnmodifiableSet(set);
@@ -516,7 +517,7 @@ namespace Lucene.Net.Analysis.Util
         [Test]
         public virtual void TestCopyJDKSet()
         {
-            ISet<string> set = new HashSet<string>();
+            ISet<string> set = new JCG.HashSet<string>();
 
             IList<string> stopwords = TEST_STOP_WORDS;
             IList<string> stopwordsUpper = new List<string>();
@@ -627,13 +628,13 @@ namespace Lucene.Net.Analysis.Util
         [Test]
         public virtual void TestToString()
         {
-            CharArraySet set = CharArraySet.Copy(TEST_VERSION_CURRENT, Collections.Singleton("test"));
+            CharArraySet set = CharArraySet.Copy(TEST_VERSION_CURRENT, new JCG.List<string> { "test" });
             assertEquals("[test]", set.ToString());
             set.add("test2");
             assertTrue(set.ToString().Contains(", "));
 
 #pragma warning disable 612, 618
-            set = CharArraySet.Copy(Version.LUCENE_30, Collections.Singleton("test"));
+            set = CharArraySet.Copy(Version.LUCENE_30, new JCG.List<string> { "test" });
 #pragma warning restore 612, 618
             assertEquals("[test]", set.ToString());
             set.add("test2");
@@ -651,7 +652,7 @@ namespace Lucene.Net.Analysis.Util
             var charArraySetCopy = new CharArraySet(TEST_VERSION_CURRENT, values, false);
             values.Reverse();
             var charArraySetReverse = new CharArraySet(TEST_VERSION_CURRENT, values, false);
-            var equatableSetReverse = new EquatableSet<string>(values);
+            var equatableSetReverse = new JCG.HashSet<string>(values);
 
             assertTrue(charArraySet.GetHashCode().Equals(charArraySetCopy.GetHashCode()));
             assertTrue(charArraySet.Equals(charArraySetCopy));
@@ -662,7 +663,7 @@ namespace Lucene.Net.Analysis.Util
 
             values = new List<string> { "sally", "seashells", "by", "the", "sea", "shore" };
             charArraySet.Clear();
-            charArraySet.AddAll(values);
+            charArraySet.UnionWith(values);
 
             assertFalse(charArraySet.GetHashCode().Equals(charArraySetCopy.GetHashCode()));
             assertFalse(charArraySet.Equals(charArraySetCopy));
@@ -683,7 +684,7 @@ namespace Lucene.Net.Analysis.Util
             CharArraySet target = new CharArraySet(TEST_VERSION_CURRENT, originalValues, false);
             var existingValuesAsObject = new List<object> { "seashells", "sea", "shore" };
             var mixedExistingNonExistingValuesAsObject = new List<object> { "true", "set", "of", "unique", "values", "except", "sells" };
-            var nonExistingMixedTypes = new object[] { true, (byte)55, (short)44, (int)33, (sbyte)22, (long)11, (char)'\n', "hurray", (uint)99, (ulong)89, (ushort)79, new char[] { 't', 'w', 'o' }, new StringCharSequenceWrapper("testing") };
+            var nonExistingMixedTypes = new object[] { true, (byte)55, (short)44, (int)33, (sbyte)22, (long)11, (char)'\n', "hurray", (uint)99, (ulong)89, (ushort)79, new char[] { 't', 'w', 'o' }, new StringCharSequence("testing") };
 
             // Add existing values
             assertFalse(target.UnionWith(existingValuesAsObject));
@@ -716,7 +717,7 @@ namespace Lucene.Net.Analysis.Util
             assertTrue(target.Contains((ulong)89));
             assertTrue(target.Contains((ushort)79));
             assertTrue(target.Contains(new char[] { 't', 'w', 'o' }));
-            assertTrue(target.Contains(new StringCharSequenceWrapper("testing")));
+            assertTrue(target.Contains(new StringCharSequence("testing")));
         }
 
         [Test, LuceneNetSpecific]
@@ -766,8 +767,8 @@ namespace Lucene.Net.Analysis.Util
         {
             var originalValues = new string[] { "sally", "sells", "seashells", "by", "the", "sea", "shore" };
             CharArraySet target = new CharArraySet(TEST_VERSION_CURRENT, originalValues, false);
-            var existingValues = new List<ICharSequence> { new StringCharSequenceWrapper("seashells"), new StringCharSequenceWrapper("sea"), new StringCharSequenceWrapper("shore") };
-            var mixedExistingNonExistingValues = new List<ICharSequence> { new StringCharSequenceWrapper("true"), new StringCharSequenceWrapper("set"), new StringCharSequenceWrapper("of"), new StringCharSequenceWrapper("unique"), new StringCharSequenceWrapper("values"), new StringCharSequenceWrapper("except"), new StringCharSequenceWrapper("sells") };
+            var existingValues = new List<ICharSequence> { new StringCharSequence("seashells"), new StringCharSequence("sea"), new StringCharSequence("shore") };
+            var mixedExistingNonExistingValues = new List<ICharSequence> { new StringCharSequence("true"), new StringCharSequence("set"), new StringCharSequence("of"), new StringCharSequence("unique"), new StringCharSequence("values"), new StringCharSequence("except"), new StringCharSequence("sells") };
 
             // Add existing values
             assertFalse(target.UnionWith(existingValues));

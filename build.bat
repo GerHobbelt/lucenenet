@@ -31,7 +31,7 @@ GOTO endcommentblock
 ::                  as PackageVersion (excluding any pre-release tag).
 ::
 ::   --PackageVersion:<PackageVersion>
-::   -pv:<PackageVersion> - Nuget package version. Default is 0.0.0, which instructs the script to use the value in Version.proj.
+::   -pv:<PackageVersion> - Nuget package version. Default is 0.0.0, which instructs the script to use the value in Directory.Build.props.
 ::
 ::   --Configuration:<Configuration>
 ::   -config:<Configuration> - MSBuild configuration for the build.

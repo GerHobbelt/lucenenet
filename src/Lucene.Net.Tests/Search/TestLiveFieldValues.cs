@@ -1,12 +1,12 @@
+using J2N.Threading;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -48,7 +48,7 @@ namespace Lucene.Net.Search
         public virtual void Test()
         {
             Directory dir = NewFSDirectory(CreateTempDir("livefieldupdates"));
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
 
             IndexWriter w = new IndexWriter(dir, iwc);
 
@@ -58,34 +58,34 @@ namespace Lucene.Net.Search
 
             LiveFieldValues<IndexSearcher, int?> rt = new LiveFieldValuesAnonymousInnerClassHelper(mgr, missing);
 
-            int numThreads = TestUtil.NextInt(Random(), 2, 5);
+            int numThreads = TestUtil.NextInt32(Random, 2, 5);
             if (VERBOSE)
             {
                 Console.WriteLine(numThreads + " threads");
             }
 
             CountdownEvent startingGun = new CountdownEvent(1);
-            IList<ThreadClass> threads = new List<ThreadClass>();
+            IList<ThreadJob> threads = new List<ThreadJob>();
 
             int iters = AtLeast(1000);
-            int idCount = TestUtil.NextInt(Random(), 100, 10000);
+            int idCount = TestUtil.NextInt32(Random, 100, 10000);
 
-            double reopenChance = Random().NextDouble() * 0.01;
-            double deleteChance = Random().NextDouble() * 0.25;
-            double addChance = Random().NextDouble() * 0.5;
+            double reopenChance = Random.NextDouble() * 0.01;
+            double deleteChance = Random.NextDouble() * 0.25;
+            double addChance = Random.NextDouble() * 0.5;
 
             for (int t = 0; t < numThreads; t++)
             {
                 int threadID = t;
-                Random threadRandom = new Random(Random().Next());
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper(w, mgr, missing, rt, startingGun, iters, idCount, reopenChance, deleteChance, addChance, t, threadID, threadRandom);
+                Random threadRandom = new Random(Random.Next());
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper(w, mgr, missing, rt, startingGun, iters, idCount, reopenChance, deleteChance, addChance, t, threadID, threadRandom);
                 threads.Add(thread);
                 thread.Start();
             }
 
             startingGun.Signal();
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -130,7 +130,7 @@ namespace Lucene.Net.Search
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private IndexWriter w;
             private SearcherManager Mgr;

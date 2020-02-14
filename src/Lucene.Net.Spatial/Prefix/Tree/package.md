@@ -1,4 +1,9 @@
-﻿<!--
+﻿---
+uid: Lucene.Net.Spatial.Prefix.Tree
+summary: *content
+---
+
+<!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
  this work for additional information regarding copyright ownership.
@@ -21,5 +26,7 @@ where adding characters to a string gives greater resolution.
 Potential Implementations include:
 
 *   http://en.wikipedia.org/wiki/Quadtree
-http://en.wikipedia.org/wiki/Geohash
-http://healpix.jpl.nasa.gov/
+
+*   http://en.wikipedia.org/wiki/Geohash
+
+*   http://healpix.jpl.nasa.gov/

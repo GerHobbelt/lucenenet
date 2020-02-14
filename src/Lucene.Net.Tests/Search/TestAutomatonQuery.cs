@@ -1,10 +1,10 @@
+using J2N.Threading;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -57,7 +57,11 @@ namespace Lucene.Net.Search
         {
             base.SetUp();
             Directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Directory);
             Document doc = new Document();
             Field titleField = NewTextField("title", "some title", Field.Store.NO);
             Field field = NewTextField(FN, "this is document one 2345", Field.Store.NO);
@@ -70,7 +74,7 @@ namespace Lucene.Net.Search
             writer.AddDocument(doc);
             field.SetStringValue("doc three has some different stuff" + " with numbers 1234 5678.9 and letter b");
             writer.AddDocument(doc);
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             Searcher = NewSearcher(Reader);
             writer.Dispose();
         }
@@ -230,25 +234,25 @@ namespace Lucene.Net.Search
             AutomatonQuery[] queries = new AutomatonQuery[1000];
             for (int i = 0; i < queries.Length; i++)
             {
-                queries[i] = new AutomatonQuery(new Term("bogus", "bogus"), AutomatonTestUtil.RandomAutomaton(Random()));
+                queries[i] = new AutomatonQuery(new Term("bogus", "bogus"), AutomatonTestUtil.RandomAutomaton(Random));
             }
             CountdownEvent startingGun = new CountdownEvent(1);
-            int numThreads = TestUtil.NextInt(Random(), 2, 5);
-            ThreadClass[] threads = new ThreadClass[numThreads];
+            int numThreads = TestUtil.NextInt32(Random, 2, 5);
+            ThreadJob[] threads = new ThreadJob[numThreads];
             for (int threadID = 0; threadID < numThreads; threadID++)
             {
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper(this, queries, startingGun);
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper(this, queries, startingGun);
                 threads[threadID] = thread;
                 thread.Start();
             }
             startingGun.Signal();
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestAutomatonQuery OuterInstance;
 

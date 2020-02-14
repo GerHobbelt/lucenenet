@@ -115,7 +115,7 @@ namespace Lucene.Net.Analysis.Core
         private class LowerCaseWhitespaceAnalyzer : Analyzer
         {
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new WhitespaceTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, new LowerCaseFilter(TEST_VERSION_CURRENT, tokenizer));
@@ -126,7 +126,7 @@ namespace Lucene.Net.Analysis.Core
         private class UpperCaseWhitespaceAnalyzer : Analyzer
         {
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new WhitespaceTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, new UpperCaseFilter(TEST_VERSION_CURRENT, tokenizer));
@@ -235,9 +235,9 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestRandomStrings()
         {
-            CheckRandomData(Random(), new WhitespaceAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
-            CheckRandomData(Random(), new SimpleAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
-            CheckRandomData(Random(), new StopAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, new WhitespaceAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, new SimpleAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, new StopAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace Lucene.Net.Analysis.Core
         [Test, LongRunningTest]
         public virtual void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             CheckRandomData(random, new WhitespaceAnalyzer(TEST_VERSION_CURRENT), 100 * RANDOM_MULTIPLIER, 8192);
             CheckRandomData(random, new SimpleAnalyzer(TEST_VERSION_CURRENT), 100 * RANDOM_MULTIPLIER, 8192);
             CheckRandomData(random, new StopAnalyzer(TEST_VERSION_CURRENT), 100 * RANDOM_MULTIPLIER, 8192);

@@ -1,9 +1,10 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Collections.Generic.Extensions;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.QueryParsers.Flexible.Core.Parser;
 using Lucene.Net.QueryParsers.Flexible.Standard.Config;
-using Lucene.Net.QueryParsers.Flexible.Standard.Parser;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
@@ -13,7 +14,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.QueryParsers.Flexible.Standard
 {
@@ -79,11 +81,11 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
         {
             base.BeforeClass();
 
-            ANALYZER = new MockAnalyzer(Random());
+            ANALYZER = new MockAnalyzer(Random);
 
             qp = new StandardQueryParser(ANALYZER);
 
-            HashMap<String, /*Number*/object> randomNumberMap = new HashMap<string, object>();
+            IDictionary<string, /*Number*/object> randomNumberMap = new JCG.Dictionary<string, object>();
 
             /*SimpleDateFormat*/
             string dateFormat;
@@ -98,10 +100,10 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
                 }
 
                 dateFormatSanityCheckPass = true;
-                LOCALE = RandomLocale(Random());
-                TIMEZONE = RandomTimeZone(Random());
-                DATE_STYLE = randomDateStyle(Random());
-                TIME_STYLE = randomDateStyle(Random());
+                LOCALE = RandomCulture(Random);
+                TIMEZONE = RandomTimeZone(Random);
+                DATE_STYLE = randomDateStyle(Random);
+                TIME_STYLE = randomDateStyle(Random);
 
                 //// assumes localized date pattern will have at least year, month, day,
                 //// hour, minute
@@ -129,7 +131,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
 
                 do
                 {
-                    randomDate = Random().nextLong();
+                    randomDate = Random.nextLong();
 
                     // prune date value so it doesn't pass in insane values to some
                     // calendars.
@@ -165,16 +167,16 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
             int randomInt;
             float randomFloat;
 
-            while ((randomLong = Convert.ToInt64(NormalizeNumber(Math.Abs(Random().nextLong()))
+            while ((randomLong = Convert.ToInt64(NormalizeNumber(Math.Abs(Random.nextLong()))
                 )) == 0L)
                 ;
-            while ((randomDouble = Convert.ToDouble(NormalizeNumber(Math.Abs(Random().NextDouble()))
+            while ((randomDouble = Convert.ToDouble(NormalizeNumber(Math.Abs(Random.NextDouble()))
                 )) == 0.0)
                 ;
-            while ((randomFloat = Convert.ToSingle(NormalizeNumber(Math.Abs(Random().nextFloat()))
+            while ((randomFloat = Convert.ToSingle(NormalizeNumber(Math.Abs(Random.nextFloat()))
                 )) == 0.0f)
                 ;
-            while ((randomInt = Convert.ToInt32(NormalizeNumber(Math.Abs(Random().nextInt())))) == 0)
+            while ((randomInt = Convert.ToInt32(NormalizeNumber(Math.Abs(Random.nextInt())))) == 0)
                 ;
 
             randomNumberMap.Put(NumericType.INT64.ToString(), randomLong);
@@ -183,17 +185,17 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
             randomNumberMap.Put(NumericType.DOUBLE.ToString(), randomDouble);
             randomNumberMap.Put(DATE_FIELD_NAME, randomDate);
 
-            RANDOM_NUMBER_MAP = Collections.UnmodifiableMap(randomNumberMap);
+            RANDOM_NUMBER_MAP = randomNumberMap.AsReadOnly();
 
             directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory,
-                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
-                    .SetMaxBufferedDocs(TestUtil.NextInt(Random(), 50, 1000))
+            RandomIndexWriter writer = new RandomIndexWriter(Random, directory,
+                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
+                    .SetMaxBufferedDocs(TestUtil.NextInt32(Random, 50, 1000))
                     .SetMergePolicy(NewLogMergePolicy()));
 
             Document doc = new Document();
-            HashMap<String, NumericConfig> numericConfigMap = new HashMap<String, NumericConfig>();
-            HashMap<String, Field> numericFieldMap = new HashMap<String, Field>();
+            IDictionary<String, NumericConfig> numericConfigMap = new JCG.Dictionary<String, NumericConfig>();
+            IDictionary<String, Field> numericFieldMap = new JCG.Dictionary<String, Field>();
             qp.NumericConfigMap = (numericConfigMap);
 
             foreach (NumericType type in Enum.GetValues(typeof(NumericType)))
@@ -252,7 +254,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
                 writer.AddDocument(doc);
             }
 
-            reader = writer.Reader;
+            reader = writer.GetReader();
             searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -313,7 +315,7 @@ namespace Lucene.Net.QueryParsers.Flexible.Standard
         }
 
         private static void setFieldValues(NumberType numberType,
-            HashMap<String, Field> numericFieldMap)
+            IDictionary<String, Field> numericFieldMap)
         {
 
             /*Number*/

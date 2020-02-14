@@ -1,8 +1,8 @@
+using Lucene.Net.Index;
+using Lucene.Net.Util;
+
 namespace Lucene.Net.Codecs.Lucene40
 {
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-    using SegmentWriteState = Lucene.Net.Index.SegmentWriteState;
-
     /*
      * Licensed to the Apache Software Foundation (ASF) under one or more
      * contributor license agreements.  See the NOTICE file distributed with
@@ -21,14 +21,14 @@ namespace Lucene.Net.Codecs.Lucene40
      */
 
     /// <summary>
-    /// Read-write version of <seealso cref="Lucene40PostingsFormat"/> for testing.
+    /// Read-write version of <see cref="Lucene40PostingsFormat"/> for testing.
     /// </summary>
 #pragma warning disable 612, 618
     public class Lucene40RWPostingsFormat : Lucene40PostingsFormat
     {
         public override FieldsConsumer FieldsConsumer(SegmentWriteState state)
         {
-            if (!LuceneTestCase.OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
+            if (!LuceneTestCase.OldFormatImpersonationIsActive)
             {
                 return base.FieldsConsumer(state);
             }

@@ -1,5 +1,6 @@
+using J2N.Collections.Generic.Extensions;
+using J2N.Threading;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -47,10 +48,14 @@ namespace Lucene.Net.Search
         public virtual void Test()
         {
             Directory dir = NewDirectory();
-            MockAnalyzer analyzer = new MockAnalyzer(Random());
-            analyzer.MaxTokenLength = TestUtil.NextInt(Random(), 1, IndexWriter.MAX_TERM_LENGTH);
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, analyzer, Similarity, TimeZone);
-            LineFileDocs docs = new LineFileDocs(Random(), DefaultCodecSupportsDocValues());
+            MockAnalyzer analyzer = new MockAnalyzer(Random);
+            analyzer.MaxTokenLength = TestUtil.NextInt32(Random, 1, IndexWriter.MAX_TERM_LENGTH);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir, analyzer);
+            LineFileDocs docs = new LineFileDocs(Random, DefaultCodecSupportsDocValues);
             int charsToIndex = AtLeast(100000);
             int charsIndexed = 0;
             //System.out.println("bytesToIndex=" + charsToIndex);
@@ -61,7 +66,7 @@ namespace Lucene.Net.Search
                 w.AddDocument(doc);
                 //System.out.println("  bytes=" + charsIndexed + " add: " + doc);
             }
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             //System.out.println("numDocs=" + r.NumDocs);
             w.Dispose();
 
@@ -81,7 +86,7 @@ namespace Lucene.Net.Search
             IDictionary<BytesRef, TopDocs> answers = new Dictionary<BytesRef, TopDocs>();
             while (termsEnum.Next() != null)
             {
-                if (Random().NextDouble() <= chance)
+                if (Random.NextDouble() <= chance)
                 {
                     BytesRef term = BytesRef.DeepCopyOf(termsEnum.Term);
                     answers[term] = s.Search(new TermQuery(new Term("body", term)), 100);
@@ -91,16 +96,16 @@ namespace Lucene.Net.Search
             if (answers.Count > 0)
             {
                 CountdownEvent startingGun = new CountdownEvent(1);
-                int numThreads = TestUtil.NextInt(Random(), 2, 5);
-                ThreadClass[] threads = new ThreadClass[numThreads];
+                int numThreads = TestUtil.NextInt32(Random, 2, 5);
+                ThreadJob[] threads = new ThreadJob[numThreads];
                 for (int threadID = 0; threadID < numThreads; threadID++)
                 {
-                    ThreadClass thread = new ThreadAnonymousInnerClassHelper(this, s, answers, startingGun);
+                    ThreadJob thread = new ThreadAnonymousInnerClassHelper(this, s, answers, startingGun);
                     threads[threadID] = thread;
                     thread.Start();
                 }
                 startingGun.Signal();
-                foreach (ThreadClass thread in threads)
+                foreach (ThreadJob thread in threads)
                 {
                     thread.Join();
                 }
@@ -109,7 +114,7 @@ namespace Lucene.Net.Search
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestSameScoresWithThreads OuterInstance;
 
@@ -132,8 +137,8 @@ namespace Lucene.Net.Search
                     StartingGun.Wait();
                     for (int i = 0; i < 20; i++)
                     {
-                        IList<KeyValuePair<BytesRef, TopDocs>> shuffled = new List<KeyValuePair<BytesRef, TopDocs>>(Answers.EntrySet());
-                        Collections.Shuffle(shuffled);
+                        IList<KeyValuePair<BytesRef, TopDocs>> shuffled = new List<KeyValuePair<BytesRef, TopDocs>>(Answers);
+                        shuffled.Shuffle(Random);
                         foreach (KeyValuePair<BytesRef, TopDocs> ent in shuffled)
                         {
                             TopDocs actual = s.Search(new TermQuery(new Term("body", ent.Key)), 100);

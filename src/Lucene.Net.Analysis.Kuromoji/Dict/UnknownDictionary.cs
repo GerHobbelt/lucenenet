@@ -25,7 +25,7 @@ namespace Lucene.Net.Analysis.Ja.Dict
     /// </summary>
     public class UnknownDictionary : BinaryDictionary
     {
-        private readonly CharacterDefinition characterDefinition = CharacterDefinition.GetInstance();
+        private readonly CharacterDefinition characterDefinition = CharacterDefinition.Instance;
 
         private UnknownDictionary()
         {
@@ -76,19 +76,16 @@ namespace Lucene.Net.Analysis.Ja.Dict
             return null;
         }
 
-        public static UnknownDictionary GetInstance()
-        {
-            return SingletonHolder.INSTANCE;
-        }
+        public static UnknownDictionary Instance => SingletonHolder.INSTANCE;
 
         private class SingletonHolder
         {
-            internal static readonly UnknownDictionary INSTANCE;
-            static SingletonHolder()
+            internal static readonly UnknownDictionary INSTANCE = LoadInstance();
+            private static UnknownDictionary LoadInstance() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    INSTANCE = new UnknownDictionary();
+                    return new UnknownDictionary();
                 }
                 catch (IOException ioe)
                 {

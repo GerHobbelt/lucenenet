@@ -2,8 +2,8 @@
 using Lucene.Net.Codecs.Lucene45;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Spatial4n.Core.Context;
 using Spatial4n.Core.Shapes;
@@ -49,9 +49,9 @@ namespace Lucene.Net.Spatial
             base.SetUp();
 
             directory = NewDirectory();
-            Random random = Random();
+            Random random = Random;
             indexWriter = new RandomIndexWriter(random, directory, newIndexWriterConfig(random));
-            indexReader = indexWriter.Reader;
+            indexReader = indexWriter.GetReader();
             indexSearcher = NewSearcher(indexReader);
         }
 
@@ -82,7 +82,7 @@ namespace Lucene.Net.Spatial
             indexWriter.AddDocument(doc);
         }
 
-        protected virtual void addDocumentsAndCommit(List<Document> documents)
+        protected virtual void addDocumentsAndCommit(IList<Document> documents)
         {
             foreach (Document document in documents)
             {
@@ -100,7 +100,7 @@ namespace Lucene.Net.Spatial
         {
             indexWriter.Commit();
             IOUtils.Dispose(indexReader);
-            indexReader = indexWriter.Reader;
+            indexReader = indexWriter.GetReader();
             indexSearcher = NewSearcher(indexReader);
         }
 

@@ -28,6 +28,7 @@ using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Lucene.Net.Util;
 using NUnit.Framework;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Tests.Queries
 {
@@ -37,7 +38,7 @@ namespace Lucene.Net.Tests.Queries
         public void TestCachability()
         {
             TermFilter a = TermFilter(@"field1", @"a");
-            var cachedFilters = new HashSet<Filter>();
+            var cachedFilters = new JCG.HashSet<Filter>();
             cachedFilters.Add(a);
             assertTrue(@"Must be cached", cachedFilters.Contains(TermFilter(@"field1", @"a")));
             assertFalse(@"Must not be cached", cachedFilters.Contains(TermFilter(@"field1", @"b")));
@@ -49,11 +50,15 @@ namespace Lucene.Net.Tests.Queries
         {
             string fieldName = @"field1";
             Directory rd = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), rd, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, rd);
             Document doc = new Document();
             doc.Add(NewStringField(fieldName, @"value1", Field.Store.NO));
             w.AddDocument(doc);
-            IndexReader reader = SlowCompositeReaderWrapper.Wrap(w.Reader);
+            IndexReader reader = SlowCompositeReaderWrapper.Wrap(w.GetReader());
             assertTrue(reader.Context is AtomicReaderContext);
             var context = (AtomicReaderContext)reader.Context;
             w.Dispose();
@@ -74,26 +79,30 @@ namespace Lucene.Net.Tests.Queries
         public void TestRandom()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             int num = AtLeast(100);
             var terms = new List<Term>();
             for (int i = 0; i < num; i++)
             {
                 string field = @"field" + i;
-                string str = TestUtil.RandomRealisticUnicodeString(Random());
+                string str = TestUtil.RandomRealisticUnicodeString(Random);
                 terms.Add(new Term(field, str));
                 Document doc = new Document();
                 doc.Add(NewStringField(field, str, Field.Store.NO));
                 w.AddDocument(doc);
             }
 
-            IndexReader reader = w.Reader;
+            IndexReader reader = w.GetReader();
             w.Dispose();
             IndexSearcher searcher = NewSearcher(reader);
             int numQueries = AtLeast(10);
             for (int i = 0; i < numQueries; i++)
             {
-                Term term = terms[Random().nextInt(num)];
+                Term term = terms[Random.nextInt(num)];
                 TopDocs queryResult = searcher.Search(new TermQuery(term), reader.MaxDoc);
                 MatchAllDocsQuery matchAll = new MatchAllDocsQuery();
                 TermFilter filter = TermFilter(term);
@@ -118,7 +127,7 @@ namespace Lucene.Net.Tests.Queries
             {
                 string field1 = @"field" + i;
                 string field2 = @"field" + i + num;
-                string value1 = TestUtil.RandomRealisticUnicodeString(Random());
+                string value1 = TestUtil.RandomRealisticUnicodeString(Random);
                 string value2 = value1 + @"x";
                 TermFilter filter1 = TermFilter(field1, value1);
                 TermFilter filter2 = TermFilter(field1, value2);
@@ -163,7 +172,7 @@ namespace Lucene.Net.Tests.Queries
             try
             {
                 new TermFilter(null);
-                Fail(@"must fail - no term!");
+                Assert.Fail(@"must fail - no term!");
             }
 #pragma warning disable 168
             catch (ArgumentException e)
@@ -174,7 +183,7 @@ namespace Lucene.Net.Tests.Queries
             try
             {
                 new TermFilter(new Term(null));
-                Fail(@"must fail - no field!");
+                Assert.Fail(@"must fail - no field!");
             }
 #pragma warning disable 168
             catch (ArgumentException e)

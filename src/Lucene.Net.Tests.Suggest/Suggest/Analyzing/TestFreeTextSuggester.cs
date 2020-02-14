@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Util;
 using Lucene.Net.Documents;
@@ -11,7 +12,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Suggest.Analyzing
 {
@@ -43,7 +45,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 new Input("boo foo bar foo bee", 20)
             );
 
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
             FreeTextSuggester sug = new FreeTextSuggester(a, a, 2, (byte)0x20);
             sug.Build(new InputArrayIterator(keys));
             assertEquals(2, sug.Count);
@@ -93,7 +95,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             IEnumerable<Input> keys = AnalyzingSuggesterTest.Shuffle(
                 new Input("foo\u001ebar baz", 50)
             );
-            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random()));
+            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random));
             try
             {
                 sug.Build(new InputArrayIterator(keys));
@@ -113,7 +115,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             IEnumerable<Input> keys = AnalyzingSuggesterTest.Shuffle(
                 new Input("foo bar baz", 50)
             );
-            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random()));
+            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random));
             sug.Build(new InputArrayIterator(keys));
 
             try
@@ -216,7 +218,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             LineFileDocs lfd = new LineFileDocs(null, "/lucenedata/enwiki/enwiki-20120502-lines-1k.txt", false);
             // Skip header:
             lfd.NextDoc();
-            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random()));
+            FreeTextSuggester sug = new FreeTextSuggester(new MockAnalyzer(Random));
             sug.Build(new TestWikiInputIterator(this, lfd));
             if (VERBOSE)
             {
@@ -239,7 +241,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 new Input("foo bar baz blah boo foo bar foo bee", 50)
             );
 
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
             FreeTextSuggester sug = new FreeTextSuggester(a, a, 1, (byte)0x20);
             sug.Build(new InputArrayIterator(keys));
             // Sorts first by count, descending, second by term, ascending
@@ -254,7 +256,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             IEnumerable<Input> keys = AnalyzingSuggesterTest.Shuffle(
                 new Input("foo bar bar bar bar", 50)
             );
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
             FreeTextSuggester sug = new FreeTextSuggester(a, a, 2, (byte)0x20);
             sug.Build(new InputArrayIterator(keys));
             assertEquals("foo bar/1.00",
@@ -268,7 +270,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             IEnumerable<Input> keys = AnalyzingSuggesterTest.Shuffle(
                 new Input("foo bar bar bar bar", 50)
             );
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
             FreeTextSuggester sug = new FreeTextSuggester(a, a, 2, (byte)0x20);
             sug.Build(new InputArrayIterator(keys));
             try
@@ -284,7 +286,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
 
         internal class TestEndingHoleAnalyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader);
                 CharArraySet stopSet = StopFilter.MakeStopSet(TEST_VERSION_CURRENT, "of");
@@ -399,7 +401,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             {
                 get
                 {
-                    return Random().Next();
+                    return Random.Next();
                 }
             }
 
@@ -440,11 +442,11 @@ namespace Lucene.Net.Search.Suggest.Analyzing
         [Test]
         public void TestRandom()
         {
-            string[] terms = new string[TestUtil.NextInt(Random(), 2, 10)];
-            ISet<string> seen = new HashSet<string>();
+            string[] terms = new string[TestUtil.NextInt32(Random, 2, 10)];
+            ISet<string> seen = new JCG.HashSet<string>();
             while (seen.size() < terms.Length)
             {
-                string token = TestUtil.RandomSimpleString(Random(), 1, 5);
+                string token = TestUtil.RandomSimpleString(Random, 1, 5);
                 if (!seen.contains(token))
                 {
                     terms[seen.size()] = token;
@@ -452,7 +454,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            Analyzer a = new MockAnalyzer(Random());
+            Analyzer a = new MockAnalyzer(Random);
 
             int numDocs = AtLeast(10);
             long totTokens = 0;
@@ -479,7 +481,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 totTokens += docs[i].Length;
             }
 
-            int grams = TestUtil.NextInt(Random(), 1, 4);
+            int grams = TestUtil.NextInt32(Random, 1, 4);
 
             if (VERBOSE)
             {
@@ -498,7 +500,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 {
                     Console.WriteLine("TEST: build model for gram=" + gram);
                 }
-                IDictionary<string, int?> model = new HashMap<string, int?>();
+                IDictionary<string, int?> model = new JCG.Dictionary<string, int?>();
                 gramCounts.Add(model);
                 foreach (string[] doc in docs)
                 {
@@ -514,8 +516,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                             b.append(doc[j]);
                         }
                         string token = b.toString();
-                        int? curCount = model.ContainsKey(token) ? model[token] : null;
-                        if (curCount == null)
+                        if (!model.TryGetValue(token, out int? curCount) || curCount == null)
                         {
                             model.Put(token, 1);
                         }
@@ -525,7 +526,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                         }
                         if (VERBOSE)
                         {
-                            Console.WriteLine("  add '" + token + "' -> count=" + (model.ContainsKey(token) ? model[token].ToString() : ""));
+                            Console.WriteLine("  add '" + token + "' -> count=" + (model.TryGetValue(token, out int? count) ? (count.HasValue ? count.ToString() : "null") : ""));
                         }
                     }
                 }
@@ -534,7 +535,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             int lookups = AtLeast(100);
             for (int iter = 0; iter < lookups; iter++)
             {
-                string[] tokens = new string[TestUtil.NextInt(Random(), 1, 5)];
+                string[] tokens = new string[TestUtil.NextInt32(Random, 1, 5)];
                 for (int i = 0; i < tokens.Length; i++)
                 {
                     tokens[i] = GetZipfToken(terms);
@@ -551,10 +552,10 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 {
                     trimStart = 0;
                 }
-                int trimAt = TestUtil.NextInt(Random(), trimStart, tokens[tokens.Length - 1].Length);
+                int trimAt = TestUtil.NextInt32(Random, trimStart, tokens[tokens.Length - 1].Length);
                 tokens[tokens.Length - 1] = tokens[tokens.Length - 1].Substring(0, trimAt - 0);
 
-                int num = TestUtil.NextInt(Random(), 1, 100);
+                int num = TestUtil.NextInt32(Random, 1, 100);
                 StringBuilder b = new StringBuilder();
                 foreach (string token in tokens)
                 {
@@ -572,7 +573,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 // Expected:
                 List<Lookup.LookupResult> expected = new List<Lookup.LookupResult>();
                 double backoff = 1.0;
-                seen = new HashSet<string>();
+                seen = new JCG.HashSet<string>();
 
                 if (VERBOSE)
                 {
@@ -630,8 +631,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                     {
                         //int? count = gramCounts.get(i - 1).get(context);
                         var gramCount = gramCounts[i - 1];
-                        int? count = gramCount.ContainsKey(context) ? gramCount[context] : null;
-                        if (count == null)
+                        if (!gramCount.TryGetValue(context, out int? count) || count == null)
                         {
                             // We never saw this context:
                             backoff *= FreeTextSuggester.ALPHA;
@@ -673,8 +673,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                             }
                             string ngram = (context + " " + term).Trim();
                             //Integer count = model.get(ngram);
-                            int? count = model.ContainsKey(ngram) ? model[ngram] : null;
-                            if (count != null)
+                            if (model.TryGetValue(ngram, out int? count) && count != null)
                             {
                                 // LUCENENET NOTE: We need to calculate this as decimal because when using double it can sometimes 
                                 // return numbers that are greater than long.MaxValue, which results in a negative long number.
@@ -749,7 +748,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             // Zipf-like distribution:
             for (int k = 0; k < tokens.Length; k++)
             {
-                if (Random().nextBoolean() || k == tokens.Length - 1)
+                if (Random.nextBoolean() || k == tokens.Length - 1)
                 {
                     return tokens[k];
                 }

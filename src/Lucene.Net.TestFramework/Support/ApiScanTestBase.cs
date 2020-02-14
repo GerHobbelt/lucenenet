@@ -1,94 +1,101 @@
-/*
- *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- *
-*/
-
-using Lucene.Net.Util;
-using NUnit.Framework;
+using Lucene.Net.Support;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using Assert = Lucene.Net.TestFramework.Assert;
+using Console = Lucene.Net.Util.SystemConsole;
 
-namespace Lucene.Net.Support
+namespace Lucene.Net.Util
 {
+    /*
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+
     /// <summary>
-    /// LUCENENET specific - functionality for scanning the API to ensure 
-    /// naming and .NET conventions are followed consistently.
+    /// LUCENENET specific - functionality for scanning the API to ensure
+    /// naming and .NET conventions are followed consistently. Not for use
+    /// by end users.
     /// </summary>
     public abstract class ApiScanTestBase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        internal ApiScanTestBase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+        internal ApiScanTestBase() { } // LUCENENET: Not for use by end users
+#endif
+
         /// <summary>
         /// Private fields must be upper case separated with underscores, 
         /// must be camelCase (optionally may be prefixed with underscore, 
         /// but it is preferred not to use the underscore to match Lucene).
         /// </summary>
-        private static Regex PrivateFieldName = new Regex("^_?[a-z][a-zA-Z0-9_]*$|^[A-Z0-9_]+$", RegexOptions.Compiled);
+        private static readonly Regex PrivateFieldName = new Regex("^_?[a-z][a-zA-Z0-9_]*$|^[A-Z0-9_]+$", RegexOptions.Compiled);
 
         /// <summary>
         /// Protected fields must either be upper case separated with underscores or
         /// must be prefixed with m_ (to avoid naming conflicts with properties).
         /// </summary>
-        private static Regex ProtectedFieldName = new Regex("^m_[a-z][a-zA-Z0-9_]*$|^[A-Z0-9_]+$", RegexOptions.Compiled);
+        private static readonly Regex ProtectedFieldName = new Regex("^m_[a-z][a-zA-Z0-9_]*$|^[A-Z0-9_]+$", RegexOptions.Compiled);
 
         /// <summary>
         /// Method parameters must be camelCase and not begin or end with underscore.
         /// </summary>
-        private static Regex MethodParameterName = new Regex("^[a-z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$", RegexOptions.Compiled);
+        private static readonly Regex MethodParameterName = new Regex("^[a-z](?:[a-zA-Z0-9_]*[a-zA-Z0-9])?$", RegexOptions.Compiled);
 
         /// <summary>
         /// Interfaces must begin with "I" followed by another captial letter. Note this includes a
         /// fix for generic interface names, that end with `{number}.
         /// </summary>
-        private static Regex InterfaceName = new Regex("^I[A-Z][a-zA-Z0-9_]*(?:`\\d+)?$", RegexOptions.Compiled);
+        private static readonly Regex InterfaceName = new Regex("^I[A-Z][a-zA-Z0-9_]*(?:`\\d+)?$", RegexOptions.Compiled);
 
         /// <summary>
         /// Class names must be pascal case and not use the interface naming convention.
         /// </summary>
-        private static Regex ClassName = new Regex("^[A-Z][a-zA-Z0-9_]*(?:`\\d+)?$", RegexOptions.Compiled);
+        private static readonly Regex ClassName = new Regex("^[A-Z][a-zA-Z0-9_]*(?:`\\d+)?$", RegexOptions.Compiled);
 
         /// <summary>
         /// Public members should not contain the word "Comparer". In .NET, these should be named "Comparer".
         /// </summary>
-        private static Regex ContainsComparer = new Regex("[Cc]omparator", RegexOptions.Compiled);
+        private static readonly Regex ContainsComparer = new Regex("[Cc]omparator", RegexOptions.Compiled);
 
         /// <summary>
         /// Public methods and properties should not contain the word "Int" that is not followed by 16, 32, or 64,
         /// "Long", "Short", or "Float". These should be converted to their .NET names "Int32", "Int64", "Int16", and "Short".
         /// Note we need to ignore common words such as "point", "intern", and "intersect".
         /// </summary>
-        private static Regex ContainsNonNetNumeric = new Regex("(?<![Pp]o|[Pp]r|[Jj]o)[Ii]nt(?!16|32|64|er|eg|ro)|[Ll]ong(?!est|er)|[Ss]hort(?!est|er)|[Ff]loat", RegexOptions.Compiled);
+        private static readonly Regex ContainsNonNetNumeric = new Regex("(?<![Pp]o|[Pp]r|[Jj]o)[Ii]nt(?!16|32|64|er|eg|ro)|[Ll]ong(?!est|er)|[Ss]hort(?!est|er)|[Ff]loat", RegexOptions.Compiled);
 
         /// <summary>
         /// Constants should not contain the word INT that is not followed by 16, 32, or 64, LONG, SHORT, or FLOAT
         /// </summary>
-        private static Regex ConstContainsNonNetNumeric = new Regex("(?<!PO|PR|JO)INT(?!16|32|64|ER|EG|RO)|LONG(?!EST|ER)|SHORT(?!EST|ER)|FLOAT", RegexOptions.Compiled);
+        private static readonly Regex ConstContainsNonNetNumeric = new Regex("(?<!PO|PR|JO)INT(?!16|32|64|ER|EG|RO)|LONG(?!EST|ER)|SHORT(?!EST|ER)|FLOAT", RegexOptions.Compiled);
 
         /// <summary>
         /// Matches IL code pattern for a method body with only a return statement for a local variable.
         /// In this case, the array is writable by the consumer.
         /// </summary>
-        private static Regex MethodBodyReturnValueOnly = new Regex("\\0\\u0002\\{(?:.|\\\\u\\d\\d\\d\\d|\\0|\\[a-z]){3}\\u0004\\n\\+\\0\\u0006\\*", RegexOptions.Compiled);
+        private static readonly Regex MethodBodyReturnValueOnly = new Regex("\\0\\u0002\\{(?:.|\\\\u\\d\\d\\d\\d|\\0|\\[a-z]){3}\\u0004\\n\\+\\0\\u0006\\*", RegexOptions.Compiled);
 
 
         //[Test, LuceneNetSpecific]
@@ -313,7 +320,7 @@ namespace Lucene.Net.Support
 
             Assert.IsFalse(names.Any(), names.Count() + " member names containing the word 'Int' not followed " + 
                 "by 16, 32, or 64, 'Long', 'Short', or 'Float' detected. " +
-                "In .NET, we need to change to 'Short' to 'Int16', 'Int' to 'Int32', 'Long' to 'Int64', and 'Float' to 'Short'.");
+                "In .NET, we need to change to 'Short' to 'Int16', 'Int' to 'Int32', 'Long' to 'Int64', and 'Float' to 'Single'.");
         }
 
         //[Test, LuceneNetSpecific]
@@ -331,7 +338,7 @@ namespace Lucene.Net.Support
 
             Assert.IsFalse(names.Any(), names.Count() + " member names containing the word 'Int' not followed " +
                 "by 16, 32, or 64, 'Long', 'Short', or 'Float' detected. " +
-                "In .NET, we need to change to 'Short' to 'Int16', 'Int' to 'Int32', 'Long' to 'Int64', and 'Float' to 'Short'." +
+                "In .NET, we need to change to 'Short' to 'Int16', 'Int' to 'Int32', 'Long' to 'Int64', and 'Float' to 'Single'." +
                 "\n\nIMPORTANT: Before making changes, make sure to rename any types with ambiguous use of the word `Single` (meaning 'singular' rather than `System.Single`) to avoid confusion.");
         }
 
@@ -451,6 +458,10 @@ namespace Lucene.Net.Support
             foreach (var c in classes)
             {
                 if (!string.IsNullOrEmpty(c.Namespace) && c.Namespace.StartsWith("Lucene.Net.Support", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+                if (!string.IsNullOrEmpty(c.Name) && c.Name.Equals("AssemblyKeys", StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -815,6 +826,11 @@ namespace Lucene.Net.Support
 
             foreach (var t in types)
             {
+                if (t.GetTypeInfo().IsDefined(typeof(ExceptionToNetNumericConventionAttribute)))
+                {
+                    continue;
+                }
+
                 if (ContainsNonNetNumeric.IsMatch(t.Name))
                 {
                     result.Add(t.FullName);
@@ -898,7 +914,7 @@ namespace Lucene.Net.Support
                     }
 
                     // Ignore properties, methods, and events with IgnoreNetNumericConventionAttribute
-                    if (member.IsDefined(typeof(ExceptionToNullableEnumConvention)))
+                    if (member.IsDefined(typeof(ExceptionToNullableEnumConventionAttribute)))
                     {
                         continue;
                     }

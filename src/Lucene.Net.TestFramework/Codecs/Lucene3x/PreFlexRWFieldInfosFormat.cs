@@ -17,7 +17,6 @@ namespace Lucene.Net.Codecs.Lucene3x
      * limitations under the License.
      */
 
-    ///
     /// <summary>
     /// @lucene.internal
     /// @lucene.experimental
@@ -25,21 +24,9 @@ namespace Lucene.Net.Codecs.Lucene3x
 #pragma warning disable 612, 618
     internal class PreFlexRWFieldInfosFormat : Lucene3xFieldInfosFormat
     {
-        public override FieldInfosReader FieldInfosReader
-        {
-            get
-            {
-                return new PreFlexRWFieldInfosReader();
-            }
-        }
+        public override FieldInfosReader FieldInfosReader => new PreFlexRWFieldInfosReader();
 
-        public override FieldInfosWriter FieldInfosWriter
-        {
-            get
-            {
-                return new PreFlexRWFieldInfosWriter();
-            }
-        }
+        public override FieldInfosWriter FieldInfosWriter => new PreFlexRWFieldInfosWriter();
     }
 #pragma warning restore 612, 618
 }

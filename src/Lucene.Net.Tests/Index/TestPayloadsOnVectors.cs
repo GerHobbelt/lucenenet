@@ -1,13 +1,12 @@
 using Lucene.Net.Analysis.TokenAttributes;
-using System.Diagnostics;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
+using System.Diagnostics;
+using System.IO;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using NUnit.Framework;
-    using System.IO;
     using BytesRef = Lucene.Net.Util.BytesRef;
 
     /*
@@ -49,15 +48,15 @@ namespace Lucene.Net.Index
         public virtual void TestMixupDocs()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             Document doc = new Document();
             FieldType customType = new FieldType(TextField.TYPE_NOT_STORED);
             customType.StoreTermVectors = true;
             customType.StoreTermVectorPositions = true;
             customType.StoreTermVectorPayloads = true;
-            customType.StoreTermVectorOffsets = Random().NextBoolean();
+            customType.StoreTermVectorOffsets = Random.NextBoolean();
             Field field = new Field("field", "", customType);
             TokenStream ts = new MockTokenizer(new StringReader("here we go"), MockTokenizer.WHITESPACE, true);
             Assert.IsFalse(ts.HasAttribute<IPayloadAttribute>());
@@ -77,7 +76,7 @@ namespace Lucene.Net.Index
             field.SetTokenStream(ts);
             writer.AddDocument(doc);
 
-            DirectoryReader reader = writer.Reader;
+            DirectoryReader reader = writer.GetReader();
             Terms terms = reader.GetTermVector(1, "field");
             Debug.Assert(terms != null);
             TermsEnum termsEnum = terms.GetIterator(null);
@@ -97,13 +96,17 @@ namespace Lucene.Net.Index
         public virtual void TestMixupMultiValued()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             FieldType customType = new FieldType(TextField.TYPE_NOT_STORED);
             customType.StoreTermVectors = true;
             customType.StoreTermVectorPositions = true;
             customType.StoreTermVectorPayloads = true;
-            customType.StoreTermVectorOffsets = Random().NextBoolean();
+            customType.StoreTermVectorOffsets = Random.NextBoolean();
             Field field = new Field("field", "", customType);
             TokenStream ts = new MockTokenizer(new StringReader("here we go"), MockTokenizer.WHITESPACE, true);
             Assert.IsFalse(ts.HasAttribute<IPayloadAttribute>());
@@ -122,7 +125,7 @@ namespace Lucene.Net.Index
             field3.SetTokenStream(ts);
             doc.Add(field3);
             writer.AddDocument(doc);
-            DirectoryReader reader = writer.Reader;
+            DirectoryReader reader = writer.GetReader();
             Terms terms = reader.GetTermVector(0, "field");
             Debug.Assert(terms != null);
             TermsEnum termsEnum = terms.GetIterator(null);
@@ -140,13 +143,17 @@ namespace Lucene.Net.Index
         public virtual void TestPayloadsWithoutPositions()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
             Document doc = new Document();
             FieldType customType = new FieldType(TextField.TYPE_NOT_STORED);
             customType.StoreTermVectors = true;
             customType.StoreTermVectorPositions = false;
             customType.StoreTermVectorPayloads = true;
-            customType.StoreTermVectorOffsets = Random().NextBoolean();
+            customType.StoreTermVectorOffsets = Random.NextBoolean();
             doc.Add(new Field("field", "foo", customType));
             try
             {

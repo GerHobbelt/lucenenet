@@ -1,10 +1,10 @@
 using System;
-using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
+using Lucene.Net.Store;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -46,10 +46,10 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void Test([ValueSource(typeof(ConcurrentMergeSchedulerFactories), "Values")]Func<IConcurrentMergeScheduler> newScheduler)
         {
-            MockDirectoryWrapper dir = new MockDirectoryWrapper(Random(), new MMapDirectory(CreateTempDir("4GBStoredFields")));
-            dir.Throttling = MockDirectoryWrapper.Throttling_e.NEVER;
+            MockDirectoryWrapper dir = new MockDirectoryWrapper(Random, new MMapDirectory(CreateTempDir("4GBStoredFields")));
+            dir.Throttling = Throttling.NEVER;
 
-            var config = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
+            var config = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
                             .SetMaxBufferedDocs(IndexWriterConfig.DISABLE_AUTO_FLUSH)
                             .SetRAMBufferSizeMB(256.0)
                             .SetMergeScheduler(newScheduler())
@@ -69,12 +69,12 @@ namespace Lucene.Net.Index
             ft.IsIndexed = false;
             ft.IsStored = true;
             ft.Freeze();
-            int valueLength = RandomInts.NextIntBetween(Random(), 1 << 13, 1 << 20);
+            int valueLength = RandomInts.RandomInt32Between(Random, 1 << 13, 1 << 20);
             var value = new byte[valueLength];
             for (int i = 0; i < valueLength; ++i)
             {
                 // random so that even compressing codecs can't compress it
-                value[i] = (byte)Random().Next(256);
+                value[i] = (byte)Random.Next(256);
             }
             Field f = new Field("fld", value, ft);
             doc.Add(f);

@@ -1,6 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29201.188
+VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 15.0.26730.8
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-templates", "azure-templates", "{05CE3A39-40D4-452D-AFE0-E57E536A08C6}"
 	ProjectSection(SolutionItems) = preProject
@@ -27,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{4016BDAB
 		build\NuGet.props = build\NuGet.props
 		build\TestReferences.Common.targets = build\TestReferences.Common.targets
 		TestTargetFramework.props = TestTargetFramework.props
+		build\TestReferences.Common.targets = build\TestReferences.Common.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{4DF7EACE-2B25-43F6-B558-8520BF20BD76}"
@@ -51,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 		LICENSE.txt = LICENSE.txt
 		NOTICE.txt = NOTICE.txt
+		NuGet.config = NuGet.config
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -97,8 +100,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Spatial", "src\Lucene.Net.Spatial\Lucene.Net.Spatial.csproj", "{62FFF347-AE79-447A-B77F-F3C33F957342}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Suggest", "src\Lucene.Net.Suggest\Lucene.Net.Suggest.csproj", "{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework", "src\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj", "{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Analysis.Common", "src\Lucene.Net.Tests.Analysis.Common\Lucene.Net.Tests.Analysis.Common.csproj", "{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}"
 EndProject
@@ -156,11 +157,31 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.ICU", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Cli", "src\dotnet\tools\Lucene.Net.Tests.Cli\Lucene.Net.Tests.Cli.csproj", "{1F5574FE-19F7-4F10-9B88-76A938621F5B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._A-I", "src\Lucene.Net.Tests._A-I\Lucene.Net.Tests._A-I.csproj", "{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._A-D", "src\Lucene.Net.Tests._A-D\Lucene.Net.Tests._A-D.csproj", "{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-U", "src\Lucene.Net.Tests._J-U\Lucene.Net.Tests._J-U.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._E-I", "src\Lucene.Net.Tests._E-I\Lucene.Net.Tests._E-I.csproj", "{8251BB22-EDA9-4850-A9B7-259C5B171040}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._J-S", "src\Lucene.Net.Tests._J-S\Lucene.Net.Tests._J-S.csproj", "{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._T-U", "src\Lucene.Net.Tests._T-U\Lucene.Net.Tests._T-U.csproj", "{DF60E276-91AD-4386-A5B5-13EB24E335E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4DF0A2A1-B9C7-4EE5-BAF0-BEEF53E34220}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework", "src\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj", "{845F8491-348C-4242-A58A-1979E8338B5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.TestFramework", "src\Lucene.Net.Tests.TestFramework\Lucene.Net.Tests.TestFramework.csproj", "{3A761C02-C3B2-4672-92F9-B700C68E7EFA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Analysis.OpenNLP", "src\Lucene.Net.Analysis.OpenNLP\Lucene.Net.Analysis.OpenNLP.csproj", "{CC2CE069-5BBB-429E-8510-7C3FBA8069D5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Analysis.OpenNLP", "src\Lucene.Net.Tests.Analysis.OpenNLP\Lucene.Net.Tests.Analysis.OpenNLP.csproj", "{88D6D124-711D-4232-AD70-F22AB6AF9EA1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Analysis.Morfologik", "src\Lucene.Net.Analysis.Morfologik\Lucene.Net.Analysis.Morfologik.csproj", "{17C7E54C-7A95-46A5-9905-90F68D349F3F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.Analysis.Morfologik", "src\Lucene.Net.Tests.Analysis.Morfologik\Lucene.Net.Tests.Analysis.Morfologik.csproj", "{435F91AD-8BA4-4376-904C-385A165C1AF0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiqqaDummy", "src\QiqqaDummy\QiqqaDummy.csproj", "{2D526481-5972-4DEF-B859-9AE5953262EB}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -169,6 +190,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiqqaDummy", "src\QiqqaDumm
 		{3D0366A8-515D-44F0-835F-4118853CFA14} = {3D0366A8-515D-44F0-835F-4118853CFA14}
 		{01CD8DE8-274F-476F-8419-7B3F018C749D} = {01CD8DE8-274F-476F-8419-7B3F018C749D}
 	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.CodeAnalysis", "src\dotnet\Lucene.Net.CodeAnalysis\Lucene.Net.CodeAnalysis.csproj", "{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests.CodeAnalysis", "src\dotnet\Lucene.Net.Tests.CodeAnalysis\Lucene.Net.Tests.CodeAnalysis.csproj", "{158F5D30-8B96-4C49-9009-0B8ACEDF8546}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -264,10 +288,6 @@ Global
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED5520B3-79D6-46DF-AF02-3BA1E89A4B13}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AA0B6851-A597-47B5-A2F8-2A3E28C2B5A2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{258BB6A8-A23A-42CE-A3C2-2B577CEC3F5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -384,10 +404,18 @@ Global
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86FADACC-57EC-4AA3-8BBE-C6ED526EE596}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8251BB22-EDA9-4850-A9B7-259C5B171040}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BE1EBA7-876C-4E9D-A78C-46A0D6F588C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF60E276-91AD-4386-A5B5-13EB24E335E6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{083EEC05-D092-4F84-8004-41F0C7192ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -396,6 +424,38 @@ Global
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D526481-5972-4DEF-B859-9AE5953262EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{845F8491-348C-4242-A58A-1979E8338B5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A761C02-C3B2-4672-92F9-B700C68E7EFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC2CE069-5BBB-429E-8510-7C3FBA8069D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC2CE069-5BBB-429E-8510-7C3FBA8069D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC2CE069-5BBB-429E-8510-7C3FBA8069D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC2CE069-5BBB-429E-8510-7C3FBA8069D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88D6D124-711D-4232-AD70-F22AB6AF9EA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88D6D124-711D-4232-AD70-F22AB6AF9EA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88D6D124-711D-4232-AD70-F22AB6AF9EA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88D6D124-711D-4232-AD70-F22AB6AF9EA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17C7E54C-7A95-46A5-9905-90F68D349F3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17C7E54C-7A95-46A5-9905-90F68D349F3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17C7E54C-7A95-46A5-9905-90F68D349F3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17C7E54C-7A95-46A5-9905-90F68D349F3F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{435F91AD-8BA4-4376-904C-385A165C1AF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{435F91AD-8BA4-4376-904C-385A165C1AF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{435F91AD-8BA4-4376-904C-385A165C1AF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{435F91AD-8BA4-4376-904C-385A165C1AF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{158F5D30-8B96-4C49-9009-0B8ACEDF8546}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{158F5D30-8B96-4C49-9009-0B8ACEDF8546}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{158F5D30-8B96-4C49-9009-0B8ACEDF8546}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{158F5D30-8B96-4C49-9009-0B8ACEDF8546}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -408,6 +468,8 @@ Global
 		{CF3A74CA-FEFD-4F41-961B-CC8CF8D96286} = {8CA61D33-3590-4024-A304-7B1F75B50653}
 		{4B054831-5275-44E2-A4D4-CA0B19BEE19A} = {8CA61D33-3590-4024-A304-7B1F75B50653}
 		{1F5574FE-19F7-4F10-9B88-76A938621F5B} = {4DF7EACE-2B25-43F6-B558-8520BF20BD76}
+		{A9A5C2DC-C4EA-49B4-805A-6CEB5D246D2F} = {8CA61D33-3590-4024-A304-7B1F75B50653}
+		{158F5D30-8B96-4C49-9009-0B8ACEDF8546} = {8CA61D33-3590-4024-A304-7B1F75B50653}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9F2179CC-CFD2-4419-AB74-D72856931F36}

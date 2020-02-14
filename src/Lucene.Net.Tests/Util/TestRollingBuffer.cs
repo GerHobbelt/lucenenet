@@ -1,6 +1,6 @@
 using NUnit.Framework;
 using System;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Util
 {
@@ -45,7 +45,7 @@ namespace Lucene.Net.Util
                 int maxPos = AtLeast(10000);
                 FixedBitSet posSet = new FixedBitSet(maxPos + 1000);
                 int posUpto = 0;
-                Random random = Random();
+                Random random = Random;
                 while (freeBeforePos < maxPos)
                 {
                     if (random.Next(4) == 1)

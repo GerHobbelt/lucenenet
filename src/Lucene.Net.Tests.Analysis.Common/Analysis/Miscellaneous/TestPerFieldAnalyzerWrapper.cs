@@ -1,9 +1,13 @@
 ﻿using Lucene.Net.Analysis.Core;
+using Lucene.Net.Analysis.En;
 using Lucene.Net.Analysis.TokenAttributes;
+using Lucene.Net.Attributes;
 using Lucene.Net.Util;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Miscellaneous
 {
@@ -69,6 +73,22 @@ namespace Lucene.Net.Analysis.Miscellaneous
             }
         }
 
+        [Test, LuceneNetSpecific]
+        public virtual void TestLUCENENET615()
+        {
+            var english = new EnglishAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_48);
+
+            var whitespace = new WhitespaceAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_48);
+
+            var pf = new PerFieldAnalyzerWrapper(english, new JCG.Dictionary<string, Analyzer>() { { "foo", whitespace } });
+
+            var test1 = english.GetTokenStream(null, "test"); // Does not throw
+
+            var test2 = pf.GetTokenStream("", "test"); // works
+
+            Assert.DoesNotThrow(() => pf.GetTokenStream(null, "test"), "GetTokenStream should not throw NullReferenceException with a null key");
+        }
+
         [Test]
         public virtual void TestCharFilters()
         {
@@ -90,12 +110,12 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 return new TokenStreamComponents(new MockTokenizer(reader));
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MockCharFilter(reader, 7);
             }

@@ -68,14 +68,14 @@ namespace Lucene.Net.QueryParsers.Surround.Query
         public override void SetUp()
         {
             base.SetUp();
-            db1 = new SingleFieldTestDb(Random(), docs1, fieldName);
-            db2 = new SingleFieldTestDb(Random(), docs2, fieldName);
-            db3 = new SingleFieldTestDb(Random(), docs3, fieldName);
+            db1 = new SingleFieldTestDb(Random, docs1, fieldName);
+            db2 = new SingleFieldTestDb(Random, docs2, fieldName);
+            db3 = new SingleFieldTestDb(Random, docs3, fieldName);
         }
 
         private void DistanceTst(String query, int[] expdnrs, SingleFieldTestDb db)
         {
-            BooleanQueryTst bqt = new BooleanQueryTst(query, expdnrs, db, fieldName, this,
+            BooleanQueryTst bqt = new BooleanQueryTst(query, expdnrs, db, fieldName,
                                                         new BasicQueryFactory(maxBasicQueries));
             bqt.Verbose = (verbose);
             bqt.DoTest();

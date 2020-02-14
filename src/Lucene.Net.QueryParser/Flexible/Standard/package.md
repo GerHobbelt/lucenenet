@@ -1,4 +1,8 @@
-﻿
+﻿---
+uid: Lucene.Net.QueryParsers.Flexible.Standard
+summary: *content
+---
+
 <!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
@@ -15,6 +19,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
+
 
 Implementation of the {@linkplain org.apache.lucene.queryparser.classic Lucene classic query parser} using the flexible query parser frameworks
 

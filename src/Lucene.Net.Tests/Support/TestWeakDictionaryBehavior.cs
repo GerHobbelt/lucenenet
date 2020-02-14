@@ -1,3 +1,4 @@
+#if !FEATURE_CONDITIONALWEAKTABLE_ENUMERATOR
 using Lucene.Net.Attributes;
 using NUnit.Framework;
 using System;
@@ -127,7 +128,8 @@ namespace Lucene.Net.Support
 
             Assert.AreEqual(0, dictionary.Count);
             Assert.IsFalse(dictionary.ContainsKey(key));
-            Assert.IsNull(dictionary[key]);
+            Assert.IsFalse(dictionary.TryGetValue(key, out _));
+            Assert.Throws<KeyNotFoundException>(() => { var x = dictionary[key]; });
         }
 
         [Test, LuceneNetSpecific]
@@ -140,7 +142,8 @@ namespace Lucene.Net.Support
 
             Assert.AreEqual(0, dictionary.Count);
             Assert.IsFalse(dictionary.ContainsKey(key));
-            Assert.IsNull(dictionary[key]);
+            Assert.IsFalse(dictionary.TryGetValue(key, out _));
+            Assert.Throws<KeyNotFoundException>(() => { var x = dictionary[key]; });
         }
 
         [Test, LuceneNetSpecific]
@@ -154,7 +157,8 @@ namespace Lucene.Net.Support
 
             Assert.AreEqual(0, dictionary.Count);
             Assert.IsFalse(dictionary.ContainsKey(key));
-            Assert.IsNull(dictionary[key]);
+            Assert.IsFalse(dictionary.TryGetValue(key, out _));
+            Assert.Throws<KeyNotFoundException>(() => { var x = dictionary[key]; });
         }
 
         [Test, LuceneNetSpecific]
@@ -211,7 +215,8 @@ namespace Lucene.Net.Support
             Assert.AreEqual("value2", dictionary[key2]);
 
             dictionary.Remove(key1);
-            Assert.AreEqual(null, dictionary[key1]);
+            Assert.IsFalse(dictionary.TryGetValue(key1, out _));
+            Assert.Throws<KeyNotFoundException>(() => { var x = dictionary[key1]; });
         }
 
         [Test, LuceneNetSpecific]
@@ -283,3 +288,4 @@ namespace Lucene.Net.Support
         }
     }
 }
+#endif

@@ -1,8 +1,7 @@
-using Lucene.Net.Support;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
+using JCG = J2N.Collections.Generic;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
 
 namespace Lucene.Net.Analysis
 {
@@ -24,8 +23,8 @@ namespace Lucene.Net.Analysis
      */
 
     /// <summary>
-    /// the purpose of this charfilter is to send offsets out of bounds
-    ///  if the analyzer doesn't use correctOffset or does incorrect offset math.
+    /// The purpose of this charfilter is to send offsets out of bounds
+    /// if the analyzer doesn't use <see cref="CharFilter.CorrectOffset(int)"/> or does incorrect offset math.
     /// </summary>
     public class MockCharFilter : CharFilter
     {
@@ -47,8 +46,7 @@ namespace Lucene.Net.Analysis
         // for testing only, uses a remainder of 0
         public MockCharFilter(TextReader @in)
             : this(@in, 0)
-        {
-        }
+        { }
 
         internal int currentOffset = -1;
         internal int delta = 0;
@@ -102,10 +100,9 @@ namespace Lucene.Net.Analysis
 
         protected override int Correct(int currentOff)
         {
-            Support.C5.KeyValuePair<int, int> lastEntry;
             int ret;
-            // LUCENENET NOTE: TryPredecessor is equivalent to TreeMap.lowerEntry() in Java
-            if (corrections.TryPredecessor(currentOff + 1, out lastEntry))
+            // LUCENENET NOTE: TryGetPredecessor is equivalent to TreeMap.lowerEntry() in Java
+            if (corrections.TryGetPredecessor(currentOff + 1, out KeyValuePair<int, int> lastEntry))
             {
                 ret = currentOff + lastEntry.Value;
             }
@@ -118,11 +115,11 @@ namespace Lucene.Net.Analysis
             return ret;
         }
 
-        protected internal virtual void AddOffCorrectMap(int off, int cumulativeDiff)
+        protected virtual void AddOffCorrectMap(int off, int cumulativeDiff)
         {
             corrections[off] = cumulativeDiff;
         }
 
-        internal TreeDictionary<int, int> corrections = new TreeDictionary<int, int>();
+        internal JCG.SortedDictionary<int, int> corrections = new JCG.SortedDictionary<int, int>();
     }
 }

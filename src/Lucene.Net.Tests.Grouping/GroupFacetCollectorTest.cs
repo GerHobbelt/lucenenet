@@ -1,9 +1,11 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N;
+using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Search.Grouping.Terms;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -11,26 +13,29 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Collections = Lucene.Net.Support.Collections;
+using Console = Lucene.Net.Util.SystemConsole;
+
 
 namespace Lucene.Net.Search.Grouping
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     public class GroupFacetCollectorTest : AbstractGroupingTestCase
     {
@@ -43,12 +48,12 @@ namespace Lucene.Net.Search.Grouping
 
             Directory dir = NewDirectory();
             RandomIndexWriter w = new RandomIndexWriter(
-                Random(),
+                Random,
                 dir,
                 NewIndexWriterConfig(TEST_VERSION_CURRENT,
-                    new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
-            bool canUseDV = !"Lucene3x".Equals(w.w.Config.Codec.Name, StringComparison.Ordinal);
-            bool useDv = canUseDV && Random().nextBoolean();
+                    new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
+            bool canUseDV = !"Lucene3x".Equals(w.IndexWriter.Config.Codec.Name, StringComparison.Ordinal);
+            bool useDv = canUseDV && Random.nextBoolean();
 
             // 0
             Document doc = new Document();
@@ -86,7 +91,7 @@ namespace Lucene.Net.Search.Grouping
             AddField(doc, "duration", "5", useDv);
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = NewSearcher(w.Reader);
+            IndexSearcher indexSearcher = NewSearcher(w.GetReader());
 
             IList<TermGroupFacetCollector.FacetEntry> entries = null;
             AbstractGroupFacetCollector groupedAirportFacetCollector = null;
@@ -170,7 +175,7 @@ namespace Lucene.Net.Search.Grouping
             w.AddDocument(doc);
 
             indexSearcher.IndexReader.Dispose();
-            indexSearcher = NewSearcher(w.Reader);
+            indexSearcher = NewSearcher(w.GetReader());
             groupedAirportFacetCollector = CreateRandomCollector(useDv ? "hotel_dv" : "hotel", useDv ? "airport_dv" : "airport", null, !useDv);
             indexSearcher.Search(new MatchAllDocsQuery(), groupedAirportFacetCollector);
             airportResult = groupedAirportFacetCollector.MergeSegmentResults(3, 0, true);
@@ -221,7 +226,7 @@ namespace Lucene.Net.Search.Grouping
             w.AddDocument(doc);
 
             indexSearcher.IndexReader.Dispose();
-            indexSearcher = NewSearcher(w.Reader);
+            indexSearcher = NewSearcher(w.GetReader());
             groupedAirportFacetCollector = CreateRandomCollector(useDv ? "hotel_dv" : "hotel", useDv ? "airport_dv" : "airport", null, false);
             indexSearcher.Search(new MatchAllDocsQuery(), groupedAirportFacetCollector);
             airportResult = groupedAirportFacetCollector.MergeSegmentResults(10, 0, false);
@@ -280,10 +285,10 @@ namespace Lucene.Net.Search.Grouping
 
             Directory dir = NewDirectory();
             RandomIndexWriter w = new RandomIndexWriter(
-                Random(),
+                Random,
                 dir,
                 NewIndexWriterConfig(TEST_VERSION_CURRENT,
-                    new MockAnalyzer(Random())).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
+                    new MockAnalyzer(Random)).SetMergePolicy(NoMergePolicy.COMPOUND_FILES));
             bool useDv = false;
 
             // Cannot assert this since we use NoMergePolicy:
@@ -372,8 +377,8 @@ namespace Lucene.Net.Search.Grouping
         [Test]
         public void TestRandom()
         {
-            Random random = Random();
-            int numberOfRuns = TestUtil.NextInt(random, 3, 6);
+            Random random = Random;
+            int numberOfRuns = TestUtil.NextInt32(random, 3, 6);
             for (int indexIter = 0; indexIter < numberOfRuns; indexIter++)
             {
                 bool multipleFacetsPerDocument = random.nextBoolean();
@@ -516,10 +521,10 @@ namespace Lucene.Net.Search.Grouping
 
         private IndexContext CreateIndexContext(bool multipleFacetValuesPerDocument)
         {
-            Random random = Random();
-            int numDocs = TestUtil.NextInt(random, 138, 1145) * RANDOM_MULTIPLIER;
-            int numGroups = TestUtil.NextInt(random, 1, numDocs / 4);
-            int numFacets = TestUtil.NextInt(random, 1, numDocs / 6);
+            Random random = Random;
+            int numDocs = TestUtil.NextInt32(random, 138, 1145) * RANDOM_MULTIPLIER;
+            int numGroups = TestUtil.NextInt32(random, 1, numDocs / 4);
+            int numFacets = TestUtil.NextInt32(random, 1, numDocs / 6);
 
             if (VERBOSE)
             {
@@ -536,7 +541,7 @@ namespace Lucene.Net.Search.Grouping
             {
                 facetValues.Add(GenerateRandomNonEmptyString());
             }
-            string[] contentBrs = new string[TestUtil.NextInt(random, 2, 20)];
+            string[] contentBrs = new string[TestUtil.NextInt32(random, 2, 20)];
             if (VERBOSE)
             {
                 Console.WriteLine("TEST: create fake content");
@@ -559,7 +564,7 @@ namespace Lucene.Net.Search.Grouping
                     new MockAnalyzer(random)
                 )
             );
-            bool canUseDV = !"Lucene3x".Equals(writer.w.Config.Codec.Name, StringComparison.Ordinal);
+            bool canUseDV = !"Lucene3x".Equals(writer.IndexWriter.Config.Codec.Name, StringComparison.Ordinal);
             bool useDv = canUseDV && !multipleFacetValuesPerDocument && random.nextBoolean();
 
             Document doc = new Document();
@@ -603,12 +608,10 @@ namespace Lucene.Net.Search.Grouping
             docNoFacet.Add(content);
             docNoGroupNoFacet.Add(content);
 
-            // LUCENENET NOTE: TreeSet (the class used in Java) allows duplicate keys. However, SortedSet seems to work,
-            // and based on the name of the variable, presuming the entries are meant to be unique.
-            ISet<string> uniqueFacetValues = new SortedSet<string>(new ComparerAnonymousHelper1());
+            ISet<string> uniqueFacetValues = new JCG.SortedSet<string>(new ComparerAnonymousHelper1());
 
-            // LUCENENET NOTE: Need HashMap here because of null keys
-            IDictionary<string, HashMap<string, ISet<string>>> searchTermToFacetToGroups = new Dictionary<string, HashMap<string, ISet<string>>>();
+            // LUCENENET NOTE: Need JCG.Dictionary here because of null keys
+            IDictionary<string, JCG.Dictionary<string, ISet<string>>> searchTermToFacetToGroups = new Dictionary<string, JCG.Dictionary<string, ISet<string>>>();
             int facetWithMostGroups = 0;
             for (int i = 0; i < numDocs; i++)
             {
@@ -632,11 +635,10 @@ namespace Lucene.Net.Search.Grouping
                 }
 
                 string contentStr = contentBrs[random.nextInt(contentBrs.Length)];
-                if (!searchTermToFacetToGroups.ContainsKey(contentStr))
+                if (!searchTermToFacetToGroups.TryGetValue(contentStr, out JCG.Dictionary<string, ISet<string>> facetToGroups))
                 {
-                    searchTermToFacetToGroups[contentStr] = new HashMap<string, ISet<string>>();
+                    searchTermToFacetToGroups[contentStr] = facetToGroups = new JCG.Dictionary<string, ISet<string>>();
                 }
-                IDictionary<string, ISet<string>> facetToGroups = searchTermToFacetToGroups[contentStr];
 
                 List<string> facetVals = new List<string>();
                 if (useDv || random.nextInt(24) != 18)
@@ -645,11 +647,10 @@ namespace Lucene.Net.Search.Grouping
                     {
                         string facetValue = facetValues[random.nextInt(facetValues.size())];
                         uniqueFacetValues.Add(facetValue);
-                        if (!facetToGroups.ContainsKey(facetValue))
+                        if (!facetToGroups.TryGetValue(facetValue, out ISet<string> groupsInFacet))
                         {
-                            facetToGroups[facetValue] = new HashSet<string>();
+                            facetToGroups[facetValue] = groupsInFacet = new JCG.HashSet<string>();
                         }
-                        ISet<string> groupsInFacet = facetToGroups[facetValue];
                         groupsInFacet.add(groupValue);
                         if (groupsInFacet.size() > facetWithMostGroups)
                         {
@@ -665,11 +666,10 @@ namespace Lucene.Net.Search.Grouping
                         {
                             string facetValue = facetValues[random.nextInt(facetValues.size())];
                             uniqueFacetValues.Add(facetValue);
-                            if (!facetToGroups.ContainsKey(facetValue))
+                            if (!facetToGroups.TryGetValue(facetValue, out ISet<string> groupsInFacet))
                             {
-                                facetToGroups[facetValue] = new HashSet<string>();
+                                facetToGroups[facetValue] = groupsInFacet = new JCG.HashSet<string>();
                             }
-                            ISet<string> groupsInFacet = facetToGroups[facetValue];
                             groupsInFacet.add(groupValue);
                             if (groupsInFacet.size() > facetWithMostGroups)
                             {
@@ -683,11 +683,10 @@ namespace Lucene.Net.Search.Grouping
                 else
                 {
                     uniqueFacetValues.Add(null);
-                    if (!facetToGroups.ContainsKey(null))
+                    if (!facetToGroups.TryGetValue(null, out ISet<string> groupsInFacet))
                     {
-                        facetToGroups.Put(null, new HashSet<string>());
+                        facetToGroups[null] = groupsInFacet = new JCG.HashSet<string>();
                     }
-                    ISet<string> groupsInFacet = facetToGroups[null];
                     groupsInFacet.add(groupValue);
                     if (groupsInFacet.size() > facetWithMostGroups)
                     {
@@ -697,7 +696,7 @@ namespace Lucene.Net.Search.Grouping
 
                 if (VERBOSE)
                 {
-                    Console.WriteLine("  doc content=" + contentStr + " group=" + (groupValue == null ? "null" : groupValue) + " facetVals=" + facetVals);
+                    Console.WriteLine("  doc content=" + contentStr + " group=" + (groupValue == null ? "null" : groupValue) + " facetVals=" + Collections.ToString(facetVals));
                 }
 
                 if (groupValue != null)
@@ -732,7 +731,7 @@ namespace Lucene.Net.Search.Grouping
                 }
             }
 
-            DirectoryReader reader = writer.Reader;
+            DirectoryReader reader = writer.GetReader();
             writer.Dispose();
 
             return new IndexContext(searchTermToFacetToGroups, reader, numDocs, dir, facetWithMostGroups, numGroups, contentBrs, uniqueFacetValues, useDv);
@@ -763,10 +762,10 @@ namespace Lucene.Net.Search.Grouping
 
         private GroupedFacetResult CreateExpectedFacetResult(string searchTerm, IndexContext context, int offset, int limit, int minCount, bool orderByCount, string facetPrefix)
         {
-            HashMap<string, ISet<string>> facetGroups;
+            JCG.Dictionary<string, ISet<string>> facetGroups;
             if (!context.searchTermToFacetGroups.TryGetValue(searchTerm, out facetGroups))
             {
-                facetGroups = new HashMap<string, ISet<string>>();
+                facetGroups = new JCG.Dictionary<string, ISet<string>>();
             }
 
             int totalCount = 0;
@@ -774,7 +773,7 @@ namespace Lucene.Net.Search.Grouping
             ISet<string> facetValues;
             if (facetPrefix != null)
             {
-                facetValues = new HashSet<string>();
+                facetValues = new JCG.HashSet<string>();
                 foreach (string facetValue in context.facetValues)
                 {
                     if (facetValue != null && facetValue.StartsWith(facetPrefix, StringComparison.Ordinal))
@@ -797,8 +796,7 @@ namespace Lucene.Net.Search.Grouping
                     continue;
                 }
 
-                ISet<string> groups = facetGroups.ContainsKey(facetValue) ? facetGroups[facetValue] : null;
-                int count = groups != null ? groups.size() : 0;
+                int count = facetGroups.TryGetValue(facetValue, out ISet<string> groups) && groups != null ? groups.size() : 0;
                 if (count >= minCount)
                 {
                     entries.Add(new TermGroupFacetCollector.FacetEntry(new BytesRef(facetValue), count));
@@ -809,8 +807,7 @@ namespace Lucene.Net.Search.Grouping
             // Only include null count when no facet prefix is specified
             if (facetPrefix == null)
             {
-                ISet<string> groups = facetGroups[null];
-                if (groups != null)
+                if (facetGroups.TryGetValue(null, out ISet<string> groups) && groups != null)
                 {
                     totalMissCount = groups.size();
                 }
@@ -840,7 +837,7 @@ namespace Lucene.Net.Search.Grouping
             BytesRef facetPrefixBR = facetPrefix == null ? null : new BytesRef(facetPrefix);
             // DocValues cannot be multi-valued:
             Debug.Assert(!multipleFacetsPerDocument || !groupField.EndsWith("_dv", StringComparison.Ordinal));
-            return TermGroupFacetCollector.CreateTermGroupFacetCollector(groupField, facetField, multipleFacetsPerDocument, facetPrefixBR, Random().nextInt(1024));
+            return TermGroupFacetCollector.CreateTermGroupFacetCollector(groupField, facetField, multipleFacetsPerDocument, facetPrefixBR, Random.nextInt(1024));
         }
 
         private string GetFromSet(ISet<string> set, int index)
@@ -861,7 +858,7 @@ namespace Lucene.Net.Search.Grouping
         {
             internal readonly int numDocs;
             internal readonly DirectoryReader indexReader;
-            internal readonly IDictionary<string, HashMap<string, ISet<string>>> searchTermToFacetGroups;
+            internal readonly IDictionary<string, JCG.Dictionary<string, ISet<string>>> searchTermToFacetGroups;
             internal readonly ISet<string> facetValues;
             internal readonly Directory dir;
             internal readonly int facetWithMostGroups;
@@ -869,7 +866,7 @@ namespace Lucene.Net.Search.Grouping
             internal readonly string[] contentStrings;
             internal readonly bool useDV;
 
-            public IndexContext(IDictionary<string, HashMap<string, ISet<string>>> searchTermToFacetGroups, DirectoryReader r,
+            public IndexContext(IDictionary<string, JCG.Dictionary<string, ISet<string>>> searchTermToFacetGroups, DirectoryReader r,
                                 int numDocs, Directory dir, int facetWithMostGroups, int numGroups, string[] contentStrings, ISet<string> facetValues, bool useDV)
             {
                 this.searchTermToFacetGroups = searchTermToFacetGroups;

@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -57,7 +57,11 @@ namespace Lucene.Net.Search
             string[] data = new string[] { "A 1 2 3 4 5 6", "Z       4 5 6", null, "B   2   4 5 6", "Y     3   5 6", null, "C     3     6", "X       4 5 6" };
 
             Index = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), Index, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Index);
 
             for (int i = 0; i < data.Length; i++)
             {
@@ -71,7 +75,7 @@ namespace Lucene.Net.Search
                 w.AddDocument(doc);
             }
 
-            r = w.Reader;
+            r = w.GetReader();
             s = NewSearcher(r);
             w.Dispose();
             //System.out.println("Set up " + getName());
@@ -108,7 +112,11 @@ namespace Lucene.Net.Search
             }
             Assert.AreEqual(expected, h2.Length, "result count (bs2)");
 
-            QueryUtils.Check(Random(), q, s, Similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, q, s);
         }
 
         [Test]
@@ -344,8 +352,8 @@ namespace Lucene.Net.Search
             int num = AtLeast(20);
             for (int i = 0; i < num; i++)
             {
-                int lev = Random().Next(maxLev);
-                int seed = Random().Next();
+                int lev = Random.Next(maxLev);
+                int seed = Random.Next();
                 BooleanQuery q1 = TestBoolean2.RandBoolQuery(new Random(seed), true, lev, field, vals, null);
                 // BooleanQuery q2 = TestBoolean2.randBoolQuery(new Random(seed), lev, field, vals, minNrCB);
                 BooleanQuery q2 = TestBoolean2.RandBoolQuery(new Random(seed), true, lev, field, vals, null);
@@ -360,8 +368,16 @@ namespace Lucene.Net.Search
                 TopDocs top2 = s.Search(q2, null, 100);
                 if (i < 100)
                 {
-                    QueryUtils.Check(Random(), q1, s, Similarity);
-                    QueryUtils.Check(Random(), q2, s, Similarity);
+                    QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, q1, s);
+                    QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                        this,
+#endif
+                        Random, q2, s);
                 }
                 AssertSubsetOfSameScores(q2, top1, top2);
             }
@@ -393,11 +409,11 @@ namespace Lucene.Net.Search
                         opt++;
                     }
                 }
-                q.MinimumNumberShouldMatch = Random().Next(opt + 2);
-                if (Random().NextBoolean())
+                q.MinimumNumberShouldMatch = Random.Next(opt + 2);
+                if (Random.NextBoolean())
                 {
                     // also add a random negation
-                    Term randomTerm = new Term(Field, Vals[Random().Next(Vals.Length)]);
+                    Term randomTerm = new Term(Field, Vals[Random.Next(Vals.Length)]);
                     q.Add(new TermQuery(randomTerm), Occur.MUST_NOT);
                 }
             }
@@ -409,7 +425,7 @@ namespace Lucene.Net.Search
             // should be a subset to the unconstrained query.
             if (top2.TotalHits > top1.TotalHits)
             {
-                Assert.Fail("Constrained results not a subset:\n" + CheckHits.TopdocsString(top1, 0, 0) + CheckHits.TopdocsString(top2, 0, 0) + "for query:" + q.ToString());
+                Assert.Fail("Constrained results not a subset:\n" + CheckHits.TopDocsString(top1, 0, 0) + CheckHits.TopDocsString(top2, 0, 0) + "for query:" + q.ToString());
             }
 
             for (int hit = 0; hit < top2.TotalHits; hit++)
@@ -425,14 +441,14 @@ namespace Lucene.Net.Search
                         found = true;
                         float otherScore = top1.ScoreDocs[other].Score;
                         // check if scores match
-                        Assert.AreEqual(score, otherScore, CheckHits.ExplainToleranceDelta(score, otherScore), "Doc " + id + " scores don't match\n" + CheckHits.TopdocsString(top1, 0, 0) + CheckHits.TopdocsString(top2, 0, 0) + "for query:" + q.ToString());
+                        Assert.AreEqual(score, otherScore, CheckHits.ExplainToleranceDelta(score, otherScore), "Doc " + id + " scores don't match\n" + CheckHits.TopDocsString(top1, 0, 0) + CheckHits.TopDocsString(top2, 0, 0) + "for query:" + q.ToString());
                     }
                 }
 
                 // check if subset
                 if (!found)
                 {
-                    Assert.Fail("Doc " + id + " not found\n" + CheckHits.TopdocsString(top1, 0, 0) + CheckHits.TopdocsString(top2, 0, 0) + "for query:" + q.ToString());
+                    Assert.Fail("Doc " + id + " not found\n" + CheckHits.TopDocsString(top1, 0, 0) + CheckHits.TopDocsString(top2, 0, 0) + "for query:" + q.ToString());
                 }
             }
         }

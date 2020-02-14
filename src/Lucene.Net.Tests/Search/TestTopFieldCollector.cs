@@ -40,14 +40,18 @@ namespace Lucene.Net.Search
         {
             base.SetUp();
             Dir = NewDirectory();
-            RandomIndexWriter iw = new RandomIndexWriter(Random(), Dir, Similarity, TimeZone);
+            RandomIndexWriter iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Dir);
             int numDocs = AtLeast(100);
             for (int i = 0; i < numDocs; i++)
             {
                 Document doc = new Document();
                 iw.AddDocument(doc);
             }
-            Ir = iw.Reader;
+            Ir = iw.GetReader();
             iw.Dispose();
             @is = NewSearcher(Ir);
         }

@@ -1,6 +1,6 @@
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 
@@ -137,15 +137,19 @@ namespace Lucene.Net.Search.Payloads
             for (int i = 0; i < numDocs; i++)
             {
                 Document doc = new Document();
-                doc.Add(new TextField(FIELD, English.IntToEnglish(i), Field.Store.YES));
-                doc.Add(new TextField(MULTI_FIELD, English.IntToEnglish(i) + "  " + English.IntToEnglish(i), Field.Store.YES));
-                doc.Add(new TextField(NO_PAYLOAD_FIELD, English.IntToEnglish(i), Field.Store.YES));
+                doc.Add(new TextField(FIELD, English.Int32ToEnglish(i), Field.Store.YES));
+                doc.Add(new TextField(MULTI_FIELD, English.Int32ToEnglish(i) + "  " + English.Int32ToEnglish(i), Field.Store.YES));
+                doc.Add(new TextField(NO_PAYLOAD_FIELD, English.Int32ToEnglish(i), Field.Store.YES));
                 writer.AddDocument(doc);
             }
             Reader = DirectoryReader.Open(writer, true);
             writer.Dispose();
 
-            IndexSearcher searcher = LuceneTestCase.NewSearcher(Reader, similarity);
+            IndexSearcher searcher = LuceneTestCase.NewSearcher(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                null, // LUCENENET: Passing null allows us to bypass similarity, which we are setting here, anyway
+#endif
+                Reader);
             searcher.Similarity = similarity;
             return searcher;
         }

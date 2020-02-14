@@ -1,5 +1,5 @@
+using J2N.Threading.Atomic;
 using Lucene.Net.Index;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -357,10 +357,7 @@ namespace Lucene.Net.Codecs.Lucene45
             return GetNumeric(entry);
         }
 
-        public override long RamBytesUsed()
-        {
-            return ramBytesUsed.Get();
-        }
+        public override long RamBytesUsed() => ramBytesUsed;
 
         public override void CheckIntegrity()
         {
@@ -506,7 +503,7 @@ namespace Lucene.Net.Codecs.Lucene45
         /// <para/>
         /// @lucene.internal
         /// </summary>
-        protected internal virtual MonotonicBlockPackedReader GetAddressInstance(IndexInput data, FieldInfo field, BinaryEntry bytes)
+        protected virtual MonotonicBlockPackedReader GetAddressInstance(IndexInput data, FieldInfo field, BinaryEntry bytes)
         {
             MonotonicBlockPackedReader addresses;
             lock (addressInstances)
@@ -577,7 +574,7 @@ namespace Lucene.Net.Codecs.Lucene45
         /// <para/>
         /// @lucene.internal
         /// </summary>
-        protected internal virtual MonotonicBlockPackedReader GetIntervalInstance(IndexInput data, FieldInfo field, BinaryEntry bytes)
+        protected virtual MonotonicBlockPackedReader GetIntervalInstance(IndexInput data, FieldInfo field, BinaryEntry bytes)
         {
             MonotonicBlockPackedReader addresses;
             long interval = bytes.AddressInterval;
@@ -690,7 +687,7 @@ namespace Lucene.Net.Codecs.Lucene45
         /// <para/>
         /// @lucene.internal
         /// </summary>
-        protected internal virtual MonotonicBlockPackedReader GetOrdIndexInstance(IndexInput data, FieldInfo field, NumericEntry entry)
+        protected virtual MonotonicBlockPackedReader GetOrdIndexInstance(IndexInput data, FieldInfo field, NumericEntry entry)
         {
             MonotonicBlockPackedReader ordIndex;
             lock (ordIndexInstances)

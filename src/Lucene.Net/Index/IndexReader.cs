@@ -1,9 +1,13 @@
+using J2N.Threading.Atomic;
 using Lucene.Net.Documents;
 using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -94,7 +98,7 @@ namespace Lucene.Net.Index
             void OnClose(IndexReader reader);
         }
 
-        private readonly ISet<IReaderClosedListener> readerClosedListeners = new ConcurrentHashSet<IReaderClosedListener>();
+        private readonly ISet<IReaderClosedListener> readerClosedListeners = new JCG.LinkedHashSet<IReaderClosedListener>().AsConcurrent();
 
         private readonly ISet<IdentityWeakReference<IndexReader>> parentReaders = new ConcurrentHashSet<IdentityWeakReference<IndexReader>>();
 
@@ -137,7 +141,7 @@ namespace Lucene.Net.Index
 
         private void NotifyReaderClosedListeners(Exception th)
         {
-            lock (readerClosedListeners)
+            lock (((ICollection)readerClosedListeners).SyncRoot) // LUCENENET: Ensure we sync on the SyncRoot of ConcurrentSet<T>
             {
                 foreach (IReaderClosedListener listener in readerClosedListeners)
                 {
@@ -163,7 +167,7 @@ namespace Lucene.Net.Index
 
         private void ReportCloseToParentReaders()
         {
-            lock (parentReaders)
+            lock (parentReaders) // LUCENENET: This does not actually synchronize the set, it only ensures this method can only be entered by 1 thread
             {
                 foreach (IdentityWeakReference<IndexReader> parent in parentReaders)
                 {
@@ -190,7 +194,7 @@ namespace Lucene.Net.Index
             {
                 // NOTE: don't ensureOpen, so that callers can see
                 // refCount is 0 (reader is closed)
-                return refCount.Get();
+                return refCount;
             }
         }
 
@@ -241,7 +245,7 @@ namespace Lucene.Net.Index
         public bool TryIncRef()
         {
             int count;
-            while ((count = refCount.Get()) > 0)
+            while ((count = refCount) > 0)
             {
                 if (refCount.CompareAndSet(count, count + 1))
                 {
@@ -264,7 +268,7 @@ namespace Lucene.Net.Index
         {
             // only check refcount here (don't call ensureOpen()), so we can
             // still close the reader if it was made invalid by a child:
-            if (refCount.Get() <= 0)
+            if (refCount <= 0)
             {
                 throw new ObjectDisposedException(this.GetType().GetTypeInfo().FullName, "this IndexReader is closed");
             }
@@ -306,7 +310,7 @@ namespace Lucene.Net.Index
         /// </summary>
         protected internal void EnsureOpen()
         {
-            if (refCount.Get() <= 0)
+            if (refCount <= 0)
             {
                 throw new ObjectDisposedException(this.GetType().GetTypeInfo().FullName, "this IndexReader is closed");
             }

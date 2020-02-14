@@ -87,7 +87,7 @@ namespace Lucene.Net.Queries.Function.ValueSources
                 return outerInstance.constant;
             }
 
-            public override string StrVal(int doc)
+            public override string StrVal(int doc) // LUCENENET TODO: API - Add overload to include CultureInfo ?
             {
                 return Convert.ToString(outerInstance.constant);
             }
@@ -105,7 +105,7 @@ namespace Lucene.Net.Queries.Function.ValueSources
 
         public override int GetHashCode()
         {
-            long bits = Lucene.Net.Support.Number.DoubleToRawInt64Bits(constant);
+            long bits = J2N.BitConversion.DoubleToRawInt64Bits(constant);
             return (int)(bits ^ ((long)((ulong)bits >> 32)));
         }
 

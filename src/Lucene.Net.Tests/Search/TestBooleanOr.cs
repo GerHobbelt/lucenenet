@@ -1,9 +1,9 @@
+using J2N.Threading.Atomic;
 using Lucene.Net.Documents;
+using NUnit.Framework;
 
 namespace Lucene.Net.Search
 {
-    using Lucene.Net.Support;
-    using NUnit.Framework;
     using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
@@ -51,7 +51,11 @@ namespace Lucene.Net.Search
 
         private int Search(Query q)
         {
-            QueryUtils.Check(Random(), q, Searcher, Similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, q, Searcher);
             return Searcher.Search(q, null, 1000).TotalHits;
         }
 
@@ -145,7 +149,11 @@ namespace Lucene.Net.Search
             Dir = NewDirectory();
 
             //
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Dir);
 
             //
             Document d = new Document();
@@ -155,7 +163,7 @@ namespace Lucene.Net.Search
             //
             writer.AddDocument(d);
 
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             //
             Searcher = NewSearcher(Reader);
             writer.Dispose();
@@ -173,7 +181,7 @@ namespace Lucene.Net.Search
         public virtual void TestBooleanScorerMax()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter riw = new RandomIndexWriter(Random(), dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            RandomIndexWriter riw = new RandomIndexWriter(Random, dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
 
             int docCount = AtLeast(10000);
 
@@ -185,7 +193,7 @@ namespace Lucene.Net.Search
             }
 
             riw.ForceMerge(1);
-            IndexReader r = riw.Reader;
+            IndexReader r = riw.GetReader();
             riw.Dispose();
 
             IndexSearcher s = NewSearcher(r);
@@ -202,11 +210,11 @@ namespace Lucene.Net.Search
             AtomicInt32 end = new AtomicInt32();
             ICollector c = new CollectorAnonymousInnerClassHelper(this, scorer, hits, end);
 
-            while (end.Get() < docCount)
+            while (end < docCount)
             {
-                int inc = TestUtil.NextInt(Random(), 1, 1000);
+                int inc = TestUtil.NextInt32(Random, 1, 1000);
                 end.AddAndGet(inc);
-                scorer.Score(c, end.Get());
+                scorer.Score(c, end);
             }
 
             Assert.AreEqual(docCount, hits.Cardinality());
@@ -236,7 +244,7 @@ namespace Lucene.Net.Search
 
             public virtual void Collect(int doc)
             {
-                Assert.IsTrue(doc < End.Get(), "collected doc=" + doc + " beyond max=" + End);
+                Assert.IsTrue(doc < End, "collected doc=" + doc + " beyond max=" + End);
                 Hits.Set(doc);
             }
 

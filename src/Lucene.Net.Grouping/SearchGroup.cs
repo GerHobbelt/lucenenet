@@ -5,25 +5,26 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search.Grouping
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Represents a group that is found during the first pass search.
@@ -193,9 +194,8 @@ namespace Lucene.Net.Search.Grouping
             // Only for assert
             private bool NeverEquals(object other)
             {
-                if (other is MergedGroup<T>)
+                if (other is MergedGroup<T> otherMergedGroup)
                 {
-                    MergedGroup<T> otherMergedGroup = (MergedGroup<T>)other;
                     if (groupValue == null)
                     {
                         Debug.Assert(otherMergedGroup.groupValue != null);
@@ -204,11 +204,11 @@ namespace Lucene.Net.Search.Grouping
                     {
                         
                         Debug.Assert(!groupValueIsValueType 
-                            ? groupValue.Equals(otherMergedGroup.groupValue)
+                            ? JCG.EqualityComparer<T>.Default.Equals(groupValue, otherMergedGroup.groupValue)
 
-                            // LUCENENET specific - use Collections.Equals() if we have a reference type
+                            // LUCENENET specific - use J2N.Collections.StructuralEqualityComparer.Default.Equals() if we have a reference type
                             // to ensure if it is a collection its contents are compared
-                            : Collections.Equals(groupValue, otherMergedGroup.groupValue));
+                            : J2N.Collections.StructuralEqualityComparer.Default.Equals(groupValue, otherMergedGroup.groupValue));
                     }
                 }
                 return true;
@@ -220,18 +220,19 @@ namespace Lucene.Net.Search.Grouping
                 // same groupValue
                 Debug.Assert(NeverEquals(other));
 
-                if (other is MergedGroup<T>)
+                if (other is MergedGroup<T> otherMergedGroup)
                 {
-                    MergedGroup<T> otherMergedGroup = (MergedGroup<T>)other;
                     if (groupValue == null)
                     {
                         return otherMergedGroup == null;
                     }
                     else
                     {
-                        // LUCENENET specific - use Collections.Equals() if we have a reference type
+                        // LUCENENET specific - use J2N.Collections.StructuralEqualityComparer.Default.Equals() if we have a reference type
                         // to ensure if it is a collection its contents are compared
-                        return groupValueIsValueType ? groupValue.Equals(otherMergedGroup) : Collections.Equals(groupValue, otherMergedGroup);
+                        return groupValueIsValueType ?
+                            JCG.EqualityComparer<T>.Default.Equals(groupValue, otherMergedGroup.groupValue) :
+                            J2N.Collections.StructuralEqualityComparer.Default.Equals(groupValue, otherMergedGroup.groupValue);
                     }
                 }
                 else
@@ -248,9 +249,11 @@ namespace Lucene.Net.Search.Grouping
                 }
                 else
                 {
-                    // LUCENENET specific - use Collections.GetHashCode() if we have a reference type
+                    // LUCENENET specific - use J2N.Collections.StructuralEqualityComparer.Default.GetHashCode() if we have a reference type
                     // to ensure if it is a collection its contents are compared
-                    return groupValueIsValueType ? groupValue.GetHashCode() : Collections.GetHashCode(groupValue);
+                    return groupValueIsValueType ?
+                        JCG.EqualityComparer<T>.Default.GetHashCode(groupValue) :
+                        J2N.Collections.StructuralEqualityComparer.Default.GetHashCode(groupValue);
                 }
             }
         }
@@ -316,14 +319,14 @@ namespace Lucene.Net.Search.Grouping
         {
 
             private readonly GroupComparer<T> groupComp;
-            private readonly TreeSet<MergedGroup<T>> queue;
+            private readonly JCG.SortedSet<MergedGroup<T>> queue;
             private readonly IDictionary<T, MergedGroup<T>> groupsSeen;
 
             public GroupMerger(Sort groupSort)
             {
                 groupComp = new GroupComparer<T>(groupSort);
-                queue = new TreeSet<MergedGroup<T>>(groupComp);
-                groupsSeen = new HashMap<T, MergedGroup<T>>();
+                queue = new JCG.SortedSet<MergedGroup<T>>(groupComp);
+                groupsSeen = new JCG.Dictionary<T, MergedGroup<T>>();
             }
 
             private void UpdateNextGroup(int topN, ShardIter<T> shard)
@@ -331,8 +334,7 @@ namespace Lucene.Net.Search.Grouping
                 while (shard.Iter.MoveNext())
                 {
                     ISearchGroup<T> group = shard.Next();
-                    MergedGroup<T> mergedGroup = groupsSeen.ContainsKey(group.GroupValue) ? groupsSeen[group.GroupValue] : null;
-                    bool isNew = mergedGroup == null;
+                    bool isNew = !groupsSeen.TryGetValue(group.GroupValue, out MergedGroup<T> mergedGroup) || mergedGroup == null;
                     //System.out.println("    next group=" + (group.groupValue == null ? "null" : ((BytesRef) group.groupValue).utf8ToString()) + " sort=" + Arrays.toString(group.sortValues));
 
                     if (isNew)
@@ -515,6 +517,8 @@ namespace Lucene.Net.Search.Grouping
         /// <c>null</c> if <c>fillFields=false</c> had
         /// been passed to <see cref="AbstractFirstPassGroupingCollector{TGroupValue}.GetTopGroups(int, bool)"/>
         /// </summary>
+        [SuppressMessage("Microsoft.Performance", "CA1819", Justification = "Lucene's design requires some writable array properties")]
+        [WritableArray]
         object[] SortValues { get; set; }
     }
 }

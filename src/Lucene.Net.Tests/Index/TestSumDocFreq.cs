@@ -1,7 +1,7 @@
 using System;
 using Lucene.Net.Documents;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -42,7 +42,11 @@ namespace Lucene.Net.Index
             int numDocs = AtLeast(500);
 
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             Field id = NewStringField("id", "", Field.Store.NO);
@@ -54,16 +58,16 @@ namespace Lucene.Net.Index
             for (int i = 0; i < numDocs; i++)
             {
                 id.SetStringValue("" + i);
-                char ch1 = (char)TestUtil.NextInt(Random(), 'a', 'z');
-                char ch2 = (char)TestUtil.NextInt(Random(), 'a', 'z');
+                char ch1 = (char)TestUtil.NextInt32(Random, 'a', 'z');
+                char ch2 = (char)TestUtil.NextInt32(Random, 'a', 'z');
                 field1.SetStringValue("" + ch1 + " " + ch2);
-                ch1 = (char)TestUtil.NextInt(Random(), 'a', 'z');
-                ch2 = (char)TestUtil.NextInt(Random(), 'a', 'z');
+                ch1 = (char)TestUtil.NextInt32(Random, 'a', 'z');
+                ch2 = (char)TestUtil.NextInt32(Random, 'a', 'z');
                 field2.SetStringValue("" + ch1 + " " + ch2);
                 writer.AddDocument(doc);
             }
 
-            IndexReader ir = writer.Reader;
+            IndexReader ir = writer.GetReader();
 
             AssertSumDocFreq(ir);
             ir.Dispose();
@@ -71,7 +75,7 @@ namespace Lucene.Net.Index
             int numDeletions = AtLeast(20);
             for (int i = 0; i < numDeletions; i++)
             {
-                writer.DeleteDocuments(new Term("id", "" + Random().Next(numDocs)));
+                writer.DeleteDocuments(new Term("id", "" + Random.Next(numDocs)));
             }
             writer.ForceMerge(1);
             writer.Dispose();

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.Lucene45
 {
@@ -42,7 +43,7 @@ namespace Lucene.Net.Codecs.Lucene45
     {
         internal static readonly int BLOCK_SIZE = 16384;
         internal static readonly int ADDRESS_INTERVAL = 16;
-        internal static readonly long MISSING_ORD = BitConverter.DoubleToInt64Bits(-1);
+        internal static readonly long MISSING_ORD = -1L;
 
         /// <summary>
         /// Compressed using packed blocks of <see cref="int"/>s. </summary>
@@ -121,11 +122,11 @@ namespace Lucene.Net.Codecs.Lucene45
             long gcd = 0;
             bool missing = false;
             // TODO: more efficient?
-            HashSet<long> uniqueValues = null;
+            JCG.HashSet<long> uniqueValues = null;
             
             if (optimizeStorage)
             {
-                uniqueValues = new HashSet<long>();
+                uniqueValues = new JCG.HashSet<long>();
 
                 foreach (long? nv in values)
                 {
@@ -354,7 +355,7 @@ namespace Lucene.Net.Codecs.Lucene45
 
         /// <summary>
         /// Expert: writes a value dictionary for a sorted/sortedset field. </summary>
-        protected internal virtual void AddTermsDict(FieldInfo field, IEnumerable<BytesRef> values)
+        protected virtual void AddTermsDict(FieldInfo field, IEnumerable<BytesRef> values)
         {
             // first check if its a "fixed-length" terms dict
             int minLength = int.MaxValue;

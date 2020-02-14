@@ -1,4 +1,4 @@
-using Lucene.Net.Support;
+using J2N.Threading.Atomic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Store
 {
@@ -72,7 +73,7 @@ namespace Lucene.Net.Store
 
         private readonly Directory directory;
         private readonly IDictionary<string, FileEntry> entries = new Dictionary<string, FileEntry>();
-        private readonly ISet<string> seenIDs = new HashSet<string>();
+        private readonly ISet<string> seenIDs = new JCG.HashSet<string>();
         // all entries that are written to a sep. file but not yet moved into CFS
         private readonly LinkedList<FileEntry> pendingEntries = new LinkedList<FileEntry>();
         private bool closed = false;
@@ -165,7 +166,7 @@ namespace Lucene.Net.Store
             // (remove partial .cfs/.cfe)
             try
             {
-                if (pendingEntries.Count > 0 || outputTaken.Get())
+                if (pendingEntries.Count > 0 || outputTaken)
                 {
                     throw new InvalidOperationException("CFS has pending open files");
                 }
@@ -297,7 +298,7 @@ namespace Lucene.Net.Store
                     entries.Remove(name);
                     if (outputLocked) // release the output lock if not successful
                     {
-                        Debug.Assert(outputTaken.Get());
+                        Debug.Assert(outputTaken);
                         ReleaseOutputLock();
                     }
                 }

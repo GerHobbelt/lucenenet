@@ -1,5 +1,5 @@
-﻿using Lucene.Net.Analysis.TokenAttributes;
-using Lucene.Net.Support;
+﻿using J2N;
+using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Automaton;
 using NUnit.Framework;
@@ -9,21 +9,21 @@ using System.IO;
 namespace Lucene.Net.Analysis.Core
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Compares MockTokenizer (which is simple with no optimizations) with equivalent 
@@ -59,7 +59,7 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterAscii()
         {
-            Random random = Random();
+            Random random = Random;
             Analyzer left = new MockAnalyzer(random, jvmLetter, false);
             Analyzer right = new AnalyzerAnonymousInnerClassHelper(this);
             for (int i = 0; i < 1000; i++)
@@ -78,7 +78,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -89,7 +89,7 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterAsciiHuge()
         {
-            Random random = Random();
+            Random random = Random;
             int maxLength = 8192; // CharTokenizer.IO_BUFFER_SIZE*2
             MockAnalyzer left = new MockAnalyzer(random, jvmLetter, false);
             left.MaxTokenLength = 255; // match CharTokenizer's max token length
@@ -111,7 +111,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -121,7 +121,7 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterHtmlish()
         {
-            Random random = Random();
+            Random random = Random;
             Analyzer left = new MockAnalyzer(random, jvmLetter, false);
             Analyzer right = new AnalyzerAnonymousInnerClassHelper3(this);
             for (int i = 0; i < 1000; i++)
@@ -140,7 +140,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -150,7 +150,7 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterHtmlishHuge()
         {
-            Random random = Random();
+            Random random = Random;
             int maxLength = 1024; // this is number of elements, not chars!
             MockAnalyzer left = new MockAnalyzer(random, jvmLetter, false);
             left.MaxTokenLength = 255; // match CharTokenizer's max token length
@@ -172,7 +172,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -182,8 +182,8 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterUnicode()
         {
-            Random random = Random();
-            Analyzer left = new MockAnalyzer(Random(), jvmLetter, false);
+            Random random = Random;
+            Analyzer left = new MockAnalyzer(LuceneTestCase.Random, jvmLetter, false);
             Analyzer right = new AnalyzerAnonymousInnerClassHelper5(this);
             for (int i = 0; i < 1000; i++)
             {
@@ -201,7 +201,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -211,7 +211,7 @@ namespace Lucene.Net.Analysis.Core
         [Test]
         public virtual void TestLetterUnicodeHuge()
         {
-            Random random = Random();
+            Random random = Random;
             int maxLength = 4300; // CharTokenizer.IO_BUFFER_SIZE + fudge
             MockAnalyzer left = new MockAnalyzer(random, jvmLetter, false);
             left.MaxTokenLength = 255; // match CharTokenizer's max token length
@@ -233,7 +233,7 @@ namespace Lucene.Net.Analysis.Core
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new LetterTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, tokenizer);
@@ -272,11 +272,11 @@ namespace Lucene.Net.Analysis.Core
         // TODO: maybe push this out to TestUtil or LuceneTestCase and always use it instead?
         private static TextReader newStringReader(string s)
         {
-            Random random = Random();
+            Random random = Random;
             TextReader r = new StringReader(s);
-            if (random.Next(1) == 1)
+            if (random.NextBoolean())
             {
-                r = new MockReaderWrapper(random, s);
+                r = new MockReaderWrapper(random, r);
             }
             return r;
         }

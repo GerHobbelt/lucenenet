@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Analysis.Core;
+﻿using J2N.Collections.Generic.Extensions;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
@@ -8,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Util
 {
@@ -59,7 +61,7 @@ namespace Lucene.Net.Analysis.Util
         protected AbstractAnalysisFactory(IDictionary<string, string> args)
         {
             IsExplicitLuceneMatchVersion = false;
-            originalArgs = Collections.UnmodifiableMap(args);
+            originalArgs = args.AsReadOnly();
             string version = Get(args, LUCENE_MATCH_VERSION_PARAM);
             // LUCENENET TODO: What should we do if the version is null?
             //luceneMatchVersion = version == null ? (LuceneVersion?)null : LuceneVersionHelpers.ParseLeniently(version);
@@ -236,7 +238,7 @@ namespace Lucene.Net.Analysis.Util
         /// </summary>
         protected float RequireSingle(IDictionary<string, string> args, string name)
         {
-            return float.Parse(Require(args, name));
+            return float.Parse(Require(args, name), CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -248,7 +250,7 @@ namespace Lucene.Net.Analysis.Util
             if (args.TryGetValue(name, out s))
             {
                 args.Remove(name);
-                return float.Parse(s);
+                return float.Parse(s, CultureInfo.InvariantCulture);
             }
             return defaultVal;
         }
@@ -286,12 +288,14 @@ namespace Lucene.Net.Analysis.Util
             if (args.TryGetValue(name, out s))
             {
                 args.Remove(name);
-                HashSet<string> set = null;
+                ISet<string> set = null;
                 Match matcher = ITEM_PATTERN.Match(s);
                 if (matcher.Success)
                 {
-                    set = new HashSet<string>();
-                    set.Add(matcher.Groups[0].Value);
+                    set = new JCG.HashSet<string>
+                    {
+                        matcher.Groups[0].Value
+                    };
                     matcher = matcher.NextMatch();
                     while (matcher.Success)
                     {

@@ -1,15 +1,15 @@
+using J2N.Text;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Util;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using Lucene.Net.Util;
-    using NUnit.Framework;
     using BytesRef = Lucene.Net.Util.BytesRef;
     using CharsRef = Lucene.Net.Util.CharsRef;
     using Directory = Lucene.Net.Store.Directory;
@@ -44,7 +44,7 @@ namespace Lucene.Net.Index
 
         private int NextInt(int lim)
         {
-            return Random().Next(lim);
+            return Random.Next(lim);
         }
 
         private int NextInt(int start, int end)
@@ -95,7 +95,7 @@ namespace Lucene.Net.Index
                     // Illegal unpaired surrogate
                     if (NextInt(10) == 7)
                     {
-                        if (Random().NextBoolean())
+                        if (Random.NextBoolean())
                         {
                             buffer[i] = (char)NextInt(0xd800, 0xdc00);
                         }
@@ -153,7 +153,7 @@ namespace Lucene.Net.Index
 
             BytesRef last = new BytesRef();
 
-            HashSet<string> seenTerms = new HashSet<string>();
+            ISet<string> seenTerms = new JCG.HashSet<string>();
 
             while (true)
             {
@@ -270,7 +270,7 @@ namespace Lucene.Net.Index
         public virtual void TestEmbeddedFFFF()
         {
             Directory d = NewDirectory();
-            IndexWriter w = new IndexWriter(d, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter w = new IndexWriter(d, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             Document doc = new Document();
             doc.Add(NewTextField("field", "a a\uffffb", Field.Store.NO));
             w.AddDocument(doc);
@@ -316,15 +316,19 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestTermUTF16SortOrder()
         {
-            Random rnd = Random();
+            Random rnd = Random;
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(rnd, dir, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                rnd, dir);
             Document d = new Document();
             // Single segment
             Field f = NewStringField("f", "", Field.Store.NO);
             d.Add(f);
             char[] chars = new char[2];
-            HashSet<string> allTerms = new HashSet<string>();
+            ISet<string> allTerms = new JCG.HashSet<string>();
 
             int num = AtLeast(200);
             for (int i = 0; i < num; i++)
@@ -364,7 +368,7 @@ namespace Lucene.Net.Index
                 }
             }
 
-            IndexReader r = writer.Reader;
+            IndexReader r = writer.GetReader();
 
             // Test each sub-segment
             foreach (AtomicReaderContext ctx in r.Leaves)
@@ -379,7 +383,7 @@ namespace Lucene.Net.Index
             writer.ForceMerge(1);
 
             // Test single segment
-            r = writer.Reader;
+            r = writer.GetReader();
             CheckTermsOrder(r, allTerms, true);
             r.Dispose();
 

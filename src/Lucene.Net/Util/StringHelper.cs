@@ -1,3 +1,5 @@
+using J2N.Numerics;
+using J2N.Text;
 using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
@@ -56,7 +58,7 @@ namespace Lucene.Net.Util
             }
             else
             {
-                return (int)Time.CurrentTimeMilliseconds();
+                return (int)J2N.Time.CurrentTimeMilliseconds();
             }
         }
 
@@ -113,12 +115,12 @@ namespace Lucene.Net.Util
                 var aTokens = new StringTokenizer(a, ".");
                 var bTokens = new StringTokenizer(b, ".");
 
-                while (aTokens.HasMoreTokens())
+                while (aTokens.MoveNext())
                 {
-                    int aToken = Convert.ToInt32(aTokens.NextToken(), CultureInfo.InvariantCulture);
-                    if (bTokens.HasMoreTokens())
+                    int aToken = Convert.ToInt32(aTokens.Current, CultureInfo.InvariantCulture);
+                    if (bTokens.MoveNext())
                     {
-                        int bToken = Convert.ToInt32(bTokens.NextToken(), CultureInfo.InvariantCulture);
+                        int bToken = Convert.ToInt32(bTokens.Current, CultureInfo.InvariantCulture);
                         if (aToken != bToken)
                         {
                             return aToken < bToken ? -1 : 1;
@@ -135,9 +137,9 @@ namespace Lucene.Net.Util
                 }
 
                 // b has some extra trailing tokens. if these are all zeroes, thats ok.
-                while (bTokens.HasMoreTokens())
+                while (bTokens.MoveNext())
                 {
-                    if (Convert.ToInt32(bTokens.NextToken(), CultureInfo.InvariantCulture) != 0)
+                    if (Convert.ToInt32(bTokens.Current, CultureInfo.InvariantCulture) != 0)
                     {
                         return -1;
                     }
@@ -227,11 +229,11 @@ namespace Lucene.Net.Util
                 // little endian load order
                 int k1 = (((sbyte)data[i]) & 0xff) | ((((sbyte)data[i + 1]) & 0xff) << 8) | ((((sbyte)data[i + 2]) & 0xff) << 16) | (((sbyte)data[i + 3]) << 24);
                 k1 *= c1;
-                k1 = Number.RotateLeft(k1, 15);
+                k1 = BitOperation.RotateLeft(k1, 15);
                 k1 *= c2;
 
                 h1 ^= k1;
-                h1 = Number.RotateLeft(h1, 13);
+                h1 = BitOperation.RotateLeft(h1, 13);
                 h1 = h1 * 5 + unchecked((int)0xe6546b64);
             }
 
@@ -251,7 +253,7 @@ namespace Lucene.Net.Util
                 case 1:
                     k2 |= (((sbyte)data[roundedEnd]) & 0xff);
                     k2 *= c1;
-                    k2 = Number.RotateLeft(k2, 15);
+                    k2 = BitOperation.RotateLeft(k2, 15);
                     k2 *= c2;
                     h1 ^= k2;
                     break;

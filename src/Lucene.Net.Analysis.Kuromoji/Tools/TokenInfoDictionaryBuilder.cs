@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Support;
+﻿using J2N.Text;
+using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Fst;
 using Lucene.Net.Util.Packed;
@@ -6,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Ja.Util
 {

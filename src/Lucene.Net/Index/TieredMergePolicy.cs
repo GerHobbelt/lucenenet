@@ -1,8 +1,10 @@
+using J2N.Text;
 using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -334,7 +336,7 @@ namespace Lucene.Net.Index
                 return null;
             }
             ICollection<SegmentCommitInfo> merging = m_writer.Get().MergingSegments;
-            ICollection<SegmentCommitInfo> toBeMerged = new HashSet<SegmentCommitInfo>();
+            ICollection<SegmentCommitInfo> toBeMerged = new JCG.HashSet<SegmentCommitInfo>();
 
             List<SegmentCommitInfo> infosSorted = new List<SegmentCommitInfo>(infos.AsList());
             infosSorted.Sort(new SegmentByteSizeDescending(this));
@@ -603,7 +605,9 @@ namespace Lucene.Net.Index
         {
             if (Verbose())
             {
-                Message("FindForcedMerges maxSegmentCount=" + maxSegmentCount + " infos=" + m_writer.Get().SegString(infos.Segments) + " segmentsToMerge=" + Arrays.ToString(segmentsToMerge));
+                Message("FindForcedMerges maxSegmentCount=" + maxSegmentCount + 
+                    " infos=" + m_writer.Get().SegString(infos.Segments) + 
+                    " segmentsToMerge=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", segmentsToMerge));
             }
 
             List<SegmentCommitInfo> eligible = new List<SegmentCommitInfo>();
@@ -645,7 +649,7 @@ namespace Lucene.Net.Index
 
             if (Verbose())
             {
-                Message("eligible=" + Arrays.ToString(eligible));
+                Message("eligible=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", eligible));
                 Message("forceMergeRunning=" + forceMergeRunning);
             }
 
@@ -711,7 +715,7 @@ namespace Lucene.Net.Index
 
             if (Verbose())
             {
-                Message("eligible=" + Arrays.ToString(eligible));
+                Message("eligible=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", eligible));
             }
 
             int start = 0;

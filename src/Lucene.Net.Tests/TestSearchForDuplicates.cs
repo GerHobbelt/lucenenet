@@ -6,7 +6,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net
 {
@@ -56,7 +56,7 @@ namespace Lucene.Net
 
             using (sw = new StringWriter())
             {
-                DoTest(Random(), sw, false, MAX_DOCS);
+                DoTest(Random, sw, false, MAX_DOCS);
                 multiFileOutput = sw.ToString();
             }
 
@@ -64,7 +64,7 @@ namespace Lucene.Net
 
             using (sw = new StringWriter())
             {
-                DoTest(Random(), sw, true, MAX_DOCS);
+                DoTest(Random, sw, true, MAX_DOCS);
                 singleFileOutput = sw.ToString();
             }
 

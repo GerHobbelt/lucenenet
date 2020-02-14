@@ -9,21 +9,21 @@ using TermInfo = Lucene.Net.Search.VectorHighlight.FieldTermStack.TermInfo;
 namespace Lucene.Net.Search.VectorHighlight
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// FieldPhraseList has a list of WeightedPhraseInfo that is used by FragListBuilder
@@ -220,7 +220,7 @@ namespace Lucene.Net.Search.VectorHighlight
                 {
                     // WeightedPhraseInfo.addIfNoOverlap() dumps the second part of, for example, hyphenated words (social-economics). 
                     // The result is that all informations in TermInfo are lost and not available for further operations. 
-                    existWpi.TermsInfos.AddAll(wpi.TermsInfos);
+                    existWpi.TermsInfos.AddRange(wpi.TermsInfos);
                     return;
                 }
             }
@@ -343,7 +343,7 @@ namespace Lucene.Net.Search.VectorHighlight
                         {
                             WeightedPhraseInfo info = toMergeItr.Current;
                             boost += info.boost;
-                            termsInfos.AddAll(info.termsInfos);
+                            termsInfos.AddRange(info.termsInfos);
                             allToffs[index++] = info.termsOffsets.GetEnumerator();
                         }
 
@@ -447,7 +447,7 @@ namespace Lucene.Net.Search.VectorHighlight
                 int result = 1;
                 result = prime * result + StartOffset;
                 result = prime * result + EndOffset;
-                long b = Number.DoubleToInt64Bits(Boost);
+                long b = J2N.BitConversion.DoubleToInt64Bits(Boost);
                 result = prime * result + (int)(b ^ TripleShift(b, 32));
                 return result;
             }

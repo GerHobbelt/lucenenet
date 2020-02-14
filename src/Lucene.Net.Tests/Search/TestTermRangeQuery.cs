@@ -1,6 +1,9 @@
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
+using System.IO;
 
 namespace Lucene.Net.Search
 {
@@ -20,11 +23,7 @@ namespace Lucene.Net.Search
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-
-    using Lucene.Net.Analysis;
-    using NUnit.Framework;
-    using System.Collections.Generic;
-    using System.IO;
+    
     using Directory = Lucene.Net.Store.Directory;
     using DirectoryReader = Lucene.Net.Index.DirectoryReader;
     using Document = Documents.Document;
@@ -268,7 +267,7 @@ namespace Lucene.Net.Search
 
         private void InitializeIndex(string[] values)
         {
-            InitializeIndex(values, new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false));
+            InitializeIndex(values, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false));
         }
 
         private void InitializeIndex(string[] values, Analyzer analyzer)
@@ -284,7 +283,7 @@ namespace Lucene.Net.Search
         // shouldnt create an analyzer for every doc?
         private void AddDoc(string content)
         {
-            IndexWriter writer = new IndexWriter(Dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false)).SetOpenMode(OpenMode.APPEND));
+            IndexWriter writer = new IndexWriter(Dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false)).SetOpenMode(OpenMode.APPEND));
             InsertDoc(writer, content);
             writer.Dispose();
         }

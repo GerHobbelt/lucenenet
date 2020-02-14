@@ -1,10 +1,10 @@
+using Lucene.Net.Util;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Lucene.Net.Codecs
 {
-    using BytesRef = Lucene.Net.Util.BytesRef;
-
     /*
      * Licensed to the Apache Software Foundation (ASF) under one or more
      * contributor license agreements.  See the NOTICE file distributed with
@@ -23,13 +23,13 @@ namespace Lucene.Net.Codecs
      */
 
     /// <summary>
-    /// a utility class to write missing values for SORTED as if they were the empty string
-    /// (to simulate pre-Lucene4.5 dv behavior for testing old codecs)
+    /// A utility class to write missing values for SORTED as if they were the empty string
+    /// (to simulate pre-Lucene4.5 dv behavior for testing old codecs).
     /// </summary>
     public class MissingOrdRemapper
     {
         /// <summary>
-        /// insert an empty byte[] to the front of this iterable </summary>
+        /// Insert an empty byte[] to the front of this enumerable.</summary>
         public static IEnumerable<BytesRef> InsertEmptyValue(IEnumerable<BytesRef> iterable)
         {
             return new IterableAnonymousInnerClassHelper(iterable);
@@ -37,11 +37,11 @@ namespace Lucene.Net.Codecs
 
         private class IterableAnonymousInnerClassHelper : IEnumerable<BytesRef>
         {
-            private IEnumerable<BytesRef> Iterable;
+            private IEnumerable<BytesRef> iterable;
 
             public IterableAnonymousInnerClassHelper(IEnumerable<BytesRef> iterable)
             {
-                this.Iterable = iterable;
+                this.iterable = iterable;
             }
 
             public IEnumerator<BytesRef> GetEnumerator()
@@ -49,7 +49,7 @@ namespace Lucene.Net.Codecs
                 return new IteratorAnonymousInnerClassHelper(this);
             }
 
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            IEnumerator IEnumerable.GetEnumerator()
             {
                 return GetEnumerator();
             }
@@ -62,7 +62,7 @@ namespace Lucene.Net.Codecs
                 {
                     this.outerInstance = outerInstance;
                     seenEmpty = false;
-                    @in = outerInstance.Iterable.GetEnumerator();
+                    @in = outerInstance.iterable.GetEnumerator();
                 }
 
                 private bool seenEmpty;
@@ -87,30 +87,20 @@ namespace Lucene.Net.Codecs
                     return false;
                 }
 
-                public BytesRef Current
-                {
-                    get { return current; }
-                }
+                public BytesRef Current => current;
 
-                object System.Collections.IEnumerator.Current
-                {
-                    get { return Current; }
-                }
+                object IEnumerator.Current => Current;
 
                 public void Reset()
-                {
-                    throw new NotImplementedException();
-                }
+                    => throw new NotSupportedException();
 
                 public void Dispose()
-                {
-                    @in.Dispose();
-                }
+                     => @in.Dispose();
             }
         }
 
         /// <summary>
-        /// remaps ord -1 to ord 0 on this iterable. </summary>
+        /// Remaps ord -1 to ord 0 on this enumerable. </summary>
         public static IEnumerable<long?> MapMissingToOrd0(IEnumerable<long?> iterable)
         {
             return new IterableAnonymousInnerClassHelper2(iterable);
@@ -118,11 +108,11 @@ namespace Lucene.Net.Codecs
 
         private class IterableAnonymousInnerClassHelper2 : IEnumerable<long?>
         {
-            private IEnumerable<long?> Iterable;
+            private IEnumerable<long?> iterable;
 
             public IterableAnonymousInnerClassHelper2(IEnumerable<long?> iterable)
             {
-                this.Iterable = iterable;
+                this.iterable = iterable;
             }
 
             public IEnumerator<long?> GetEnumerator()
@@ -130,10 +120,8 @@ namespace Lucene.Net.Codecs
                 return new IteratorAnonymousInnerClassHelper2(this);
             }
 
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
 
             private class IteratorAnonymousInnerClassHelper2 : IEnumerator<long?>
             {
@@ -142,7 +130,7 @@ namespace Lucene.Net.Codecs
                 public IteratorAnonymousInnerClassHelper2(IterableAnonymousInnerClassHelper2 outerInstance)
                 {
                     this.outerInstance = outerInstance;
-                    @in = outerInstance.Iterable.GetEnumerator();
+                    @in = outerInstance.iterable.GetEnumerator();
                 }
 
                 private readonly IEnumerator<long?> @in;
@@ -162,30 +150,20 @@ namespace Lucene.Net.Codecs
                     return true;
                 }
 
-                public long? Current
-                {
-                    get { return current; }
-                }
+                public long? Current => current;
 
-                object System.Collections.IEnumerator.Current
-                {
-                    get { return Current; }
-                }
+                object IEnumerator.Current => Current;
 
                 public void Reset()
-                {
-                    throw new NotImplementedException();
-                }
+                    => throw new NotSupportedException();
 
                 public void Dispose()
-                {
-                    @in.Dispose();
-                }
+                    => @in.Dispose();
             }
         }
 
         /// <summary>
-        /// remaps every ord+1 on this iterable </summary>
+        /// Remaps every ord+1 on this enumerable. </summary>
         public static IEnumerable<long?> MapAllOrds(IEnumerable<long?> iterable)
         {
             return new IterableAnonymousInnerClassHelper3(iterable);
@@ -193,11 +171,11 @@ namespace Lucene.Net.Codecs
 
         private class IterableAnonymousInnerClassHelper3 : IEnumerable<long?>
         {
-            private IEnumerable<long?> Iterable;
+            private IEnumerable<long?> iterable;
 
             public IterableAnonymousInnerClassHelper3(IEnumerable<long?> iterable)
             {
-                this.Iterable = iterable;
+                this.iterable = iterable;
             }
 
             public IEnumerator<long?> GetEnumerator()
@@ -205,10 +183,8 @@ namespace Lucene.Net.Codecs
                 return new IteratorAnonymousInnerClassHelper3(this);
             }
 
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            IEnumerator IEnumerable.GetEnumerator()
+                => GetEnumerator();
 
             private class IteratorAnonymousInnerClassHelper3 : IEnumerator<long?>
             {
@@ -217,7 +193,7 @@ namespace Lucene.Net.Codecs
                 public IteratorAnonymousInnerClassHelper3(IterableAnonymousInnerClassHelper3 outerInstance)
                 {
                     this.outerInstance = outerInstance;
-                    @in = outerInstance.Iterable.GetEnumerator();
+                    @in = outerInstance.iterable.GetEnumerator();
                 }
 
                 private readonly IEnumerator<long?> @in;
@@ -236,25 +212,15 @@ namespace Lucene.Net.Codecs
                     return true;
                 }
 
-                public long? Current
-                {
-                    get { return current; }
-                }
+                public long? Current => current;
 
-                object System.Collections.IEnumerator.Current
-                {
-                    get { return Current; }
-                }
+                object IEnumerator.Current => Current;
 
                 public void Reset()
-                {
-                    throw new NotImplementedException();
-                }
+                    => throw new NotSupportedException();
 
                 public void Dispose()
-                {
-                    @in.Dispose();
-                }
+                    => @in.Dispose();
             }
         }
     }

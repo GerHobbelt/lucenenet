@@ -48,7 +48,11 @@ namespace Lucene.Net.Search
 
             // create an index
             Directory indexStore = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), indexStore, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, indexStore);
 
             long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
 
@@ -58,7 +62,7 @@ namespace Lucene.Net.Search
             doc.Add(NewTextField("body", "Today is a very sunny day in New York City", Field.Store.YES));
             writer.AddDocument(doc);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
             IndexSearcher searcher = NewSearcher(reader);
 
@@ -112,7 +116,11 @@ namespace Lucene.Net.Search
         {
             // create an index
             Directory indexStore = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), indexStore, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, indexStore);
 
             long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
 
@@ -122,7 +130,7 @@ namespace Lucene.Net.Search
             doc.Add(NewTextField("body", "Today is a very sunny day in New York City", Field.Store.YES));
             writer.AddDocument(doc);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
             IndexSearcher searcher = NewSearcher(reader);
 

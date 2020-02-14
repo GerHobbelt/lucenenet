@@ -1,4 +1,4 @@
-using Lucene.Net.Support;
+using J2N.Threading.Atomic;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -226,13 +227,7 @@ namespace Lucene.Net.Index
 
         /// <summary>
         /// Returns how many docs are currently buffered in RAM. </summary>
-        internal int NumDocs
-        {
-            get
-            {
-                return numDocsInRAM.Get();
-            }
-        }
+        internal int NumDocs => numDocsInRAM;
 
         private void EnsureOpen()
         {
@@ -255,7 +250,7 @@ namespace Lucene.Net.Index
             {
                 //Debug.Assert(!Thread.HoldsLock(writer), "IndexWriter lock should never be hold when aborting");
                 bool success = false;
-                HashSet<string> newFilesSet = new HashSet<string>();
+                JCG.HashSet<string> newFilesSet = new JCG.HashSet<string>();
                 try
                 {
                     deleteQueue.Clear();
@@ -286,7 +281,7 @@ namespace Lucene.Net.Index
                 {
                     if (infoStream.IsEnabled("DW"))
                     {
-                        infoStream.Message("DW", "done abort; abortedFiles=" + Arrays.ToString(newFilesSet) + " success=" + success);
+                        infoStream.Message("DW", "done abort; abortedFiles=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", newFilesSet) + " success=" + success);
                     }
                 }
             }
@@ -306,7 +301,7 @@ namespace Lucene.Net.Index
                 {
                     deleteQueue.Clear();
                     int limit = perThreadPool.MaxThreadStates;
-                    HashSet<string> newFilesSet = new HashSet<string>();
+                    JCG.HashSet<string> newFilesSet = new JCG.HashSet<string>();
                     for (int i = 0; i < limit; i++)
                     {
                         ThreadState perThread = perThreadPool.GetThreadState(i);
@@ -399,7 +394,7 @@ namespace Lucene.Net.Index
         {
             if (infoStream.IsEnabled("DW"))
             {
-                infoStream.Message("DW", "anyChanges? numDocsInRam=" + numDocsInRAM.Get() + " deletes=" + AnyDeletions() + " hasTickets:" + ticketQueue.HasTickets + " pendingChangesInFullFlush: " + pendingChangesInCurrentFullFlush);
+                infoStream.Message("DW", "anyChanges? numDocsInRam=" + numDocsInRAM + " deletes=" + AnyDeletions() + " hasTickets:" + ticketQueue.HasTickets + " pendingChangesInFullFlush: " + pendingChangesInCurrentFullFlush);
             }
             /*
              * changes are either in a DWPT or in the deleteQueue.
@@ -408,7 +403,7 @@ namespace Lucene.Net.Index
              * before they are published to the IW. ie we need to check if the
              * ticket queue has any tickets.
              */
-            return numDocsInRAM.Get() != 0 || AnyDeletions() || ticketQueue.HasTickets || pendingChangesInCurrentFullFlush;
+            return numDocsInRAM != 0 || AnyDeletions() || ticketQueue.HasTickets || pendingChangesInCurrentFullFlush;
         }
 
         public int BufferedDeleteTermsSize
@@ -714,10 +709,10 @@ namespace Lucene.Net.Index
 
         internal void SubtractFlushedNumDocs(int numFlushed)
         {
-            int oldValue = numDocsInRAM.Get();
+            int oldValue = numDocsInRAM;
             while (!numDocsInRAM.CompareAndSet(oldValue, oldValue - numFlushed))
             {
-                oldValue = numDocsInRAM.Get();
+                oldValue = numDocsInRAM;
             }
         }
 
@@ -806,7 +801,7 @@ namespace Lucene.Net.Index
                 }
                 else
                 {
-                    HashSet<string> newFilesSet = new HashSet<string>();
+                    JCG.HashSet<string> newFilesSet = new JCG.HashSet<string>();
                     flushControl.AbortFullFlushes(newFilesSet);
                     PutEvent(new DeleteNewFilesEvent(newFilesSet));
                 }
@@ -833,7 +828,7 @@ namespace Lucene.Net.Index
         internal sealed class ApplyDeletesEvent : IEvent
         {
             internal static readonly IEvent INSTANCE = new ApplyDeletesEvent();
-            private int instCount = 0; // LUCENENET TODO: What is this for? It will always be zero when initialized and 1 after the constructor is called. Should it be static?
+            private int instCount = 0;
 
             internal ApplyDeletesEvent()
             {
@@ -850,7 +845,7 @@ namespace Lucene.Net.Index
         internal sealed class MergePendingEvent : IEvent
         {
             internal static readonly IEvent INSTANCE = new MergePendingEvent();
-            private int instCount = 0; // LUCENENET TODO: What is this for? It will always be zero when initialized and 1 after the constructor is called. Should it be static?
+            private int instCount = 0;
 
             internal MergePendingEvent()
             {
@@ -867,7 +862,7 @@ namespace Lucene.Net.Index
         internal sealed class ForcedPurgeEvent : IEvent
         {
             internal static readonly IEvent INSTANCE = new ForcedPurgeEvent();
-            private int instCount = 0; // LUCENENET TODO: What is this for? It will always be zero when initialized and 1 after the constructor is called. Should it be static?
+            private int instCount = 0;
 
             internal ForcedPurgeEvent()
             {

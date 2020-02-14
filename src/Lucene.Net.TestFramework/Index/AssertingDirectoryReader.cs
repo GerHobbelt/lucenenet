@@ -18,43 +18,28 @@ namespace Lucene.Net.Index
      */
 
     /// <summary>
-    /// A <seealso cref="DirectoryReader"/> that wraps all its subreaders with
-    /// <seealso cref="AssertingAtomicReader"/>
+    /// A <see cref="DirectoryReader"/> that wraps all its subreaders with
+    /// <see cref="AssertingAtomicReader"/>
     /// </summary>
     public class AssertingDirectoryReader : FilterDirectoryReader
     {
         internal class AssertingSubReaderWrapper : SubReaderWrapper
         {
             public override AtomicReader Wrap(AtomicReader reader)
-            {
-                return new AssertingAtomicReader(reader);
-            }
+                => new AssertingAtomicReader(reader);
         }
 
         public AssertingDirectoryReader(DirectoryReader @in)
             : base(@in, new AssertingSubReaderWrapper())
-        {
-        }
+        { }
 
         protected override DirectoryReader DoWrapDirectoryReader(DirectoryReader @in)
-        {
-            return new AssertingDirectoryReader(@in);
-        }
+            => new AssertingDirectoryReader(@in);
 
         public override object CoreCacheKey
-        {
-            get
-            {
-                return m_input.CoreCacheKey;
-            }
-        }
+            => m_input.CoreCacheKey;
 
         public override object CombinedCoreAndDeletesKey
-        {
-            get
-            {
-                return m_input.CombinedCoreAndDeletesKey;
-            }
-        }
+            => m_input.CombinedCoreAndDeletesKey;
     }
 }

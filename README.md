@@ -1,5 +1,9 @@
 # Apache Lucene.Net
 
+[![Nuget](https://img.shields.io/nuget/dt/Lucene.Net)](https://www.nuget.org/packages/Lucene.Net)
+[![Azure DevOps builds (master)](https://img.shields.io/azure-devops/build/lucene-net/6ba240c9-9598-47e7-a793-0ed8a4ba2f8b/3/master)](https://dev.azure.com/lucene-net/Lucene.NET/_build?definitionId=3&_a=summary)
+[![GitHub](https://img.shields.io/github/license/NightOwl888/ICU4N)](https://github.com/NightOwl888/ICU4N/blob/master/LICENSE.txt)
+
 ## Full-text search for .NET
 
 Apache Lucene.Net is a .NET full-text search engine framework, a C# port of the popular Apache Lucene project.  Apache Lucene.Net is not a complete application, but rather a code library and API that can easily be used to add search capabilities to applications.
@@ -17,8 +21,8 @@ The Apache Lucene.Net web site is at:
 ### Lucene.Net 4.8.0
 
 
+- [.NET Standard 2.1](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
 - [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
-- [.NET Standard 1.6](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
 - .NET Framework 4.5
 
 ## Status
@@ -60,13 +64,15 @@ PM> Install-Package Lucene.Net -Pre
 
 <!--- TO BE ADDED WHEN RELEASED 
 
-- [Lucene.Net.Analysis.UIMA](https://www.nuget.org/packages/Lucene.Net.Analysis.UIMA/) - Analysis integration with Apache UIMA)
+- [Lucene.Net.Analysis.Nori](https://www.nuget.org/packages/Lucene.Net.Analysis.Nori/) - Korean Morphological Analyzer
 
 -->
 
 - [Lucene.Net](https://www.nuget.org/packages/Lucene.Net/) - Core library
 - [Lucene.Net.Analysis.Common](https://www.nuget.org/packages/Lucene.Net.Analysis.Common/) - Analyzers for indexing content in different languages and domains
-- [Lucene.Net.Analysis.Kuromoji](https://www.nuget.org/packages/Lucene.Net.Analysis.Kuromoji/) - Japanese Morphological Analyzer 
+- [Lucene.Net.Analysis.Kuromoji](https://www.nuget.org/packages/Lucene.Net.Analysis.Kuromoji/) - Japanese Morphological Analyzer
+- [Lucene.Net.Analysis.Morfologik](https://www.nuget.org/packages/Lucene.Net.Analysis.Morfologik/) - Analyzer for dictionary stemming, built-in Polish dictionary
+- [Lucene.Net.Analysis.OpenNLP](https://www.nuget.org/packages/Lucene.Net.Analysis.OpenNLP/) - OpenNLP Library Integration
 - [Lucene.Net.Analysis.Phonetic](https://www.nuget.org/packages/Lucene.Net.Analysis.Phonetic/) - Analyzer for indexing phonetic signatures (for sounds-alike search)
 - [Lucene.Net.Analysis.SmartCn](https://www.nuget.org/packages/Lucene.Net.Analysis.SmartCn/) - Analyzer for indexing Chinese
 - [Lucene.Net.Analysis.Stempel](https://www.nuget.org/packages/Lucene.Net.Analysis.Stempel/) - Analyzer for indexing Polish
@@ -87,6 +93,7 @@ PM> Install-Package Lucene.Net -Pre
 - [Lucene.Net.Sandbox](https://www.nuget.org/packages/Lucene.Net.Sandbox/) - Various third party contributions and new ideas
 - [Lucene.Net.Spatial](https://www.nuget.org/packages/Lucene.Net.Spatial/) - Geospatial search
 - [Lucene.Net.Suggest](https://www.nuget.org/packages/Lucene.Net.Suggest/) - Auto-suggest and Spell-checking support
+- [Lucene.Net.TestFramework](https://www.nuget.org/packages/Lucene.Net.TestFramework/) - Framework for testing Lucene-based applications
 
 ## Documentation
 
@@ -105,18 +112,17 @@ The API is similar to Java [Lucene 4.8.0](https://lucene.apache.org/core/4_8_0/)
 
 There are several demos implemented as simple console applications that can be copied and pasted into Visual Studio or compiled on the command line in the [Lucene.Net.Demo project](https://github.com/apache/lucenenet/tree/master/src/Lucene.Net.Demo).
 
-<!-- TO BE ADDED WHEN RELEASED
+There is also a dotnet command line tool available on NuGet. It contains all of the demos as well as tools maintaining your Lucene.Net index, featuring operations such as splitting, merging, listing segment info, fixing, deleting segments, upgrading, etc. Always be sure to back up your index before running any commands against it!
 
-There is also a dotnet command line tool available on NuGet. It contains all of the demos as well as tools maintaining your Lucene.Net index, containing such operations as splitting, merging, listing segment info, fixing, deleting segments, upgrading, etc. Always be sure to back up your index before running any commands against it!
+- [Prerequisite: .NET Core 3.1.0 Runtime](https://www.microsoft.com/net/download/core#/runtime)
 
 ```
-dotnet tool install lucene-cli -g --version 4.8.0-beta00006
+dotnet tool install lucene-cli -g --version 4.8.0-beta00007
 ```
 
-Once installed, you can explore what commands and options are available by entering the command `lucene`.
+Once installed, you can explore the commands and options that are available by entering the command `lucene`.
 
 [lucene-cli Documentation](https://github.com/apache/lucenenet/blob/master/src/dotnet/tools/lucene-cli/docs/index.md)
--->
 
 ## How to Contribute
 
@@ -165,7 +171,8 @@ Building on the Command Line is currently only supported on Windows.
 ##### Prerequisites
 
 1. [Powershell](https://msdn.microsoft.com/en-us/powershell/scripting/setup/installing-windows-powershell) 3.0 or higher (see [this question](http://stackoverflow.com/questions/1825585/determine-installed-powershell-version) to check your Powershell version)
-2. [.NET Core SDK 2.0 or higher](https://www.microsoft.com/net/download/core)
+2. [.NET Core SDK 3.1 or higher](https://dotnet.microsoft.com/download/visual-studio-sdks)
+3. [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/visual-studio-sdks)
 
 ##### Execution
 
@@ -178,42 +185,42 @@ To build the source, clone or download and unzip the repository. From the reposi
 ##### Build Options
 
 <table>
-	<tr>
-		<th>Short</th>
-		<th>Long</th>
-		<th>Description</th>
-		<th>Example</th>
-	</tr>
-	<tr>
-		<td>&#8209;config</td>
-		<td>&#8209;&#8209;Configuration</td>
-		<td>The build configuration ("Release" or "Debug").</td>
-		<td>build&nbsp;&#8209;&#8209;Configuration:Debug</td>
-	</tr>
-	<tr>
-		<td>&#8209;mp</td>
-		<td>&#8209;&#8209;MaximumParallelJobs</td>
-		<td>The maximum number of parallel jobs to run during testing. If not supplied, the default is 8.</td>
-		<td>build&nbsp;&#8209;mp:10</td>
-	</tr>
-	<tr>
-		<td>&#8209;pv</td>
-		<td>&#8209;&#8209;PackageVersion</td>
-		<td>The NuGet package version. If not supplied, will use the version from the Version.proj file.</td>
-		<td>build&nbsp;&#8209;pv:4.8.0&#8209;beta00001</td>
-	</tr>
-	<tr>
-		<td>&#8209;t</td>
-		<td>&#8209;&#8209;Test</td>
-		<td>Runs the tests after building. Note that testing typically takes around 40 minutes with 8 parallel jobs.</td>
-		<td>build&nbsp;&#8209;t</td>
-	</tr>
-	<tr>
-		<td>&#8209;v</td>
-		<td>&#8209;&#8209;Version</td>
-		<td>The assembly file version. If not supplied, will use the PackageVersion (excluding any pre-release tag).</td>
-		<td>build&nbsp;&#8209;pv:4.8.0&#8209;beta00001&nbsp;&#8209;v:4.8.0</td>
-	</tr>
+    <tr>
+        <th>Short</th>
+        <th>Long</th>
+        <th>Description</th>
+        <th>Example</th>
+    </tr>
+    <tr>
+        <td>&#8209;config</td>
+        <td>&#8209;&#8209;Configuration</td>
+        <td>The build configuration ("Release" or "Debug").</td>
+        <td>build&nbsp;&#8209;&#8209;Configuration:Debug</td>
+    </tr>
+    <tr>
+        <td>&#8209;mp</td>
+        <td>&#8209;&#8209;MaximumParallelJobs</td>
+        <td>The maximum number of parallel jobs to run during testing. If not supplied, the default is 8.</td>
+        <td>build&nbsp;&#8209;t&nbsp;&#8209;mp:10</td>
+    </tr>
+    <tr>
+        <td>&#8209;pv</td>
+        <td>&#8209;&#8209;PackageVersion</td>
+		<td>The NuGet package version. If not supplied, will use the version from the Directory.Build.props file.</td>
+        <td>build&nbsp;&#8209;pv:4.8.0&#8209;beta00001</td>
+    </tr>
+    <tr>
+        <td>&#8209;t</td>
+        <td>&#8209;&#8209;Test</td>
+        <td>Runs the tests after building. Note that testing typically takes around 40 minutes with 8 parallel jobs.</td>
+        <td>build&nbsp;&#8209;t</td>
+    </tr>
+    <tr>
+        <td>&#8209;v</td>
+        <td>&#8209;&#8209;Version</td>
+        <td>The assembly file version. If not supplied, will use the PackageVersion (excluding any pre-release tag).</td>
+        <td>build&nbsp;&#8209;pv:4.8.0&#8209;beta00001&nbsp;&#8209;v:4.8.0</td>
+    </tr>
 </table>
 
 NuGet packages are output by the build to the `/release/NuGetPackages/` directory. Test results (if applicable) are output to the `/release/TestResults/` directory.
@@ -233,9 +240,9 @@ Then all you need to do is choose the `Lucene.Net Local Packages` feed from the 
 
 #### Prerequisites
 
-1. Visual Studio 2017 version 15.3 or higher
-2. [.NET Core SDK 2.0 or higher](https://www.microsoft.com/net/download/core)
-3. [NUnit3 Test Adapter](https://marketplace.visualstudio.com/items?itemName=NUnitDevelopers.NUnit3TestAdapter)
+1. Visual Studio 2019 or higher
+2. [.NET Core SDK 3.1 or higher](https://dotnet.microsoft.com/download/visual-studio-sdks)
+3. [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/visual-studio-sdks)
 
 #### Execution
 
@@ -245,3 +252,38 @@ Then all you need to do is choose the `Lucene.Net Local Packages` feed from the 
 4. Run or debug the tests in Test Explorer, optionally using the desired filters.
 
 > **NOTE:** When running tests in Visual Studio, be sure to [set the default processor architecture to 64 bit](https://stackoverflow.com/a/45946727) to avoid running out of virtual memory on some tests.
+
+### Azure DevOps
+
+We have setup our `azure-pipelines.yml` file with logical defaults so anyone with an Azure DevOps account can build Lucene.Net and run the tests with minimal effort. Even a free Azure DevOps account will work, but tests will run much faster if the account is setup as public, which enables up to 10 parallel jobs to run simultaneously.
+
+#### Prerequisites
+
+1. An [Azure DevOps](https://azure.microsoft.com/en-us/services/devops/) account.
+2. A fork of this repository either on GitHub or Azure DevOps. The rest of these instructions assume a [GitHub fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo).
+
+#### Execution
+
+##### If you don't already have a pipeline set up:
+
+1. [Create an Azure DevOps organization](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/create-organization?view=azure-devops). If you already have one that you wish to use, you may skip this step.
+2. [Create an Azure DevOps project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page). We recommend naming the project Lucene.NET. Note that if you are using a free Azure DevOps account, you should choose to make the project public in order to enable 10 parallel jobs. If you make the project private, you will only get 1 parallel job. Also, if disabling features, make sure to leave Pipelines enabled.
+3. Create an Azure DevOps pipeline.
+   - Click on "Pipelines" from the left menu.
+   - Click the "Create Pipeline" or "New Pipeline" button, depending on whether any pipelines already exist.
+   - Select GitHub as the location to find the YAML file.
+   - Select the fork of this repository you created in "Prerequisites". Note that if this is a new Azure DevOps account you may need to [setup extra permissions to access your GitHub account](https://docs.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml).
+   - Next a "Review your YAML" page is presented showing the contents of `azure-pipelines.yml`. There is documentation near the top of the file indicating the varaibles that can be setup to enable additional options, but note that the default configuration will automatically run the build and all of the tests.
+   - Click the "Run" button at the top right of the page.
+
+##### If you already have a pipeline set up:
+
+1. Click on "Pipelines" from the left menu.
+2. Select the pipeline you wish to run.
+3. Click the "Queue" button on the upper right.
+4. (Optional) Select the branch and override any variables in the pipeline for this run.
+5. Click the "Run" button.
+
+Note that after the build is complete, the `nuget` artifact contains `.nupkg` files which may be downloaded to your local machine where you can [setup a local folder to act as a NuGet feed](https://docs.microsoft.com/en-us/nuget/hosting-packages/local-feeds).
+
+> It is also possible to add an Azure DevOps feed id to a new variable named `ArtifactFeedID`, but we are getting mixed results due to permission issues.

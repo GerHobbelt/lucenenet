@@ -1,7 +1,6 @@
-using Lucene.Net.Support;
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+using J2N.Collections.Generic;
+using J2N.Threading.Atomic;
+using SCG = System.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -122,9 +121,9 @@ namespace Lucene.Net.Index
         internal readonly AtomicInt32 numTermDeletes = new AtomicInt32();
         internal readonly AtomicInt32 numNumericUpdates = new AtomicInt32();
         internal readonly AtomicInt32 numBinaryUpdates = new AtomicInt32();
-        internal readonly IDictionary<Term, int?> terms = new Dictionary<Term, int?>();
-        internal readonly IDictionary<Query, int?> queries = new Dictionary<Query, int?>();
-        internal readonly IList<int?> docIDs = new List<int?>();
+        internal readonly SCG.IDictionary<Term, int?> terms = new Dictionary<Term, int?>();
+        internal readonly SCG.IDictionary<Query, int?> queries = new Dictionary<Query, int?>();
+        internal readonly SCG.IList<int?> docIDs = new SCG.List<int?>();
 
 
         // Map<dvField,Map<updateTerm,NumericUpdate>>
@@ -134,7 +133,7 @@ namespace Lucene.Net.Index
         // one that came in wins), and helps us detect faster if the same Term is
         // used to update the same field multiple times (so we later traverse it
         // only once).
-        internal readonly IDictionary<string, LinkedHashMap<Term, NumericDocValuesUpdate>> numericUpdates = new Dictionary<string, LinkedHashMap<Term, NumericDocValuesUpdate>>();
+        internal readonly SCG.IDictionary<string, LinkedDictionary<Term, NumericDocValuesUpdate>> numericUpdates = new Dictionary<string, LinkedDictionary<Term, NumericDocValuesUpdate>>();
 
         // Map<dvField,Map<updateTerm,BinaryUpdate>>
         // For each field we keep an ordered list of BinaryUpdates, key'd by the
@@ -143,12 +142,12 @@ namespace Lucene.Net.Index
         // one that came in wins), and helps us detect faster if the same Term is
         // used to update the same field multiple times (so we later traverse it
         // only once).
-        internal readonly IDictionary<string, LinkedHashMap<Term, BinaryDocValuesUpdate>> binaryUpdates = new Dictionary<string, LinkedHashMap<Term, BinaryDocValuesUpdate>>();
+        internal readonly SCG.IDictionary<string, LinkedDictionary<Term, BinaryDocValuesUpdate>> binaryUpdates = new Dictionary<string, LinkedDictionary<Term, BinaryDocValuesUpdate>>();
 
         /// <summary>
         /// NOTE: This was MAX_INT in Lucene
         /// </summary>
-        public static readonly int MAX_INT32 = Convert.ToInt32(int.MaxValue);
+        public static readonly int MAX_INT32 = int.MaxValue;
 
         internal readonly AtomicInt64 bytesUsed;
 
@@ -165,17 +164,17 @@ namespace Lucene.Net.Index
         {
             if (VERBOSE_DELETES)
             {
-                return "gen=" + gen + " numTerms=" + numTermDeletes + ", terms=" + Arrays.ToString(terms) 
-                    + ", queries=" + Arrays.ToString(queries) + ", docIDs=" + Arrays.ToString(docIDs) 
-                    + ", numericUpdates=" + Arrays.ToString(numericUpdates) 
-                    + ", binaryUpdates=" + Arrays.ToString(binaryUpdates) + ", bytesUsed=" + bytesUsed;
+                return "gen=" + gen + " numTerms=" + numTermDeletes + ", terms=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", terms) 
+                    + ", queries=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", queries) + ", docIDs=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", docIDs) 
+                    + ", numericUpdates=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", numericUpdates) 
+                    + ", binaryUpdates=" + string.Format(J2N.Text.StringFormatter.InvariantCulture, "{0}", binaryUpdates) + ", bytesUsed=" + bytesUsed;
             }
             else
             {
                 string s = "gen=" + gen;
-                if (numTermDeletes.Get() != 0)
+                if (numTermDeletes != 0)
                 {
-                    s += " " + numTermDeletes.Get() + " deleted terms (unique count=" + terms.Count + ")";
+                    s += " " + numTermDeletes.Value + " deleted terms (unique count=" + terms.Count + ")";
                 }
                 if (queries.Count != 0)
                 {
@@ -185,17 +184,17 @@ namespace Lucene.Net.Index
                 {
                     s += " " + docIDs.Count + " deleted docIDs";
                 }
-                if (numNumericUpdates.Get() != 0)
+                if (numNumericUpdates != 0)
                 {
-                    s += " " + numNumericUpdates.Get() + " numeric updates (unique count=" + numericUpdates.Count + ")";
+                    s += " " + numNumericUpdates + " numeric updates (unique count=" + numericUpdates.Count + ")";
                 }
-                if (numBinaryUpdates.Get() != 0)
+                if (numBinaryUpdates != 0)
                 {
-                    s += " " + numBinaryUpdates.Get() + " binary updates (unique count=" + binaryUpdates.Count + ")";
+                    s += " " + numBinaryUpdates + " binary updates (unique count=" + binaryUpdates.Count + ")";
                 }
-                if (bytesUsed.Get() != 0)
+                if (bytesUsed != 0)
                 {
-                    s += " bytesUsed=" + bytesUsed.Get();
+                    s += " bytesUsed=" + bytesUsed;
                 }
 
                 return s;
@@ -216,7 +215,7 @@ namespace Lucene.Net.Index
 
         public virtual void AddDocID(int docID)
         {
-            docIDs.Add(Convert.ToInt32(docID));
+            docIDs.Add(docID);
             bytesUsed.AddAndGet(BYTES_PER_DEL_DOCID);
         }
 
@@ -236,7 +235,7 @@ namespace Lucene.Net.Index
                 return;
             }
 
-            terms[term] = Convert.ToInt32(docIDUpto);
+            terms[term] = docIDUpto;
             // note that if current != null then it means there's already a buffered
             // delete on that term, therefore we seem to over-count. this over-counting
             // is done to respect IndexWriterConfig.setMaxBufferedDeleteTerms.
@@ -249,16 +248,14 @@ namespace Lucene.Net.Index
 
         public virtual void AddNumericUpdate(NumericDocValuesUpdate update, int docIDUpto)
         {
-            LinkedHashMap<Term, NumericDocValuesUpdate> fieldUpdates = null;
-            if (!numericUpdates.TryGetValue(update.field, out fieldUpdates))
+            if (!numericUpdates.TryGetValue(update.field, out LinkedDictionary<Term, NumericDocValuesUpdate> fieldUpdates))
             {
-                fieldUpdates = new LinkedHashMap<Term, NumericDocValuesUpdate>();
+                fieldUpdates = new LinkedDictionary<Term, NumericDocValuesUpdate>();
                 numericUpdates[update.field] = fieldUpdates;
                 bytesUsed.AddAndGet(BYTES_PER_NUMERIC_FIELD_ENTRY);
             }
 
-            NumericDocValuesUpdate current;
-            if (fieldUpdates.TryGetValue(update.term, out current) && current != null && docIDUpto < current.docIDUpto)
+            if (fieldUpdates.TryGetValue(update.term, out NumericDocValuesUpdate current) && current != null && docIDUpto < current.docIDUpto)
             {
                 // Only record the new number if it's greater than or equal to the current
                 // one. this is important because if multiple threads are replacing the
@@ -284,16 +281,14 @@ namespace Lucene.Net.Index
 
         public virtual void AddBinaryUpdate(BinaryDocValuesUpdate update, int docIDUpto)
         {
-            LinkedHashMap<Term, BinaryDocValuesUpdate> fieldUpdates;
-            if (!binaryUpdates.TryGetValue(update.field, out fieldUpdates))
+            if (!binaryUpdates.TryGetValue(update.field, out LinkedDictionary<Term, BinaryDocValuesUpdate> fieldUpdates))
             {
-                fieldUpdates = new LinkedHashMap<Term, BinaryDocValuesUpdate>();
+                fieldUpdates = new LinkedDictionary<Term, BinaryDocValuesUpdate>();
                 binaryUpdates[update.field] = fieldUpdates;
                 bytesUsed.AddAndGet(BYTES_PER_BINARY_FIELD_ENTRY);
             }
 
-            BinaryDocValuesUpdate current;
-            if (fieldUpdates.TryGetValue(update.term, out current) && current != null && docIDUpto < current.docIDUpto)
+            if (fieldUpdates.TryGetValue(update.term, out BinaryDocValuesUpdate current) && current != null && docIDUpto < current.docIDUpto)
             {
                 // Only record the new number if it's greater than or equal to the current
                 // one. this is important because if multiple threads are replacing the
@@ -324,10 +319,10 @@ namespace Lucene.Net.Index
             docIDs.Clear();
             numericUpdates.Clear();
             binaryUpdates.Clear();
-            numTermDeletes.Set(0);
-            numNumericUpdates.Set(0);
-            numBinaryUpdates.Set(0);
-            bytesUsed.Set(0);
+            numTermDeletes.Value = 0;
+            numNumericUpdates.Value = 0;
+            numBinaryUpdates.Value = 0;
+            bytesUsed.Value = 0;
         }
 
         internal virtual bool Any()

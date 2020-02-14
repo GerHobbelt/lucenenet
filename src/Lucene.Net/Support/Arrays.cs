@@ -1,46 +1,64 @@
-﻿using System;
+﻿using J2N.Collections;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+using System.Text;
 
 namespace Lucene.Net.Support
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
-    public static class Arrays
+    internal static class Arrays
     {
-        public static int GetHashCode<T>(T[] a)
+        /// <summary>
+        /// Compares the entire members of one array whith the other one.
+        /// </summary>
+        /// <param name="a">The array to be compared.</param>
+        /// <param name="b">The array to be compared with.</param>
+        /// <returns>Returns true if the two specified arrays of Objects are equal
+        /// to one another. The two arrays are considered equal if both arrays
+        /// contain the same number of elements, and all corresponding pairs of
+        /// elements in the two arrays are equal. Two objects e1 and e2 are
+        /// considered equal if (e1==null ? e2==null : e1.Equals(e2)). In other
+        /// words, the two arrays are equal if they contain the same elements in
+        /// the same order. Also, two array references are considered equal if
+        /// both are null.
+        /// <para/>
+        /// Note that if the type of <typeparam name="T"/> is a <see cref="IDictionary{TKey, TValue}"/>,
+        /// <see cref="IList{T}"/>, or <see cref="ISet{T}"/>, its values and any nested collection values
+        /// will be compared for equality as well.
+        /// </returns>
+        public static bool Equals<T>(T[] a, T[] b)
         {
-            if (a == null)
-                return 0;
+            return ArrayEqualityComparer<T>.OneDimensional.Equals(a, b);
+        }
 
-            int result = 1;
-            bool isValueType = typeof(T).GetTypeInfo().IsValueType;
-
-            foreach (var item in a)
-            {
-                result = 31 * result + (item == null ? 0 : 
-                    // LUCENENET specific: if this is a reference type, pass to
-                    // Collections.GetHashCode() in case we have an array of collections
-                    (isValueType ? item.GetHashCode() : Collections.GetHashCode(item)));
-            }
-
-            return result;
+        /// <summary>
+        /// Returns a hash code based on the contents of the given array. For any two
+        /// <typeparamref name="T"/> arrays <c>a</c> and <c>b</c>, if
+        /// <c>Arrays.Equals(b)</c> returns <c>true</c>, it means
+        /// that the return value of <c>Arrays.GetHashCode(a)</c> equals <c>Arrays.GetHashCode(b)</c>.
+        /// </summary>
+        /// <typeparam name="T">The array element type.</typeparam>
+        /// <param name="array">The array whose hash code to compute.</param>
+        /// <returns>The hash code for <paramref name="array"/>.</returns>
+        public static int GetHashCode<T>(T[] array)
+        {
+            return ArrayEqualityComparer<T>.OneDimensional.GetHashCode(array);
         }
 
         /// <summary>
@@ -93,56 +111,6 @@ namespace Lucene.Net.Support
             }
         }
 
-        /// <summary>
-        /// Compares the entire members of one array whith the other one.
-        /// </summary>
-        /// <param name="a">The array to be compared.</param>
-        /// <param name="b">The array to be compared with.</param>
-        /// <returns>Returns true if the two specified arrays of Objects are equal
-        /// to one another. The two arrays are considered equal if both arrays
-        /// contain the same number of elements, and all corresponding pairs of
-        /// elements in the two arrays are equal. Two objects e1 and e2 are
-        /// considered equal if (e1==null ? e2==null : e1.Equals(e2)). In other
-        /// words, the two arrays are equal if they contain the same elements in
-        /// the same order. Also, two array references are considered equal if
-        /// both are null.
-        /// <para/>
-        /// Note that if the type of <typeparam name="T"/> is a <see cref="IDictionary{TKey, TValue}"/>,
-        /// <see cref="IList{T}"/>, or <see cref="ISet{T}"/>, its values and any nested collection values
-        /// will be compared for equality as well.
-        /// </returns>
-        public static bool Equals<T>(T[] a, T[] b)
-        {
-            if (object.ReferenceEquals(a, b))
-            {
-                return true;
-            }
-            bool isValueType = typeof(T).GetTypeInfo().IsValueType;
-            if (!isValueType && a == null)
-            {
-                return b == null;
-            }
-
-            int length = a.Length;
-
-            if (b.Length != length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < length; i++)
-            {
-                T o1 = a[i];
-                T o2 = b[i];
-                if (!(isValueType ? o1.Equals(o2) : (o1 == null ? o2 == null : Collections.Equals(o1, o2))))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         public static T[] CopyOf<T>(T[] original, int newLength)
         {
             T[] newArray = new T[newLength];
@@ -168,25 +136,31 @@ namespace Lucene.Net.Support
             return newArray;
         }
 
-        public static string ToString(IEnumerable<string> values)
+        /// <summary>
+        /// Creates a <see cref="string"/> representation of the array passed.
+        /// The result is surrounded by brackets <c>"[]"</c>, each
+        /// element is converted to a <see cref="string"/> via the
+        /// <see cref="J2N.Text.StringFormatter.InvariantCulture"/> and separated by <c>", "</c>. If
+        /// the array is <c>null</c>, then <c>"null"</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type of array element.</typeparam>
+        /// <param name="array"></param>
+        public static string ToString<T>(T[] array)
         {
-            if (values == null)
-                return string.Empty;
-
-            return string.Join(", ", values);
-        }
-
-        public static string ToString<T>(IEnumerable<T> values)
-        {
-            if (values == null)
-                return string.Empty;
-
-            return string.Join(", ", values);
-        }
-
-        public static List<T> AsList<T>(params T[] objects)
-        {
-            return objects.ToList();
+            if (array == null)
+                return "null"; //$NON-NLS-1$
+            if (array.Length == 0)
+                return "[]"; //$NON-NLS-1$
+            StringBuilder sb = new StringBuilder(2 + array.Length * 4);
+            sb.Append('[');
+            sb.AppendFormat(J2N.Text.StringFormatter.InvariantCulture, "{0}", array[0]);
+            for (int i = 1; i < array.Length; i++)
+            {
+                sb.Append(", "); //$NON-NLS-1$
+                sb.AppendFormat(J2N.Text.StringFormatter.InvariantCulture, "{0}", array[i]);
+            }
+            sb.Append(']');
+            return sb.ToString();
         }
     }
 }

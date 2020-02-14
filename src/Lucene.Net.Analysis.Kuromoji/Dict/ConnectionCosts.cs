@@ -66,19 +66,16 @@ namespace Lucene.Net.Analysis.Ja.Dict
             return costs[backwardId][forwardId];
         }
 
-        public static ConnectionCosts GetInstance()
-        {
-            return SingletonHolder.INSTANCE;
-        }
+        public static ConnectionCosts Instance => SingletonHolder.INSTANCE;
 
         private class SingletonHolder
         {
-            internal static readonly ConnectionCosts INSTANCE;
-            static SingletonHolder()
+            internal static readonly ConnectionCosts INSTANCE = LoadInstance();
+            private static ConnectionCosts LoadInstance() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    INSTANCE = new ConnectionCosts();
+                    return new ConnectionCosts();
                 }
                 catch (IOException ioe)
                 {

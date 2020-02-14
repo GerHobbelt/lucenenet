@@ -294,7 +294,6 @@ namespace Lucene.Net.Index
             internal DeleteSlice(Node currentTail)
             {
                 Debug.Assert(currentTail != null);
-                Debug.Assert(currentTail.next == null);
                 /*
                  * Initially this is a 0 length slice pointing to the 'current' tail of
                  * the queue. Once we update the slice we only need to assign the tail and
@@ -351,10 +350,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        public int NumGlobalTermDeletes
-        {
-            get { return globalBufferedUpdates.numTermDeletes.Get(); }
-        }
+        public int NumGlobalTermDeletes => globalBufferedUpdates.numTermDeletes;
 
         internal void Clear()
         {
@@ -524,10 +520,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        public long BytesUsed
-        {
-            get { return globalBufferedUpdates.bytesUsed.Get(); }
-        }
+        public long BytesUsed => globalBufferedUpdates.bytesUsed;
 
         public override string ToString()
         {

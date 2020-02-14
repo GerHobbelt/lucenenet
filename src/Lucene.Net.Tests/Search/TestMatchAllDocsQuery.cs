@@ -16,7 +16,7 @@
  */
 
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 
 namespace Lucene.Net.Search
@@ -45,7 +45,7 @@ namespace Lucene.Net.Search
         public override void SetUp()
         {
             base.SetUp();
-            Analyzer = new MockAnalyzer(Random());
+            Analyzer = new MockAnalyzer(Random);
         }
 
         [Test]

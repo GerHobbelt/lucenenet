@@ -1,15 +1,15 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -76,20 +76,20 @@ namespace Lucene.Net.Index
         public virtual void Test()
         {
             // update variables
-            int commitPercent = Random().Next(20);
-            int softCommitPercent = Random().Next(100); // what percent of the commits are soft
-            int deletePercent = Random().Next(50);
-            int deleteByQueryPercent = Random().Next(25);
+            int commitPercent = Random.Next(20);
+            int softCommitPercent = Random.Next(100); // what percent of the commits are soft
+            int deletePercent = Random.Next(50);
+            int deleteByQueryPercent = Random.Next(25);
             int ndocs = AtLeast(50);
-            int nWriteThreads = TestUtil.NextInt(Random(), 1, TEST_NIGHTLY ? 10 : 5);
-            int maxConcurrentCommits = TestUtil.NextInt(Random(), 1, TEST_NIGHTLY ? 10 : 5); // number of committers at a time... needed if we want to avoid commit errors due to exceeding the max
+            int nWriteThreads = TestUtil.NextInt32(Random, 1, TEST_NIGHTLY ? 10 : 5);
+            int maxConcurrentCommits = TestUtil.NextInt32(Random, 1, TEST_NIGHTLY ? 10 : 5); // number of committers at a time... needed if we want to avoid commit errors due to exceeding the max
 
-            bool tombstones = Random().NextBoolean();
+            bool tombstones = Random.NextBoolean();
 
             // query variables
             AtomicInt64 operations = new AtomicInt64(AtLeast(10000)); // number of query operations to perform in total
 
-            int nReadThreads = TestUtil.NextInt(Random(), 1, TEST_NIGHTLY ? 10 : 5);
+            int nReadThreads = TestUtil.NextInt32(Random, 1, TEST_NIGHTLY ? 10 : 5);
             InitModel(ndocs);
 
             FieldType storedOnlyType = new FieldType();
@@ -113,35 +113,35 @@ namespace Lucene.Net.Index
 
             AtomicInt32 numCommitting = new AtomicInt32();
 
-            IList<ThreadClass> threads = new List<ThreadClass>();
+            IList<ThreadJob> threads = new List<ThreadJob>();
 
             Directory dir = NewDirectory();
 
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             writer.DoRandomForceMergeAssert = false;
             writer.Commit();
             Reader = DirectoryReader.Open(dir);
 
             for (int i = 0; i < nWriteThreads; i++)
             {
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper(this, "WRITER" + i, commitPercent, softCommitPercent, deletePercent, deleteByQueryPercent, ndocs, maxConcurrentCommits, tombstones, operations, storedOnlyType, numCommitting, writer);
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper(this, "WRITER" + i, commitPercent, softCommitPercent, deletePercent, deleteByQueryPercent, ndocs, maxConcurrentCommits, tombstones, operations, storedOnlyType, numCommitting, writer);
 
                 threads.Add(thread);
             }
 
             for (int i = 0; i < nReadThreads; i++)
             {
-                ThreadClass thread = new ThreadAnonymousInnerClassHelper2(this, "READER" + i, ndocs, tombstones, operations);
+                ThreadJob thread = new ThreadAnonymousInnerClassHelper2(this, "READER" + i, ndocs, tombstones, operations);
 
                 threads.Add(thread);
             }
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Start();
             }
 
-            foreach (ThreadClass thread in threads)
+            foreach (ThreadJob thread in threads)
             {
                 thread.Join();
             }
@@ -155,7 +155,7 @@ namespace Lucene.Net.Index
             dir.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestStressNRT OuterInstance;
 
@@ -186,7 +186,7 @@ namespace Lucene.Net.Index
                 this.StoredOnlyType = storedOnlyType;
                 this.NumCommitting = numCommitting;
                 this.Writer = writer;
-                rand = new Random(Random().Next());
+                rand = new Random(Random.Next());
             }
 
             internal Random rand;
@@ -195,7 +195,7 @@ namespace Lucene.Net.Index
             {
                 try
                 {
-                    while (Operations.Get() > 0)
+                    while (Operations > 0)
                     {
                         int oper = rand.Next(100);
 
@@ -219,7 +219,7 @@ namespace Lucene.Net.Index
                                 if (rand.Next(100) < SoftCommitPercent)
                                 {
                                     // assertU(h.Commit("softCommit","true"));
-                                    if (Random().NextBoolean())
+                                    if (Random.NextBoolean())
                                     {
                                         if (VERBOSE)
                                         {
@@ -233,7 +233,7 @@ namespace Lucene.Net.Index
                                         {
                                             Console.WriteLine("TEST: " + Thread.CurrentThread.Name + ": reopen reader=" + oldReader + " version=" + version);
                                         }
-                                        newReader = DirectoryReader.OpenIfChanged(oldReader, Writer.w, true);
+                                        newReader = DirectoryReader.OpenIfChanged(oldReader, Writer.IndexWriter, true);
                                     }
                                 }
                                 else
@@ -319,7 +319,7 @@ namespace Lucene.Net.Index
 
                             // set the lastId before we actually change it sometimes to try and
                             // uncover more race conditions between writing and reading
-                            bool before = Random().NextBoolean();
+                            bool before = Random.NextBoolean();
                             if (before)
                             {
                                 OuterInstance.LastId = id;
@@ -340,8 +340,8 @@ namespace Lucene.Net.Index
                                     if (Tombstones)
                                     {
                                         Document d = new Document();
-                                        d.Add(OuterInstance.NewStringField("id", "-" + Convert.ToString(id), Documents.Field.Store.YES));
-                                        d.Add(OuterInstance.NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
+                                        d.Add(NewStringField("id", "-" + Convert.ToString(id), Documents.Field.Store.YES));
+                                        d.Add(NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
                                         Writer.UpdateDocument(new Term("id", "-" + Convert.ToString(id)), d);
                                     }
 
@@ -360,8 +360,8 @@ namespace Lucene.Net.Index
                                     if (Tombstones)
                                     {
                                         Document d = new Document();
-                                        d.Add(OuterInstance.NewStringField("id", "-" + Convert.ToString(id), Documents.Field.Store.YES));
-                                        d.Add(OuterInstance.NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
+                                        d.Add(NewStringField("id", "-" + Convert.ToString(id), Documents.Field.Store.YES));
+                                        d.Add(NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
                                         Writer.UpdateDocument(new Term("id", "-" + Convert.ToString(id)), d);
                                     }
 
@@ -376,8 +376,8 @@ namespace Lucene.Net.Index
                                 {
                                     // assertU(adoc("id",Integer.toString(id), field, Long.toString(nextVal)));
                                     Document d = new Document();
-                                    d.Add(OuterInstance.NewStringField("id", Convert.ToString(id), Documents.Field.Store.YES));
-                                    d.Add(OuterInstance.NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
+                                    d.Add(NewStringField("id", Convert.ToString(id), Documents.Field.Store.YES));
+                                    d.Add(NewField(OuterInstance.Field, Convert.ToString(nextVal), StoredOnlyType));
                                     if (VERBOSE)
                                     {
                                         Console.WriteLine("TEST: " + Thread.CurrentThread.Name + ": u id:" + id + " val=" + nextVal);
@@ -408,7 +408,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper2 : ThreadClass
+        private class ThreadAnonymousInnerClassHelper2 : ThreadJob
         {
             private readonly TestStressNRT OuterInstance;
 
@@ -423,7 +423,7 @@ namespace Lucene.Net.Index
                 this.Ndocs = ndocs;
                 this.Tombstones = tombstones;
                 this.Operations = operations;
-                rand = new Random(Random().Next());
+                rand = new Random(Random.Next());
             }
 
             internal Random rand;
@@ -468,7 +468,11 @@ namespace Lucene.Net.Index
                         }
                         else
                         {
-                            searcher = OuterInstance.NewSearcher(r);
+                            searcher = NewSearcher(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                                OuterInstance,
+#endif
+                                r);
                             lastReader = r;
                             lastSearcher = searcher;
                         }
@@ -522,7 +526,7 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception e)
                 {
-                    Operations.Set((int)-1L);
+                    Operations.Value = ((int)-1L);
                     Console.WriteLine(Thread.CurrentThread.Name + ": FAILED: unexpected exception");
                     Console.WriteLine(e.StackTrace);
                     throw new Exception(e.Message, e);

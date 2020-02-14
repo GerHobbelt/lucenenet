@@ -61,19 +61,19 @@ namespace Lucene.Net.Analysis.El
 
         private class DefaultSetHolder
         {
-            internal static readonly CharArraySet DEFAULT_SET;
+            internal static readonly CharArraySet DEFAULT_SET = LoadDefaultSet();
 
-            static DefaultSetHolder()
+            private static CharArraySet LoadDefaultSet() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    DEFAULT_SET = LoadStopwordSet(false, typeof(GreekAnalyzer), DEFAULT_STOPWORD_FILE, "#");
+                    return LoadStopwordSet(false, typeof(GreekAnalyzer), DEFAULT_STOPWORD_FILE, "#");
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
                     // default set should always be present as it is part of the
                     // distribution (JAR)
-                    throw new Exception("Unable to load default stopword set");
+                    throw new Exception("Unable to load default stopword set", ex);
                 }
             }
         }
@@ -112,7 +112,7 @@ namespace Lucene.Net.Analysis.El
         ///         built from a <see cref="StandardTokenizer"/> filtered with
         ///         <see cref="GreekLowerCaseFilter"/>, <see cref="StandardFilter"/>,
         ///         <see cref="StopFilter"/>, and <see cref="GreekStemFilter"/> </returns>
-        protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+        protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
         {
             Tokenizer source = new StandardTokenizer(m_matchVersion, reader);
             TokenStream result = new GreekLowerCaseFilter(m_matchVersion, source);

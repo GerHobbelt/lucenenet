@@ -1,9 +1,11 @@
 ﻿// commons-codec version compatibility level: 1.10
+using J2N;
+using J2N.Text;
 using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -177,15 +179,9 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             }
 
             // LUCENENET specific - need read access to pattern
-            public string Pattern
-            {
-                get { return pattern; }
-            }
+            public string Pattern => pattern;
 
-            public int PatternLength
-            {
-                get { return pattern.Length; }
-            }
+            public int PatternLength => pattern.Length;
 
             public string[] GetReplacements(string context, bool atStart)
             {
@@ -221,18 +217,18 @@ namespace Lucene.Net.Analysis.Phonetic.Language
             }
         }
 
-        private static readonly string COMMENT = "//";
-        private static readonly string DOUBLE_QUOTE = "\"";
+        private const string COMMENT = "//";
+        private const string DOUBLE_QUOTE = "\"";
 
-        private static readonly string MULTILINE_COMMENT_END = "*/";
+        private const string MULTILINE_COMMENT_END = "*/";
 
-        private static readonly string MULTILINE_COMMENT_START = "/*";
+        private const string MULTILINE_COMMENT_START = "/*";
 
         /// <summary>The resource file containing the replacement and folding rules</summary>
-        private static readonly string RESOURCE_FILE = "dmrules.txt";
+        private const string RESOURCE_FILE = "dmrules.txt";
 
         /// <summary>The code length of a DM soundex value.</summary>
-        private static readonly int MAX_LENGTH = 6;
+        private const int MAX_LENGTH = 6;
 
         /// <summary>Transformation rules indexed by the first character of their pattern.</summary>
         private static readonly IDictionary<char, IList<Rule>> RULES = new Dictionary<char, IList<Rule>>();
@@ -252,7 +248,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language
 
         static DaitchMokotoffSoundex()
         {
-            Stream rulesIS = typeof(DaitchMokotoffSoundex).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(DaitchMokotoffSoundex), RESOURCE_FILE);
+            Stream rulesIS = typeof(DaitchMokotoffSoundex).FindAndGetManifestResourceStream(RESOURCE_FILE);
             if (rulesIS == null)
             {
                 throw new ArgumentException("Unable to load resource: " + RESOURCE_FILE);
@@ -432,9 +428,9 @@ namespace Lucene.Net.Analysis.Phonetic.Language
                 }
 
                 ch = char.ToLowerInvariant(ch);
-                if (folding && FOLDINGS.ContainsKey(ch))
+                if (folding && FOLDINGS.TryGetValue(ch, out char newChar))
                 {
-                    ch = FOLDINGS[ch];
+                    ch = newChar;
                 }
                 sb.Append(ch);
             }

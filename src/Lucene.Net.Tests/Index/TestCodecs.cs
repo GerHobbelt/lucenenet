@@ -1,14 +1,16 @@
+using J2N.Text;
+using J2N.Threading;
 using Lucene.Net.Codecs.MockSep;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -289,11 +291,11 @@ namespace Lucene.Net.Index
 
         internal virtual TermData[] MakeRandomTerms(bool omitTF, bool storePayloads)
         {
-            int numTerms = 1 + Random().Next(NUM_TERMS_RAND);
+            int numTerms = 1 + Random.Next(NUM_TERMS_RAND);
             //final int numTerms = 2;
             TermData[] terms = new TermData[numTerms];
 
-            HashSet<string> termsSeen = new HashSet<string>();
+            ISet<string> termsSeen = new JCG.HashSet<string>();
 
             for (int i = 0; i < numTerms; i++)
             {
@@ -301,7 +303,7 @@ namespace Lucene.Net.Index
                 string text2;
                 while (true)
                 {
-                    text2 = TestUtil.RandomUnicodeString(Random());
+                    text2 = TestUtil.RandomUnicodeString(Random);
                     if (!termsSeen.Contains(text2) && !text2.EndsWith(".", StringComparison.Ordinal))
                     {
                         termsSeen.Add(text2);
@@ -309,7 +311,7 @@ namespace Lucene.Net.Index
                     }
                 }
 
-                int docFreq = 1 + Random().Next(DOC_FREQ_RAND);
+                int docFreq = 1 + Random.Next(DOC_FREQ_RAND);
                 int[] docs = new int[docFreq];
                 PositionData[][] positions;
 
@@ -325,25 +327,25 @@ namespace Lucene.Net.Index
                 int docID = 0;
                 for (int j = 0; j < docFreq; j++)
                 {
-                    docID += TestUtil.NextInt(Random(), 1, 10);
+                    docID += TestUtil.NextInt32(Random, 1, 10);
                     docs[j] = docID;
 
                     if (!omitTF)
                     {
-                        int termFreq = 1 + Random().Next(TERM_DOC_FREQ_RAND);
+                        int termFreq = 1 + Random.Next(TERM_DOC_FREQ_RAND);
                         positions[j] = new PositionData[termFreq];
                         int position = 0;
                         for (int k = 0; k < termFreq; k++)
                         {
-                            position += TestUtil.NextInt(Random(), 1, 10);
+                            position += TestUtil.NextInt32(Random, 1, 10);
 
                             BytesRef payload;
-                            if (storePayloads && Random().Next(4) == 0)
+                            if (storePayloads && Random.Next(4) == 0)
                             {
-                                var bytes = new byte[1 + Random().Next(5)];
+                                var bytes = new byte[1 + Random.Next(5)];
                                 for (int l = 0; l < bytes.Length; l++)
                                 {
-                                    bytes[l] = (byte)Random().Next(255);
+                                    bytes[l] = (byte)Random.Next(255);
                                 }
                                 payload = new BytesRef(bytes);
                             }
@@ -388,7 +390,7 @@ namespace Lucene.Net.Index
                 SegmentInfo si = new SegmentInfo(dir, Constants.LUCENE_MAIN_VERSION, SEGMENT, 10000, false, codec, null);
 
                 // LUCENENET specific - BUG: we must wrap this in a using block in case anything in the below loop throws
-                using (FieldsProducer reader = codec.PostingsFormat.FieldsProducer(new SegmentReadState(dir, si, fieldInfos, NewIOContext(Random()), DirectoryReader.DEFAULT_TERMS_INDEX_DIVISOR)))
+                using (FieldsProducer reader = codec.PostingsFormat.FieldsProducer(new SegmentReadState(dir, si, fieldInfos, NewIOContext(Random), DirectoryReader.DEFAULT_TERMS_INDEX_DIVISOR)))
                 {
                     IEnumerator<string> fieldsEnum = reader.GetEnumerator();
                     fieldsEnum.MoveNext();
@@ -411,7 +413,7 @@ namespace Lucene.Net.Index
                         // internal state:
                         for (int iter = 0; iter < 2; iter++)
                         {
-                            docsEnum = TestUtil.Docs(Random(), termsEnum, null, docsEnum, DocsFlags.NONE);
+                            docsEnum = TestUtil.Docs(Random, termsEnum, null, docsEnum, DocsFlags.NONE);
                             Assert.AreEqual(terms[i].Docs[0], docsEnum.NextDoc());
                             Assert.AreEqual(DocIdSetIterator.NO_MORE_DOCS, docsEnum.NextDoc());
                         }
@@ -461,14 +463,14 @@ namespace Lucene.Net.Index
                 }
 
                 // LUCENENET specific - BUG: we must wrap this in a using block in case anything in the below loop throws
-                using (FieldsProducer terms = codec.PostingsFormat.FieldsProducer(new SegmentReadState(dir, si, fieldInfos, NewIOContext(Random()), DirectoryReader.DEFAULT_TERMS_INDEX_DIVISOR)))
+                using (FieldsProducer terms = codec.PostingsFormat.FieldsProducer(new SegmentReadState(dir, si, fieldInfos, NewIOContext(Random), DirectoryReader.DEFAULT_TERMS_INDEX_DIVISOR)))
                 {
 
                     Verify[] threads = new Verify[NUM_TEST_THREADS - 1];
                     for (int i = 0; i < NUM_TEST_THREADS - 1; i++)
                     {
                         threads[i] = new Verify(this, si, fields, terms);
-                        threads[i].SetDaemon(true);
+                        threads[i].IsBackground = (true);
                         threads[i].Start();
                     }
 
@@ -488,7 +490,7 @@ namespace Lucene.Net.Index
         public virtual void TestSepPositionAfterMerge()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig config = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig config = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             config.SetMergePolicy(NewLogMergePolicy());
             config.SetCodec(TestUtil.AlwaysPostingsFormat(new MockSepPostingsFormat()));
             IndexWriter writer = new IndexWriter(dir, config);
@@ -549,7 +551,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private class Verify : ThreadClass
+        private class Verify : ThreadJob
         {
             private readonly TestCodecs OuterInstance;
 
@@ -605,7 +607,7 @@ namespace Lucene.Net.Index
                     if (positions[i].Payload != null)
                     {
                         Assert.IsNotNull(posEnum.GetPayload());
-                        if (Random().Next(3) < 2)
+                        if (Random.Next(3) < 2)
                         {
                             // Verify the payload bytes
                             BytesRef otherPayload = posEnum.GetPayload();
@@ -623,7 +625,7 @@ namespace Lucene.Net.Index
             {
                 for (int iter = 0; iter < NUM_TEST_ITER; iter++)
                 {
-                    FieldData field = Fields[Random().Next(Fields.Length)];
+                    FieldData field = Fields[Random.Next(Fields.Length)];
                     TermsEnum termsEnum = TermsDict.GetTerms(field.FieldInfo.Name).GetIterator(null);
 #pragma warning disable 612, 618
                     if (Si.Codec is Lucene3xCodec)
@@ -648,13 +650,13 @@ namespace Lucene.Net.Index
                     Assert.AreEqual(upto, field.Terms.Length);
 
                     // Test random seek:
-                    TermData term2 = field.Terms[Random().Next(field.Terms.Length)];
+                    TermData term2 = field.Terms[Random.Next(field.Terms.Length)];
                     TermsEnum.SeekStatus status = termsEnum.SeekCeil(new BytesRef(term2.Text2));
                     Assert.AreEqual(status, TermsEnum.SeekStatus.FOUND);
                     Assert.AreEqual(term2.Docs.Length, termsEnum.DocFreq);
                     if (field.OmitTF)
                     {
-                        this.VerifyDocs(term2.Docs, term2.Positions, TestUtil.Docs(Random(), termsEnum, null, null, DocsFlags.NONE), false);
+                        this.VerifyDocs(term2.Docs, term2.Positions, TestUtil.Docs(Random, termsEnum, null, null, DocsFlags.NONE), false);
                     }
                     else
                     {
@@ -662,7 +664,7 @@ namespace Lucene.Net.Index
                     }
 
                     // Test random seek by ord:
-                    int idx = Random().Next(field.Terms.Length);
+                    int idx = Random.Next(field.Terms.Length);
                     term2 = field.Terms[idx];
                     bool success = false;
                     try
@@ -683,7 +685,7 @@ namespace Lucene.Net.Index
                         Assert.AreEqual(term2.Docs.Length, termsEnum.DocFreq);
                         if (field.OmitTF)
                         {
-                            this.VerifyDocs(term2.Docs, term2.Positions, TestUtil.Docs(Random(), termsEnum, null, null, DocsFlags.NONE), false);
+                            this.VerifyDocs(term2.Docs, term2.Positions, TestUtil.Docs(Random, termsEnum, null, null, DocsFlags.NONE), false);
                         }
                         else
                         {
@@ -698,7 +700,7 @@ namespace Lucene.Net.Index
                     }
                     for (int i = 0; i < 100; i++)
                     {
-                        string text2 = TestUtil.RandomUnicodeString(Random()) + ".";
+                        string text2 = TestUtil.RandomUnicodeString(Random) + ".";
                         status = termsEnum.SeekCeil(new BytesRef(text2));
                         Assert.IsTrue(status == TermsEnum.SeekStatus.NOT_FOUND || status == TermsEnum.SeekStatus.END);
                     }
@@ -744,7 +746,7 @@ namespace Lucene.Net.Index
                     do
                     {
                         term2 = field.Terms[upto];
-                        if (Random().Next(3) == 1)
+                        if (Random.Next(3) == 1)
                         {
                             DocsEnum docs;
                             DocsEnum docsAndFreqs;
@@ -758,14 +760,14 @@ namespace Lucene.Net.Index
                                 }
                                 else
                                 {
-                                    docs = docsAndFreqs = TestUtil.Docs(Random(), termsEnum, null, null, DocsFlags.FREQS);
+                                    docs = docsAndFreqs = TestUtil.Docs(Random, termsEnum, null, null, DocsFlags.FREQS);
                                 }
                             }
                             else
                             {
                                 postings = null;
                                 docsAndFreqs = null;
-                                docs = TestUtil.Docs(Random(), termsEnum, null, null, DocsFlags.NONE);
+                                docs = TestUtil.Docs(Random, termsEnum, null, null, DocsFlags.NONE);
                             }
                             Assert.IsNotNull(docs);
                             int upto2 = -1;
@@ -775,11 +777,11 @@ namespace Lucene.Net.Index
                                 // Maybe skip:
                                 int left = term2.Docs.Length - upto2;
                                 int doc;
-                                if (Random().Next(3) == 1 && left >= 1)
+                                if (Random.Next(3) == 1 && left >= 1)
                                 {
-                                    int inc = 1 + Random().Next(left - 1);
+                                    int inc = 1 + Random.Next(left - 1);
                                     upto2 += inc;
-                                    if (Random().Next(2) == 1)
+                                    if (Random.Next(2) == 1)
                                     {
                                         doc = docs.Advance(term2.Docs[upto2]);
                                         Assert.AreEqual(term2.Docs[upto2], doc);
@@ -815,7 +817,7 @@ namespace Lucene.Net.Index
                                 if (!field.OmitTF)
                                 {
                                     Assert.AreEqual(term2.Positions[upto2].Length, postings.Freq);
-                                    if (Random().Next(2) == 1)
+                                    if (Random.Next(2) == 1)
                                     {
                                         this.VerifyPositions(term2.Positions[upto2], postings);
                                     }
@@ -837,10 +839,10 @@ namespace Lucene.Net.Index
 
         private void Write(FieldInfos fieldInfos, Directory dir, FieldData[] fields, bool allowPreFlex)
         {
-            int termIndexInterval = TestUtil.NextInt(Random(), 13, 27);
+            int termIndexInterval = TestUtil.NextInt32(Random, 13, 27);
             Codec codec = Codec.Default;
             SegmentInfo si = new SegmentInfo(dir, Constants.LUCENE_MAIN_VERSION, SEGMENT, 10000, false, codec, null);
-            SegmentWriteState state = new SegmentWriteState(InfoStream.Default, dir, si, fieldInfos, termIndexInterval, null, NewIOContext(Random()));
+            SegmentWriteState state = new SegmentWriteState(InfoStream.Default, dir, si, fieldInfos, termIndexInterval, null, NewIOContext(Random));
 
             // LUCENENET specific - BUG: we must wrap this in a using block in case anything in the below loop throws
             using (FieldsConsumer consumer = codec.PostingsFormat.FieldsConsumer(state))
@@ -867,7 +869,7 @@ namespace Lucene.Net.Index
             // returns 1 in docsEnum.Freq()
             using (Directory dir = NewDirectory())
             {
-                Random random = Random();
+                Random random = Random;
                 using (IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(random))))
                 {
                     // we don't need many documents to assert this, but don't use one document either
@@ -902,8 +904,8 @@ namespace Lucene.Net.Index
             Codec[] oldCodecs = new Codec[] { new Lucene40RWCodec(), new Lucene41RWCodec(), new Lucene42RWCodec() };
             using (Directory dir = NewDirectory())
             {
-                IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
-                conf.SetCodec(oldCodecs[Random().Next(oldCodecs.Length)]);
+                IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
+                conf.SetCodec(oldCodecs[Random.Next(oldCodecs.Length)]);
                 IndexWriter writer = new IndexWriter(dir, conf);
 
                 Document doc = new Document();
@@ -911,7 +913,7 @@ namespace Lucene.Net.Index
                 doc.Add(new NumericDocValuesField("n", 18L));
                 writer.AddDocument(doc);
 
-                OLD_FORMAT_IMPERSONATION_IS_ACTIVE = false;
+                OldFormatImpersonationIsActive = false;
                 try
                 {
                     writer.Dispose();
@@ -925,7 +927,7 @@ namespace Lucene.Net.Index
                 }
                 finally
                 {
-                    OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
+                    OldFormatImpersonationIsActive = true;
                 }
 
             }

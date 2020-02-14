@@ -1,6 +1,5 @@
+using J2N.Text;
 using Lucene.Net.Attributes;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -27,6 +26,9 @@ namespace Lucene.Net.Util
     [TestFixture]
     public class TestNumericUtils : LuceneTestCase
     {
+
+#if FEATURE_UTIL_TESTS
+
         [Test]
         public virtual void TestLongConversionAndOrdering()
         {
@@ -187,7 +189,17 @@ namespace Lucene.Net.Util
             }
         }
 
-        public static readonly double[] DOUBLE_NANs = new double[] { double.NaN, BitConverter.Int64BitsToDouble(0x7ff0000000000001L), BitConverter.Int64BitsToDouble(0x7fffffffffffffffL), BitConverter.Int64BitsToDouble(unchecked((long)0xfff0000000000001L)), BitConverter.Int64BitsToDouble(unchecked((long)0xffffffffffffffffL)) };
+#endif
+
+        public static readonly double[] DOUBLE_NANs = new double[] {
+            double.NaN,
+            J2N.BitConversion.Int64BitsToDouble(0x7ff0000000000001L),
+            J2N.BitConversion.Int64BitsToDouble(0x7fffffffffffffffL),
+            J2N.BitConversion.Int64BitsToDouble(unchecked((long)0xfff0000000000001L)),
+            J2N.BitConversion.Int64BitsToDouble(unchecked((long)0xffffffffffffffffL))
+        };
+
+#if FEATURE_UTIL_TESTS
 
         [Test]
         public virtual void TestSortableDoubleNaN()
@@ -220,8 +232,17 @@ namespace Lucene.Net.Util
                 Assert.IsTrue(intVals[i - 1] < intVals[i], "check sort order");
             }
         }
+#endif
 
-        public static readonly float[] FLOAT_NANs = new float[] { float.NaN, Number.Int32BitsToSingle(0x7f800001), Number.Int32BitsToSingle(0x7fffffff), Number.Int32BitsToSingle(unchecked((int)0xff800001)), Number.Int32BitsToSingle(unchecked((int)0xffffffff)) };
+        public static readonly float[] FLOAT_NANs = new float[] {
+            float.NaN,
+            J2N.BitConversion.Int32BitsToSingle(0x7f800001),
+            J2N.BitConversion.Int32BitsToSingle(0x7fffffff),
+            J2N.BitConversion.Int32BitsToSingle(unchecked((int)0xff800001)),
+            J2N.BitConversion.Int32BitsToSingle(unchecked((int)0xffffffff))
+        };
+
+#if FEATURE_UTIL_TESTS
 
         [Test]
         public virtual void TestSortableFloatNaN()
@@ -316,26 +337,26 @@ namespace Lucene.Net.Util
         public virtual void TestLongExtremeValues()
         {
             // upper end extremes
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 1, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 2, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 4, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 6, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 8, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 64, true, Arrays.AsList(unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL)), Arrays.AsList(0));
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 1, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 2, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 4, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 6, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 8, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
+            AssertLongRangeSplit(long.MaxValue, long.MaxValue, 64, true, new long[] { unchecked((long)0xffffffffffffffffL), unchecked((long)0xffffffffffffffffL) }, new int[] { 0 });
 
-            AssertLongRangeSplit(long.MaxValue - 0xfL, long.MaxValue, 4, true, Arrays.AsList(0xfffffffffffffffL, 0xfffffffffffffffL), Arrays.AsList(4));
-            AssertLongRangeSplit(long.MaxValue - 0x10L, long.MaxValue, 4, true, Arrays.AsList(unchecked((long)0xffffffffffffffefL), unchecked((long)0xffffffffffffffefL), 0xfffffffffffffffL, 0xfffffffffffffffL), Arrays.AsList(0, 4));
+            AssertLongRangeSplit(long.MaxValue - 0xfL, long.MaxValue, 4, true, new long[] { 0xfffffffffffffffL, 0xfffffffffffffffL }, new int[] { 4 });
+            AssertLongRangeSplit(long.MaxValue - 0x10L, long.MaxValue, 4, true, new long[] { unchecked((long)0xffffffffffffffefL), unchecked((long)0xffffffffffffffefL), 0xfffffffffffffffL, 0xfffffffffffffffL }, new int[] { 0, 4 });
 
             // lower end extremes
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 1, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 2, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 4, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 6, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 8, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
-            AssertLongRangeSplit(long.MinValue, long.MinValue, 64, true, Arrays.AsList(0x0000000000000000L, 0x0000000000000000L), Arrays.AsList(0));
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 1, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 2, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 4, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 6, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 8, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue, 64, true, new long[] { 0x0000000000000000L, 0x0000000000000000L }, new int[] { 0 });
 
-            AssertLongRangeSplit(long.MinValue, long.MinValue + 0xfL, 4, true, Arrays.AsList(0x000000000000000L, 0x000000000000000L), Arrays.AsList(4));
-            AssertLongRangeSplit(long.MinValue, long.MinValue + 0x10L, 4, true, Arrays.AsList(0x0000000000000010L, 0x0000000000000010L, 0x000000000000000L, 0x000000000000000L), Arrays.AsList(0, 4));
+            AssertLongRangeSplit(long.MinValue, long.MinValue + 0xfL, 4, true, new long[] { 0x000000000000000L, 0x000000000000000L }, new int[] { 4 });
+            AssertLongRangeSplit(long.MinValue, long.MinValue + 0x10L, 4, true, new long[] { 0x0000000000000010L, 0x0000000000000010L, 0x000000000000000L, 0x000000000000000L }, new int[] { 0, 4 });
         }
 
         [Test, LongRunningTest]
@@ -344,7 +365,7 @@ namespace Lucene.Net.Util
             long num = (long)AtLeast(10);
             for (long i = 0; i < num; i++)
             {
-                ExecuteOneRandomSplit(Random());
+                ExecuteOneRandomSplit(Random);
             }
         }
 
@@ -373,7 +394,7 @@ namespace Lucene.Net.Util
                     break;
 
                 default:
-                    val = random.NextLong();
+                    val = random.NextInt64();
                     break;
             }
 
@@ -510,32 +531,33 @@ namespace Lucene.Net.Util
         public virtual void TestSplitIntRange()
         {
             // a hard-coded "standard" range
-            AssertIntRangeSplit(-5000, 9500, 4, true, Arrays.AsList(0x7fffec78, 0x7fffec7f, unchecked((int)0x80002510), unchecked((int)0x8000251c), 0x7fffec8, 0x7fffecf, 0x8000250, 0x8000250, 0x7fffed, 0x7fffef, 0x800020, 0x800024, 0x7ffff, 0x80001), Arrays.AsList(0, 0, 4, 4, 8, 8, 12));
+            AssertIntRangeSplit(-5000, 9500, 4, true, new int[] { 0x7fffec78, 0x7fffec7f, unchecked((int)0x80002510), unchecked((int)0x8000251c), 0x7fffec8, 0x7fffecf, 0x8000250, 0x8000250, 0x7fffed, 0x7fffef, 0x800020, 0x800024, 0x7ffff, 0x80001 }, new int[] { 0, 0, 4, 4, 8, 8, 12 });
 
             // the same with no range splitting
-            AssertIntRangeSplit(-5000, 9500, 32, true, Arrays.AsList(0x7fffec78, unchecked((int)0x8000251c)), Arrays.AsList(0));
+            AssertIntRangeSplit(-5000, 9500, 32, true, new int[] { 0x7fffec78, unchecked((int)0x8000251c) }, new int[] { 0 });
 
             // this tests optimized range splitting, if one of the inner bounds
             // is also the bound of the next lower precision, it should be used completely
-            AssertIntRangeSplit(0, 1024 + 63, 4, true, Arrays.AsList(0x8000040, 0x8000043, 0x800000, 0x800003), Arrays.AsList(4, 8));
+            AssertIntRangeSplit(0, 1024 + 63, 4, true, new int[] { 0x8000040, 0x8000043, 0x800000, 0x800003 }, new int[] { 4, 8 });
 
             // the full int range should only consist of a lowest precision range; no bitset testing here, as too much memory needed :-)
-            AssertIntRangeSplit(int.MinValue, int.MaxValue, 8, false, Arrays.AsList(0x00, 0xff), Arrays.AsList(24));
+            AssertIntRangeSplit(int.MinValue, int.MaxValue, 8, false, new int[] { 0x00, 0xff }, new int[] { 24 });
 
             // the same with precisionStep=4
-            AssertIntRangeSplit(int.MinValue, int.MaxValue, 4, false, Arrays.AsList(0x0, 0xf), Arrays.AsList(28));
+            AssertIntRangeSplit(int.MinValue, int.MaxValue, 4, false, new int[] { 0x0, 0xf }, new int[] { 28 });
 
             // the same with precisionStep=2
-            AssertIntRangeSplit(int.MinValue, int.MaxValue, 2, false, Arrays.AsList(0x0, 0x3), Arrays.AsList(30));
+            AssertIntRangeSplit(int.MinValue, int.MaxValue, 2, false, new int[] { 0x0, 0x3 }, new int[] { 30 });
 
             // the same with precisionStep=1
-            AssertIntRangeSplit(int.MinValue, int.MaxValue, 1, false, Arrays.AsList(0x0, 0x1), Arrays.AsList(31));
+            AssertIntRangeSplit(int.MinValue, int.MaxValue, 1, false, new int[] { 0x0, 0x1 }, new int[] { 31 });
 
             // a inverse range should produce no sub-ranges
             AssertIntRangeSplit(9500, -5000, 4, false, new List<int>(), new List<int>());
 
             // a 0-length range should reproduce the range itself
-            AssertIntRangeSplit(9500, 9500, 4, false, Arrays.AsList(unchecked((int)0x8000251c), unchecked((int)0x8000251c)), Arrays.AsList(0));
+            AssertIntRangeSplit(9500, 9500, 4, false, new int[] { unchecked((int)0x8000251c), unchecked((int)0x8000251c) }, new int[] { 0 });
         }
+#endif
     }
 }

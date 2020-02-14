@@ -1,25 +1,25 @@
 ﻿using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Index;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Store;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
-namespace Lucene.Net.Tests
+namespace Lucene.Net.Index
 {
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
-    using IndexWriter = Lucene.Net.Index.IndexWriter;
-    using IndexWriterConfig = Lucene.Net.Index.IndexWriterConfig;
-    using LogMergePolicy = Lucene.Net.Index.LogMergePolicy;
+    //using IndexWriter = Lucene.Net.Index.IndexWriter;
+    //using IndexWriterConfig = Lucene.Net.Index.IndexWriterConfig;
+    //using LogMergePolicy = Lucene.Net.Index.LogMergePolicy;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-    using MergePolicy = Lucene.Net.Index.MergePolicy;
-    using MergeScheduler = Lucene.Net.Index.MergeScheduler;
-    using MergeTrigger = Lucene.Net.Index.MergeTrigger;
+    //using MergePolicy = Lucene.Net.Index.MergePolicy;
+    //using MergeScheduler = Lucene.Net.Index.MergeScheduler;
+    //using MergeTrigger = Lucene.Net.Index.MergeTrigger;
     using MockAnalyzer = Lucene.Net.Analysis.MockAnalyzer;
     using MockDirectoryWrapper = Lucene.Net.Store.MockDirectoryWrapper;
     using RAMDirectory = Lucene.Net.Store.RAMDirectory;
@@ -71,7 +71,7 @@ namespace Lucene.Net.Tests
             }
         }
 
-        private class FailOnlyOnMerge : MockDirectoryWrapper.Failure
+        private class FailOnlyOnMerge : Failure
         {
             public override void Eval(MockDirectoryWrapper dir)
             {
@@ -94,7 +94,7 @@ namespace Lucene.Net.Tests
             Field idField = NewStringField("id", "", Field.Store.YES);
             doc.Add(idField);
 
-            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergeScheduler(new MyMergeScheduler(this)).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy()));
+            IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergeScheduler(new MyMergeScheduler(this)).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy()));
             LogMergePolicy logMP = (LogMergePolicy)writer.Config.MergePolicy;
             logMP.MergeFactor = 10;
             for (int i = 0; i < 20; i++)
@@ -161,7 +161,7 @@ namespace Lucene.Net.Tests
                 doc.Add(idField);
 
                 var mergeScheduler = new TaskMergeScheduler();
-                using (IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergeScheduler(mergeScheduler).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy())))
+                using (IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergeScheduler(mergeScheduler).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy())))
                 {
                     LogMergePolicy logMP = (LogMergePolicy)writer.Config.MergePolicy;
                     logMP.MergeFactor = 10;

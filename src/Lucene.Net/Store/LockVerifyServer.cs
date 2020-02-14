@@ -1,12 +1,12 @@
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using J2N.Threading;
+using Lucene.Net.Util;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Store
 {
@@ -66,13 +66,13 @@ namespace Lucene.Net.Store
                 Console.WriteLine("Listening on " + ((IPEndPoint)s.LocalEndPoint).Port.ToString() + "...");
 
                 // we set the port as a sysprop, so the ANT task can read it. For that to work, this server must run in-process:
-                SystemProperties.SetProperty("lockverifyserver.port", ((IPEndPoint)s.LocalEndPoint).Port.ToString());
+                SystemProperties.SetProperty("lockverifyserver.port", ((IPEndPoint)s.LocalEndPoint).Port.ToString(CultureInfo.InvariantCulture));
 
                 object localLock = new object();
                 int[] lockedID = new int[1];
                 lockedID[0] = -1;
                 CountdownEvent startingGun = new CountdownEvent(1);
-                ThreadClass[] threads = new ThreadClass[maxClients];
+                ThreadJob[] threads = new ThreadJob[maxClients];
 
                 for (int count = 0; count < maxClients; count++)
                 {
@@ -86,7 +86,7 @@ namespace Lucene.Net.Store
                 startingGun.Signal();
 
                 // wait for all threads to finish
-                foreach (ThreadClass t in threads)
+                foreach (ThreadJob t in threads)
                 {
                     t.Join();
                 }
@@ -98,7 +98,7 @@ namespace Lucene.Net.Store
             }
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private object localLock;
             private int[] lockedID;

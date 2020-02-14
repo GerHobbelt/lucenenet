@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using Lucene.Net.Attributes;
+using J2N.Text;
 
 namespace Lucene.Net.Util
 {
@@ -105,8 +105,8 @@ namespace Lucene.Net.Util
             List<byte[]> data = new List<byte[]>();
             while (howMuchData > 0)
             {
-                byte[] current = new byte[Random().Next(256)];
-                Random().NextBytes(current);
+                byte[] current = new byte[Random.Next(256)];
+                Random.NextBytes(current);
                 data.Add(current);
                 howMuchData -= current.Length;
             }
@@ -203,7 +203,7 @@ namespace Lucene.Net.Util
             int numIters = AtLeast(10000);
             for (int i = 0; i < numIters; i++)
             {
-                OfflineSorter.BufferSize.Megabytes(1 + Random().Next(2047));
+                OfflineSorter.BufferSize.Megabytes(1 + Random.Next(2047));
             }
             OfflineSorter.BufferSize.Megabytes(2047);
             OfflineSorter.BufferSize.Megabytes(1);

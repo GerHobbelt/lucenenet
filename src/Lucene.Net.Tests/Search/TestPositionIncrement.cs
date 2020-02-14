@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -62,11 +62,15 @@ namespace Lucene.Net.Search
         {
             Analyzer analyzer = new AnalyzerAnonymousInnerClassHelper(this);
             Directory store = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), store, analyzer, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, store, analyzer);
             Document d = new Document();
             d.Add(NewTextField("field", "bogus", Field.Store.YES));
             writer.AddDocument(d);
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             writer.Dispose();
 
             IndexSearcher searcher = NewSearcher(reader);
@@ -232,12 +236,16 @@ namespace Lucene.Net.Search
         public virtual void TestPayloadsPos0()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, new MockPayloadAnalyzer(), Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir, new MockPayloadAnalyzer());
             Document doc = new Document();
             doc.Add(new TextField("content", new StringReader("a a b c d e a f g h i j a b k k")));
             writer.AddDocument(doc);
 
-            IndexReader readerFromWriter = writer.Reader;
+            IndexReader readerFromWriter = writer.GetReader();
             AtomicReader r = SlowCompositeReaderWrapper.Wrap(readerFromWriter);
 
             DocsAndPositionsEnum tp = r.GetTermPositionsEnum(new Term("content", "a"));

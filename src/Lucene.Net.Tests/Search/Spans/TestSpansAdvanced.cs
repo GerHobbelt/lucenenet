@@ -1,8 +1,8 @@
-using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using System;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Spans
 {
@@ -65,12 +65,12 @@ namespace Lucene.Net.Search.Spans
             base.SetUp();
             // create test index
             MDirectory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), MDirectory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)).SetMergePolicy(NewLogMergePolicy()).SetSimilarity(new DefaultSimilarity()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, MDirectory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)).SetMergePolicy(NewLogMergePolicy()).SetSimilarity(new DefaultSimilarity()));
             AddDocument(writer, "1", "I think it should work.");
             AddDocument(writer, "2", "I think it should work.");
             AddDocument(writer, "3", "I think it should work.");
             AddDocument(writer, "4", "I think it should work.");
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Searcher = NewSearcher(Reader);
             Searcher.Similarity = new DefaultSimilarity();
@@ -141,7 +141,11 @@ namespace Lucene.Net.Search.Spans
         /// <param name="expectedScores"> the expected scores of the hits </param>
         protected internal void AssertHits(IndexSearcher s, Query query, string description, string[] expectedIds, float[] expectedScores)
         {
-            QueryUtils.Check(Random(), query, s, Similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, query, s);
 
             const float tolerance = 1e-5f;
 

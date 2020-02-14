@@ -1,7 +1,6 @@
 ﻿using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.IO;
@@ -68,9 +67,9 @@ namespace Lucene.Net.Analysis.Miscellaneous
         /// <c>"\\s+"</c>; Divides text at whitespaces (Character.isWhitespace(c)) </summary>
         public static readonly Regex WHITESPACE_PATTERN = new Regex("\\s+", RegexOptions.Compiled);
 
-        private static readonly CharArraySet EXTENDED_ENGLISH_STOP_WORDS = 
-            CharArraySet.UnmodifiableSet(new CharArraySet(LuceneVersion.LUCENE_CURRENT, 
-                Arrays.AsList(
+        private static readonly CharArraySet EXTENDED_ENGLISH_STOP_WORDS =
+            CharArraySet.UnmodifiableSet(new CharArraySet(LuceneVersion.LUCENE_CURRENT,
+                new string[] {
                     "a", "about", "above", "across", "adj", "after", "afterwards",
                     "again", "against", "albeit", "all", "almost", "alone", "along",
                     "already", "also", "although", "always", "among", "amongst", "an",
@@ -112,8 +111,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                     "with", "within", "without", "would", "xsubj", "xcal", "xauthor",
                     "xother ", "xnote", "yet", "you", "your", "yours", "yourself",
                     "yourselves"
-                
-                    ), true));
+                    }, true));
 
         /// <summary>
         /// A lower-casing word analyzer with English stop words (can be shared
@@ -227,7 +225,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         /// <param name="reader">
         ///            the reader delivering the text </param>
         /// <returns> a new token stream </returns>
-        protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+        protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
         {
             return CreateComponents(fieldName, reader, null);
         }
@@ -411,7 +409,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                         string text = str.Substring(start, end - start);
                         if (toLowerCase)
                         {
-                            text = text.ToLower();
+                            text = text.ToLower(); // LUCENENET: Since this class is obsolete, we aren't going to bother with passing culture in the constructor.
                         }
                         termAtt.SetEmpty().Append(text);
                         offsetAtt.SetOffset(CorrectOffset(start), CorrectOffset(end));
@@ -526,7 +524,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                         text = s.Substring(start, i - start);
                         if (toLowerCase)
                         {
-                            text = text.ToLower();
+                            text = text.ToLower(); // LUCENENET: Since this class is obsolete, we aren't going to bother with passing culture in the constructor.
                         }
                         //          if (toLowerCase) {            
                         ////            use next line once JDK 1.5 String.toLowerCase() performance regression is fixed

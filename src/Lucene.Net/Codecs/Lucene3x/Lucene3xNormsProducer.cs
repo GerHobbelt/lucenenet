@@ -1,9 +1,11 @@
+using J2N.Threading.Atomic;
+using J2N.Runtime.CompilerServices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using Lucene.Net.Support;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.Lucene3x
 {
@@ -64,7 +66,7 @@ namespace Lucene.Net.Codecs.Lucene3x
 
         // any .nrm or .sNN files we have open at any time.
         // TODO: just a list, and double-close() separate norms files?
-        internal readonly ISet<IndexInput> openFiles = new IdentityHashSet<IndexInput>();
+        internal readonly ISet<IndexInput> openFiles = new JCG.HashSet<IndexInput>(IdentityEqualityComparer<IndexInput>.Default);
 
         // points to a singleNormFile
         internal IndexInput singleNormStream;
@@ -280,13 +282,8 @@ namespace Lucene.Net.Codecs.Lucene3x
             throw new InvalidOperationException();
         }
 
-        public override long RamBytesUsed()
-        {
-            return ramBytesUsed.Get();
-        }
+        public override long RamBytesUsed() => ramBytesUsed;
 
-        public override void CheckIntegrity()
-        {
-        }
+        public override void CheckIntegrity() { }
     }
 }

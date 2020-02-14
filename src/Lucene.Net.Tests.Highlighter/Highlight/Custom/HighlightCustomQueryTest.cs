@@ -4,7 +4,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Highlight.Custom
 {
@@ -78,7 +78,7 @@ namespace Lucene.Net.Search.Highlight.Custom
         private String highlightField(Query query, String fieldName,
             String text)
         {
-            TokenStream tokenStream = new MockAnalyzer(Random(), MockTokenizer.SIMPLE,
+            TokenStream tokenStream = new MockAnalyzer(Random, MockTokenizer.SIMPLE,
                 true, MockTokenFilter.ENGLISH_STOPSET).GetTokenStream(fieldName, text);
             // Assuming "<B>", "</B>" used to highlight
             SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();

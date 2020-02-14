@@ -576,7 +576,7 @@ namespace Lucene.Net.Util
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public MaxBytesLengthExceededException(SerializationInfo info, StreamingContext context)
+            protected MaxBytesLengthExceededException(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
             }
@@ -610,7 +610,7 @@ namespace Lucene.Net.Util
             /// <see cref="BytesStartArray"/>. The <see cref="BytesRefHash"/> uses this reference to
             /// track it memory usage.
             /// </summary>
-            /// <returns> a <see cref="AtomicInt64"/> reference holding the number of bytes used
+            /// <returns> a <see cref="J2N.Threading.Atomic.AtomicInt64"/> reference holding the number of bytes used
             ///         by this <see cref="BytesStartArray"/>. </returns>
             public abstract Counter BytesUsed();
         }

@@ -1,7 +1,6 @@
 ﻿using Lucene.Net.Index;
 using Lucene.Net.Queries.Function.DocValues;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using System;
 using System.Collections;
 
@@ -83,7 +82,7 @@ namespace Lucene.Net.Queries.Function.ValueSources
             {
                 return outerInstance.m_a / (outerInstance.m_m * vals.SingleVal(doc) + outerInstance.m_b);
             }
-            public override string ToString(int doc)
+            public override string ToString(int doc) // LUCENENET TODO: API - Add overload to include CultureInfo ?
             {
                 return Convert.ToString(outerInstance.m_a) + "/(" + outerInstance.m_m + "*float(" + vals.ToString(doc) + ')' + '+' + outerInstance.m_b + ')';
             }
@@ -94,16 +93,16 @@ namespace Lucene.Net.Queries.Function.ValueSources
             m_source.CreateWeight(context, searcher);
         }
 
-        public override string GetDescription()
+        public override string GetDescription() // LUCENENET TODO: API - Add overload to include CultureInfo ?
         {
             return Convert.ToString(m_a) + "/(" + m_m + "*float(" + m_source.GetDescription() + ")" + "+" + m_b + ')';
         }
 
         public override int GetHashCode()
         {
-            int h = Number.SingleToInt32Bits(m_a) + Number.SingleToInt32Bits(m_m);
+            int h = J2N.BitConversion.SingleToInt32Bits(m_a) + J2N.BitConversion.SingleToInt32Bits(m_m);
             h ^= (h << 13) | ((int)((uint)h >> 20));
-            return h + (Number.SingleToInt32Bits(m_b)) + m_source.GetHashCode();
+            return h + (J2N.BitConversion.SingleToInt32Bits(m_b)) + m_source.GetHashCode();
         }
 
         public override bool Equals(object o)

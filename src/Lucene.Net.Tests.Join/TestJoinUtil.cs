@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Join;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using System;
+using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Tests.Join
 {
@@ -41,8 +41,8 @@ namespace Lucene.Net.Tests.Join
             const string toField = "productId";
 
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir,
-                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir,
+                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
                     .SetMergePolicy(NewLogMergePolicy()));
 
             // 0
@@ -88,7 +88,7 @@ namespace Lucene.Net.Tests.Join
             doc.Add(new TextField(toField, "4", Field.Store.NO));
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = new IndexSearcher(w.Reader);
+            IndexSearcher indexSearcher = new IndexSearcher(w.GetReader());
             w.Dispose();
 
             // Search for product
@@ -129,7 +129,7 @@ namespace Lucene.Net.Tests.Join
         public void TestOverflowTermsWithScoreCollectorRandom()
         {
             var scoreModeLength = Enum.GetNames(typeof(ScoreMode)).Length;
-            Test300spartans(Random().NextBoolean(), (ScoreMode) Random().Next(scoreModeLength));
+            Test300spartans(Random.NextBoolean(), (ScoreMode) Random.Next(scoreModeLength));
         }
 
         protected virtual void Test300spartans(bool multipleValues, ScoreMode scoreMode)
@@ -138,8 +138,8 @@ namespace Lucene.Net.Tests.Join
             const string toField = "productId";
 
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir,
-                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir,
+                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
                     .SetMergePolicy(NewLogMergePolicy()));
 
             // 0
@@ -162,7 +162,7 @@ namespace Lucene.Net.Tests.Join
             }
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = new IndexSearcher(w.Reader);
+            IndexSearcher indexSearcher = new IndexSearcher(w.GetReader());
             w.Dispose();
 
             // Search for product
@@ -189,8 +189,8 @@ namespace Lucene.Net.Tests.Join
             const string toField = "productId";
 
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir,
-                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir,
+                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
                     .SetMergePolicy(NewLogMergePolicy()));
 
             // 0
@@ -238,7 +238,7 @@ namespace Lucene.Net.Tests.Join
 
             w.ForceMerge(1);
 
-            IndexSearcher indexSearcher = new IndexSearcher(w.Reader);
+            IndexSearcher indexSearcher = new IndexSearcher(w.GetReader());
             w.Dispose();
 
             // Search for product
@@ -302,8 +302,8 @@ namespace Lucene.Net.Tests.Join
             const string toField = "movieId";
 
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir,
-                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))
+            RandomIndexWriter w = new RandomIndexWriter(Random, dir,
+                NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))
                     .SetMergePolicy(NewLogMergePolicy()));
 
             // 0
@@ -349,7 +349,7 @@ namespace Lucene.Net.Tests.Join
             doc.Add(new TextField(toField, "4", Field.Store.NO));
             w.AddDocument(doc);
 
-            IndexSearcher indexSearcher = new IndexSearcher(w.Reader);
+            IndexSearcher indexSearcher = new IndexSearcher(w.GetReader());
             w.Dispose();
 
             // Search for movie via subtitle
@@ -391,18 +391,18 @@ namespace Lucene.Net.Tests.Join
         [Test]
         public void TestSingleValueRandomJoin()
         {
-            int maxIndexIter = TestUtil.NextInt(Random(), 6, 12);
-            int maxSearchIter = TestUtil.NextInt(Random(), 13, 26);
-            ExecuteRandomJoin(false, maxIndexIter, maxSearchIter, TestUtil.NextInt(Random(), 87, 764));
+            int maxIndexIter = TestUtil.NextInt32(Random, 6, 12);
+            int maxSearchIter = TestUtil.NextInt32(Random, 13, 26);
+            ExecuteRandomJoin(false, maxIndexIter, maxSearchIter, TestUtil.NextInt32(Random, 87, 764));
         }
 
         [Test]
         public void TestMultiValueRandomJoin()
             // this test really takes more time, that is why the number of iterations are smaller.
         {
-            int maxIndexIter = TestUtil.NextInt(Random(), 3, 6);
-            int maxSearchIter = TestUtil.NextInt(Random(), 6, 12);
-            ExecuteRandomJoin(true, maxIndexIter, maxSearchIter, TestUtil.NextInt(Random(), 11, 57));
+            int maxIndexIter = TestUtil.NextInt32(Random, 3, 6);
+            int maxSearchIter = TestUtil.NextInt32(Random, 6, 12);
+            ExecuteRandomJoin(true, maxIndexIter, maxSearchIter, TestUtil.NextInt32(Random, 11, 57));
         }
         
         private void ExecuteRandomJoin(bool multipleValuesPerDocument, int maxIndexIter, int maxSearchIter,
@@ -415,14 +415,14 @@ namespace Lucene.Net.Tests.Join
                     Console.WriteLine("indexIter=" + indexIter);
                 }
                 Directory dir = NewDirectory();
-                RandomIndexWriter w = new RandomIndexWriter(Random(), dir,
-                    NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.KEYWORD, false))
+                RandomIndexWriter w = new RandomIndexWriter(Random, dir,
+                    NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.KEYWORD, false))
                         .SetMergePolicy(NewLogMergePolicy()));
-                bool scoreDocsInOrder = TestJoinUtil.Random().NextBoolean();
+                bool scoreDocsInOrder = TestJoinUtil.Random.NextBoolean();
                 IndexIterationContext context = CreateContext(numberOfDocumentsToIndex, w, multipleValuesPerDocument,
                     scoreDocsInOrder);
 
-                IndexReader topLevelReader = w.Reader;
+                IndexReader topLevelReader = w.GetReader();
                 w.Dispose();
                 for (int searchIter = 1; searchIter <= maxSearchIter; searchIter++)
                 {
@@ -432,7 +432,7 @@ namespace Lucene.Net.Tests.Join
                     }
                     IndexSearcher indexSearcher = NewSearcher(topLevelReader);
 
-                    int r = Random().Next(context.RandomUniqueValues.Length);
+                    int r = Random.Next(context.RandomUniqueValues.Length);
                     bool from = context.RandomFrom[r];
                     string randomValue = context.RandomUniqueValues[r];
                     FixedBitSet expectedResult = CreateExpectedResult(randomValue, from, indexSearcher.IndexReader,
@@ -445,7 +445,7 @@ namespace Lucene.Net.Tests.Join
                     }
                     
                     var scoreModeLength = Enum.GetNames(typeof(ScoreMode)).Length;
-                    ScoreMode scoreMode = (ScoreMode) Random().Next(scoreModeLength);
+                    ScoreMode scoreMode = (ScoreMode) Random.Next(scoreModeLength);
                     if (VERBOSE)
                     {
                         Console.WriteLine("scoreMode=" + scoreMode);
@@ -582,19 +582,19 @@ namespace Lucene.Net.Tests.Join
             IndexIterationContext context = new IndexIterationContext();
             int numRandomValues = nDocs/2;
             context.RandomUniqueValues = new string[numRandomValues];
-            ISet<string> trackSet = new HashSet<string>();
+            ISet<string> trackSet = new JCG.HashSet<string>();
             context.RandomFrom = new bool[numRandomValues];
             for (int i = 0; i < numRandomValues; i++)
             {
                 string uniqueRandomValue;
                 do
                 {
-                    uniqueRandomValue = TestUtil.RandomRealisticUnicodeString(Random());
+                    uniqueRandomValue = TestUtil.RandomRealisticUnicodeString(Random);
                     //        uniqueRandomValue = TestUtil.randomSimpleString(random);
                 } while ("".Equals(uniqueRandomValue, StringComparison.Ordinal) || trackSet.Contains(uniqueRandomValue));
                 // Generate unique values and empty strings aren't allowed.
                 trackSet.Add(uniqueRandomValue);
-                context.RandomFrom[i] = Random().NextBoolean();
+                context.RandomFrom[i] = Random.NextBoolean();
                 context.RandomUniqueValues[i] = uniqueRandomValue;
             }
 
@@ -602,48 +602,48 @@ namespace Lucene.Net.Tests.Join
             for (int i = 0; i < nDocs; i++)
             {
                 string id = Convert.ToString(i);
-                int randomI = Random().Next(context.RandomUniqueValues.Length);
+                int randomI = Random.Next(context.RandomUniqueValues.Length);
                 string value = context.RandomUniqueValues[randomI];
                 Document document = new Document();
-                document.Add(NewTextField(Random(), "id", id, Field.Store.NO));
-                document.Add(NewTextField(Random(), "value", value, Field.Store.NO));
+                document.Add(NewTextField(Random, "id", id, Field.Store.NO));
+                document.Add(NewTextField(Random, "value", value, Field.Store.NO));
 
                 bool from = context.RandomFrom[randomI];
-                int numberOfLinkValues = multipleValuesPerDocument ? 2 + Random().Next(10) : 1;
+                int numberOfLinkValues = multipleValuesPerDocument ? 2 + Random.Next(10) : 1;
                 docs[i] = new RandomDoc(id, numberOfLinkValues, value, from);
                 for (int j = 0; j < numberOfLinkValues; j++)
                 {
-                    string linkValue = context.RandomUniqueValues[Random().Next(context.RandomUniqueValues.Length)];
+                    string linkValue = context.RandomUniqueValues[Random.Next(context.RandomUniqueValues.Length)];
                     docs[i].LinkValues.Add(linkValue);
                     if (from)
                     {
-                        if (!context.FromDocuments.ContainsKey(linkValue))
+                        if (!context.FromDocuments.TryGetValue(linkValue, out IList<RandomDoc> fromDocs))
                         {
-                            context.FromDocuments[linkValue] = new List<RandomDoc>();
+                            context.FromDocuments[linkValue] = fromDocs = new List<RandomDoc>();
                         }
-                        if (!context.RandomValueFromDocs.ContainsKey(value))
+                        if (!context.RandomValueFromDocs.TryGetValue(value, out IList<RandomDoc> randomValueFromDocs))
                         {
-                            context.RandomValueFromDocs[value] = new List<RandomDoc>();
+                            context.RandomValueFromDocs[value] = randomValueFromDocs = new List<RandomDoc>();
                         }
 
-                        context.FromDocuments[linkValue].Add(docs[i]);
-                        context.RandomValueFromDocs[value].Add(docs[i]);
-                        document.Add(NewTextField(Random(), "from", linkValue, Field.Store.NO));
+                        fromDocs.Add(docs[i]);
+                        randomValueFromDocs.Add(docs[i]);
+                        document.Add(NewTextField(Random, "from", linkValue, Field.Store.NO));
                     }
                     else
                     {
-                        if (!context.ToDocuments.ContainsKey(linkValue))
+                        if (!context.ToDocuments.TryGetValue(linkValue, out IList<RandomDoc> toDocuments))
                         {
-                            context.ToDocuments[linkValue] = new List<RandomDoc>();
+                            context.ToDocuments[linkValue] = toDocuments = new List<RandomDoc>();
                         }
-                        if (!context.RandomValueToDocs.ContainsKey(value))
+                        if (!context.RandomValueToDocs.TryGetValue(value, out IList<RandomDoc> randomValueToDocs))
                         {
-                            context.RandomValueToDocs[value] = new List<RandomDoc>();
+                            context.RandomValueToDocs[value] = randomValueToDocs = new List<RandomDoc>();
                         }
 
-                        context.ToDocuments[linkValue].Add(docs[i]);
-                        context.RandomValueToDocs[value].Add(docs[i]);
-                        document.Add(NewTextField(Random(), "to", linkValue, Field.Store.NO));
+                        toDocuments.Add(docs[i]);
+                        randomValueToDocs.Add(docs[i]);
+                        document.Add(NewTextField(Random, "to", linkValue, Field.Store.NO));
                     }
                 }
 
@@ -658,7 +658,7 @@ namespace Lucene.Net.Tests.Join
                 }
 
                 w.AddDocument(document);
-                if (Random().Next(10) == 4)
+                if (Random.Next(10) == 4)
                 {
                     w.Commit();
                 }
@@ -670,8 +670,8 @@ namespace Lucene.Net.Tests.Join
 
             // Pre-compute all possible hits for all unique random values. On top of this also compute all possible score for
             // any ScoreMode.
-            IndexSearcher fromSearcher = NewSearcher(fromWriter.Reader);
-            IndexSearcher toSearcher = NewSearcher(toWriter.Reader);
+            IndexSearcher fromSearcher = NewSearcher(fromWriter.GetReader());
+            IndexSearcher toSearcher = NewSearcher(toWriter.GetReader());
             for (int i = 0; i < context.RandomUniqueValues.Length; i++)
             {
                 string uniqueRandomValue = context.RandomUniqueValues[i];
@@ -713,9 +713,9 @@ namespace Lucene.Net.Tests.Join
                         {
                             DocsEnum docsEnum = null;
                             TermsEnum termsEnum = null;
-                            SortedSet<BytesRef> joinValues =
-                                new SortedSet<BytesRef>(BytesRef.UTF8SortedAsUnicodeComparer);
-                            joinValues.AddAll(joinValueToJoinScores.Keys);
+                            JCG.SortedSet<BytesRef> joinValues =
+                                new JCG.SortedSet<BytesRef>(BytesRef.UTF8SortedAsUnicodeComparer);
+                            joinValues.UnionWith(joinValueToJoinScores.Keys);
                             foreach (BytesRef joinValue in joinValues)
                             {
                                 termsEnum = terms.GetIterator(termsEnum);
@@ -792,8 +792,7 @@ namespace Lucene.Net.Tests.Join
                 while ((ord = docTermOrds.NextOrd()) != SortedSetDocValues.NO_MORE_ORDS)
                 {
                     docTermOrds.LookupOrd(ord, joinValue);
-                    var joinScore = JoinValueToJoinScores.ContainsKey(joinValue) ? JoinValueToJoinScores[joinValue] : null;
-                    if (joinScore == null)
+                    if (!JoinValueToJoinScores.TryGetValue(joinValue, out JoinScore joinScore) || joinScore == null)
                     {
                         JoinValueToJoinScores[BytesRef.DeepCopyOf(joinValue)] = joinScore = new JoinScore();
                     }
@@ -851,8 +850,7 @@ namespace Lucene.Net.Tests.Join
                     return;
                 }
 
-                var joinScore = JoinValueToJoinScores.ContainsKey(joinValue) ? JoinValueToJoinScores[joinValue] : null;
-                if (joinScore == null)
+                if (!JoinValueToJoinScores.TryGetValue(joinValue, out JoinScore joinScore) || joinScore == null)
                 {
                     JoinValueToJoinScores[BytesRef.DeepCopyOf(joinValue)] = joinScore = new JoinScore();
                 }
@@ -905,8 +903,7 @@ namespace Lucene.Net.Tests.Join
                 while ((ord = docTermOrds.NextOrd()) != SortedSetDocValues.NO_MORE_ORDS)
                 {
                     docTermOrds.LookupOrd(ord, scratch);
-                    JoinScore joinScore = _joinValueToJoinScores.ContainsKey(scratch) ? _joinValueToJoinScores[scratch] : null;
-                    if (joinScore == null)
+                    if (!_joinValueToJoinScores.TryGetValue(scratch, out JoinScore joinScore) || joinScore == null)
                     {
                         continue;
                     }
@@ -962,8 +959,7 @@ namespace Lucene.Net.Tests.Join
             public virtual void Collect(int doc)
             {
                 terms.Get(doc, spare);
-                JoinScore joinScore = JoinValueToJoinScores.ContainsKey(spare) ? JoinValueToJoinScores[spare] : null;
-                if (joinScore == null)
+                if (!JoinValueToJoinScores.TryGetValue(spare, out JoinScore joinScore) || joinScore == null)
                 {
                     return;
                 }
@@ -993,7 +989,7 @@ namespace Lucene.Net.Tests.Join
                 ? context.FromHitsToJoinScore[queryValue]
                 : context.ToHitsToJoinScore[queryValue];
 
-            var hits = new List<KeyValuePair<int, JoinScore>>(hitsToJoinScores.EntrySet());
+            var hits = new List<KeyValuePair<int, JoinScore>>(hitsToJoinScores);
             hits.Sort(new ComparerAnonymousInnerClassHelper(this, scoreMode));
             ScoreDoc[] scoreDocs = new ScoreDoc[Math.Min(10, hits.Count)];
             for (int i = 0; i < scoreDocs.Length; i++)
@@ -1047,8 +1043,7 @@ namespace Lucene.Net.Tests.Join
             }
 
             FixedBitSet expectedResult = new FixedBitSet(topLevelReader.MaxDoc);
-            IList<RandomDoc> matchingDocs = randomValueDocs.ContainsKey(queryValue) ? randomValueDocs[queryValue] : null;
-            if (matchingDocs == null)
+            if (!randomValueDocs.TryGetValue(queryValue, out IList<RandomDoc> matchingDocs) || matchingDocs == null)
             {
                 return new FixedBitSet(topLevelReader.MaxDoc);
             }
@@ -1057,8 +1052,7 @@ namespace Lucene.Net.Tests.Join
             {
                 foreach (string linkValue in matchingDoc.LinkValues)
                 {
-                    IList<RandomDoc> otherMatchingDocs = linkValueDocuments.ContainsKey(linkValue) ? linkValueDocuments[linkValue] : null;
-                    if (otherMatchingDocs == null)
+                    if (!linkValueDocuments.TryGetValue(linkValue, out IList<RandomDoc> otherMatchingDocs) || otherMatchingDocs == null)
                     {
                         continue;
                     }

@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Util
 {
@@ -36,14 +37,14 @@ namespace Lucene.Net.Util
 
         private RecyclingByteBlockAllocator NewAllocator()
         {
-            return new RecyclingByteBlockAllocator(1 << (2 + Random().Next(15)), Random().Next(97), Util.Counter.NewCounter());
+            return new RecyclingByteBlockAllocator(1 << (2 + Random.Next(15)), Random.Next(97), Util.Counter.NewCounter());
         }
 
         [Test]
         public virtual void TestAllocate()
         {
             RecyclingByteBlockAllocator allocator = NewAllocator();
-            var set = new HashSet<byte[]>();
+            var set = new JCG.HashSet<byte[]>();
             var block = allocator.GetByteBlock();
             set.Add(block);
             Assert.IsNotNull(block);
@@ -65,7 +66,7 @@ namespace Lucene.Net.Util
         public virtual void TestAllocateAndRecycle()
         {
             RecyclingByteBlockAllocator allocator = NewAllocator();
-            var allocated = new HashSet<byte[]>();
+            var allocated = new JCG.HashSet<byte[]>();
 
             var block = allocator.GetByteBlock();
             allocated.Add(block);
@@ -75,7 +76,7 @@ namespace Lucene.Net.Util
             int numIters = AtLeast(97);
             for (int i = 0; i < numIters; i++)
             {
-                int num = 1 + Random().Next(39);
+                int num = 1 + Random.Next(39);
                 for (int j = 0; j < num; j++)
                 {
                     block = allocator.GetByteBlock();
@@ -85,8 +86,8 @@ namespace Lucene.Net.Util
                     Assert.AreEqual(size * (allocated.Count + allocator.NumBufferedBlocks), allocator.BytesUsed);
                 }
                 var array = allocated.ToArray();
-                int begin = Random().Next(array.Length);
-                int end = begin + Random().Next(array.Length - begin);
+                int begin = Random.Next(array.Length);
+                int end = begin + Random.Next(array.Length - begin);
                 var selected = new List<byte[]>();
                 for (int j = begin; j < end; j++)
                 {
@@ -107,7 +108,7 @@ namespace Lucene.Net.Util
         public virtual void TestAllocateAndFree()
         {
             RecyclingByteBlockAllocator allocator = NewAllocator();
-            var allocated = new HashSet<byte[]>();
+            var allocated = new JCG.HashSet<byte[]>();
             int freeButAllocated = 0;
             var block = allocator.GetByteBlock();
             allocated.Add(block);
@@ -117,7 +118,7 @@ namespace Lucene.Net.Util
             int numIters = AtLeast(97);
             for (int i = 0; i < numIters; i++)
             {
-                int num = 1 + Random().Next(39);
+                int num = 1 + Random.Next(39);
                 for (int j = 0; j < num; j++)
                 {
                     block = allocator.GetByteBlock();
@@ -129,8 +130,8 @@ namespace Lucene.Net.Util
                 }
 
                 var array = allocated.ToArray();
-                int begin = Random().Next(array.Length);
-                int end = begin + Random().Next(array.Length - begin);
+                int begin = Random.Next(array.Length);
+                int end = begin + Random.Next(array.Length - begin);
                 for (int j = begin; j < end; j++)
                 {
                     var b = array[j];
@@ -143,7 +144,7 @@ namespace Lucene.Net.Util
                 }
                 // randomly free blocks
                 int numFreeBlocks = allocator.NumBufferedBlocks;
-                int freeBlocks = allocator.FreeBlocks(Random().Next(7 + allocator.MaxBufferedBlocks));
+                int freeBlocks = allocator.FreeBlocks(Random.Next(7 + allocator.MaxBufferedBlocks));
                 Assert.AreEqual(allocator.NumBufferedBlocks, numFreeBlocks - freeBlocks);
             }
         }

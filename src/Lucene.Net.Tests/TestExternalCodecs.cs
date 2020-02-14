@@ -1,8 +1,7 @@
-using System;
-using Lucene.Net.Codecs;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
-using Console = Lucene.Net.Support.SystemConsole;
+using System;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net
 {
@@ -82,8 +81,8 @@ namespace Lucene.Net
 
             using (BaseDirectoryWrapper dir = NewDirectory())
             {
-                dir.CheckIndexOnClose = false; // we use a custom codec provider
-                using (IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetCodec(new CustomPerFieldCodec()).SetMergePolicy(NewLogMergePolicy(3))))
+                dir.CheckIndexOnDispose = false; // we use a custom codec provider
+                using (IndexWriter w = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetCodec(new CustomPerFieldCodec()).SetMergePolicy(NewLogMergePolicy(3))))
                 {
                     Documents.Document doc = new Documents.Document();
                     // uses default codec:

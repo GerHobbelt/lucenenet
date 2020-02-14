@@ -1,4 +1,8 @@
-﻿
+﻿---
+uid: Lucene.Net.Util.Fst
+summary: *content
+---
+
 <!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
@@ -23,13 +27,19 @@ Finite State Transducers](http://en.wikipedia.org/wiki/Finite_state_transducer) 
 
 *   Fast and low memory overhead construction of the minimal FST 
        (but inputs must be provided in sorted order)
+
 *   Low object overhead and quick deserialization (byte[] representation)
+
 *   Optional two-pass compression: [FST.pack](xref:Lucene.Net.Util.Fst.FST#methods)
+
 *   [Lookup-by-output](xref:Lucene.Net.Util.Fst.Util#methods) when the 
        outputs are in sorted order (e.g., ordinals or file pointers)
+
 *   Pluggable [Outputs](xref:Lucene.Net.Util.Fst.Outputs) representation
+
 *   [N-shortest-paths](xref:Lucene.Net.Util.Fst.Util#methods) search by
        weight
+
 *   Enumerators ([IntsRef](xref:Lucene.Net.Util.Fst.IntsRefFSTEnum) and [BytesRef](xref:Lucene.Net.Util.Fst.BytesRefFSTEnum)) that behave like {@link java.util.SortedMap SortedMap} iterators
 
 FST Construction example:

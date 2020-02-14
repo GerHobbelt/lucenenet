@@ -1,7 +1,6 @@
 using System;
 using Lucene.Net.Documents;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using NUnit.Framework;
 
@@ -45,7 +44,7 @@ namespace Lucene.Net.Index
         private static IndexWriter GetWriter(Directory directory)
         {
             MergePolicy policy = new LogByteSizeMergePolicy();
-            IndexWriterConfig conf = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig conf = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             conf.SetMergePolicy(policy);
             conf.SetOpenMode(OpenMode.CREATE_OR_APPEND);
 
@@ -90,7 +89,7 @@ namespace Lucene.Net.Index
             Assert.AreEqual(1, topDocs.TotalHits);
 
             long result;
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 IndexReader r = DirectoryReader.Open(writer, true);
                 result = mgrWriter.TryDeleteDocument(r, 0);
@@ -106,7 +105,7 @@ namespace Lucene.Net.Index
 
             Assert.IsTrue(writer.HasDeletions());
 
-            if (Random().NextBoolean())
+            if (Random.NextBoolean())
             {
                 writer.Commit();
             }

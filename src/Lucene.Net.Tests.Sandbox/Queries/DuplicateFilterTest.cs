@@ -1,12 +1,13 @@
 ﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Sandbox.Queries
 {
@@ -40,7 +41,7 @@ namespace Lucene.Net.Sandbox.Queries
         {
             base.SetUp();
             directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             //Add series of docs with filterable fields : url, text and dates  flags
             AddDoc(writer, "http://lucene.apache.org", "lucene 1.4.3 available", "20040101");
@@ -56,7 +57,7 @@ namespace Lucene.Net.Sandbox.Queries
             // have only 1 segment:
             writer.ForceMerge(1);
 
-            reader = writer.Reader;
+            reader = writer.GetReader();
             writer.Dispose();
             searcher = NewSearcher(reader);
 
@@ -82,7 +83,7 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestDefaultFilter()
         {
             DuplicateFilter df = new DuplicateFilter(KEY_FIELD);
-            HashSet<string> results = new HashSet<string>();
+            ISet<string> results = new JCG.HashSet<string>();
             ScoreDoc[] hits = searcher.Search(tq, df, 1000).ScoreDocs;
 
             foreach (ScoreDoc hit in hits)
@@ -96,7 +97,7 @@ namespace Lucene.Net.Sandbox.Queries
         [Test]
         public void TestNoFilter()
         {
-            HashSet<string> results = new HashSet<string>();
+            ISet<string> results = new JCG.HashSet<string>();
             ScoreDoc[] hits = searcher.Search(tq, null, 1000).ScoreDocs;
             assertTrue("Default searching should have found some matches", hits.Length > 0);
             bool dupsFound = false;
@@ -117,7 +118,7 @@ namespace Lucene.Net.Sandbox.Queries
         {
             DuplicateFilter df = new DuplicateFilter(KEY_FIELD);
             df.ProcessingMode = (ProcessingMode.PM_FAST_INVALIDATION);
-            HashSet<string> results = new HashSet<string>();
+            ISet<string> results = new JCG.HashSet<string>();
             ScoreDoc[] hits = searcher.Search(tq, df, 1000).ScoreDocs;
             assertTrue("Filtered searching should have found some matches", hits.Length > 0);
 
@@ -142,7 +143,7 @@ namespace Lucene.Net.Sandbox.Queries
             {
                 Document d = searcher.Doc(hit.Doc);
                 string url = d.Get(KEY_FIELD);
-                DocsEnum td = TestUtil.Docs(Random(), reader,
+                DocsEnum td = TestUtil.Docs(Random, reader,
                     KEY_FIELD,
                     new BytesRef(url),
                     MultiFields.GetLiveDocs(reader),
@@ -169,7 +170,7 @@ namespace Lucene.Net.Sandbox.Queries
             {
                 Document d = searcher.Doc(hit.Doc);
                 string url = d.Get(KEY_FIELD);
-                DocsEnum td = TestUtil.Docs(Random(), reader,
+                DocsEnum td = TestUtil.Docs(Random, reader,
                     KEY_FIELD,
                     new BytesRef(url),
                     MultiFields.GetLiveDocs(reader),

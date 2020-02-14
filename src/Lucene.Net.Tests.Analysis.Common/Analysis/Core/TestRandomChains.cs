@@ -1,4 +1,6 @@
-﻿using Lucene.Net.Analysis.CharFilters;
+﻿
+using J2N.Text;
+using Lucene.Net.Analysis.CharFilters;
 using Lucene.Net.Analysis.Cjk;
 using Lucene.Net.Analysis.CommonGrams;
 using Lucene.Net.Analysis.Compound;
@@ -17,6 +19,7 @@ using Lucene.Net.Analysis.Wikipedia;
 using Lucene.Net.Attributes;
 using Lucene.Net.Support;
 using Lucene.Net.Tartarus.Snowball;
+using Lucene.Net.TestFramework.Analysis;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Automaton;
 using NUnit.Framework;
@@ -29,26 +32,28 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
+using J2N.Runtime.CompilerServices;
 
 namespace Lucene.Net.Analysis.Core
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// tests random analysis chains </summary>
@@ -92,22 +97,17 @@ namespace Lucene.Net.Analysis.Core
                 brokenConstructors[typeof(LimitTokenCountFilter).GetConstructor(new Type[] { typeof(TokenStream), typeof(int), typeof(bool) })] = new PredicateAnonymousInnerClassHelper2();
                 brokenConstructors[typeof(LimitTokenPositionFilter).GetConstructor(new Type[] { typeof(TokenStream), typeof(int) })] = ALWAYS;
                 brokenConstructors[typeof(LimitTokenPositionFilter).GetConstructor(new Type[] { typeof(TokenStream), typeof(int), typeof(bool) })] = new PredicateAnonymousInnerClassHelper3();
-                foreach (Type c in Arrays.AsList(
+                foreach (Type c in new Type[] {
                     // TODO: can we promote some of these to be only
                     // offsets offenders?
                     // doesn't actual reset itself:
                     typeof(CachingTokenFilter),
-
-#if NETSTANDARD
-#if FEATURE_BREAKITERATOR
-                    // LUCENENET TODO: icu-dotnet is throwing AccessViolationException, bringing down the test runner
-                    typeof(Th.ThaiTokenizer),
-#endif
-#endif
-
+                    // Not broken, simulates brokenness:
+                    typeof(CrankyTokenFilter),
                     // Not broken: we forcefully add this, so we shouldn't
                     // also randomly pick it:
-                    typeof(ValidatingTokenFilter)))
+                    typeof(ValidatingTokenFilter)
+                })
                 {
                     foreach (ConstructorInfo ctor in c.GetConstructors())
                     {
@@ -121,7 +121,7 @@ namespace Lucene.Net.Analysis.Core
             }
             try
             {
-                foreach (Type c in Arrays.AsList(
+                foreach (Type c in new Type[] {
                     typeof(ReversePathHierarchyTokenizer),
                     typeof(PathHierarchyTokenizer),
                     // TODO: it seems to mess up offsets!?
@@ -135,9 +135,7 @@ namespace Lucene.Net.Analysis.Core
                     // TODO: doesn't handle graph inputs
                     typeof(CommonGramsQueryFilter),
                     // TODO: probably doesnt handle graph inputs, too afraid to try
-                    typeof(WordDelimiterFilter)))
-
-
+                    typeof(WordDelimiterFilter) })
                 {
                     foreach (ConstructorInfo ctor in c.GetConstructors())
                     {
@@ -150,19 +148,19 @@ namespace Lucene.Net.Analysis.Core
                 throw new Exception(e.Message, e);
             }
 
-            allowedTokenizerArgs = new IdentityHashSet<Type>(); // Collections.NewSetFromMap(new IdentityHashMap<Type, bool?>());
+            allowedTokenizerArgs = new JCG.HashSet<Type>(IdentityEqualityComparer<Type>.Default);
             allowedTokenizerArgs.addAll(argProducers.Keys);
             allowedTokenizerArgs.Add(typeof(TextReader));
             allowedTokenizerArgs.Add(typeof(AttributeSource.AttributeFactory));
             allowedTokenizerArgs.Add(typeof(AttributeSource));
 
-            allowedTokenFilterArgs = new IdentityHashSet<Type>();  //Collections.newSetFromMap(new IdentityHashMap<Type, bool?>());
+            allowedTokenFilterArgs = new JCG.HashSet<Type>(IdentityEqualityComparer<Type>.Default);
             allowedTokenFilterArgs.addAll(argProducers.Keys);
             allowedTokenFilterArgs.Add(typeof(TokenStream));
             // TODO: fix this one, thats broken:
             allowedTokenFilterArgs.Add(typeof(CommonGramsFilter));
 
-            allowedCharFilterArgs = new IdentityHashSet<Type>(); //Collections.newSetFromMap(new IdentityHashMap<Type, bool?>());
+            allowedCharFilterArgs = new JCG.HashSet<Type>(IdentityEqualityComparer<Type>.Default);
             allowedCharFilterArgs.addAll(argProducers.Keys);
             allowedCharFilterArgs.Add(typeof(TextReader));
         }
@@ -224,19 +222,19 @@ namespace Lucene.Net.Analysis.Core
                     if (typeInfo.IsSubclassOf(typeof(Tokenizer)))
                     {
                         assertTrue(ctor.ToString() + " has unsupported parameter types", 
-                            allowedTokenizerArgs.containsAll(Arrays.AsList(ctor.GetParameters().Select(p => p.ParameterType).ToArray())));
+                            allowedTokenizerArgs.containsAll(ctor.GetParameters().Select(p => p.ParameterType).ToArray()));
                         tokenizers.Add(ctor);
                     }
                     else if (typeInfo.IsSubclassOf(typeof(TokenFilter)))
                     {
                         assertTrue(ctor.ToString() + " has unsupported parameter types", 
-                            allowedTokenFilterArgs.containsAll(Arrays.AsList(ctor.GetParameters().Select(p => p.ParameterType).ToArray())));
+                            allowedTokenFilterArgs.containsAll(ctor.GetParameters().Select(p => p.ParameterType).ToArray()));
                         tokenfilters.Add(ctor);
                     }
                     else if (typeInfo.IsSubclassOf(typeof(CharFilter)))
                     {
                         assertTrue(ctor.ToString() + " has unsupported parameter types", 
-                            allowedCharFilterArgs.containsAll(Arrays.AsList(ctor.GetParameters().Select(p => p.ParameterType).ToArray())));
+                            allowedCharFilterArgs.containsAll(ctor.GetParameters().Select(p => p.ParameterType).ToArray()));
                         charfilters.Add(ctor);
                     }
                     else
@@ -286,7 +284,7 @@ namespace Lucene.Net.Analysis.Core
             object Create(Random random);
         }
 
-        private static readonly IDictionary<Type, IArgProducer> argProducers = new IdentityHashMap<Type, IArgProducer>()
+        private static readonly IDictionary<Type, IArgProducer> argProducers = new JCG.Dictionary<Type, IArgProducer>(IdentityEqualityComparer<Type>.Default)
         {
             { typeof(int), new IntArgProducer() },
             { typeof(char), new CharArgProducer() },
@@ -330,7 +328,7 @@ namespace Lucene.Net.Analysis.Core
                 return (CJKScript)random.Next(0, max + 1);
             }) },
             { typeof(CultureInfo), new AnonymousProducer((random) => {
-                return LuceneTestCase.RandomLocale(random);
+                return LuceneTestCase.RandomCulture(random);
             }) },
         };
 
@@ -341,7 +339,7 @@ namespace Lucene.Net.Analysis.Core
                 // TODO: could cause huge ram usage to use full int range for some filters
                 // (e.g. allocate enormous arrays)
                 // return Integer.valueOf(random.nextInt());
-                return TestUtil.NextInt(random, -100, 100);
+                return TestUtil.NextInt32(random, -100, 100);
             }
         }
 
@@ -447,7 +445,7 @@ namespace Lucene.Net.Analysis.Core
             public object Create(Random random)
             {
                 // TypeTokenFilter
-                ISet<string> set = new HashSet<string>();
+                ISet<string> set = new JCG.HashSet<string>();
                 int num = random.nextInt(5);
                 for (int i = 0; i < num; i++)
                 {
@@ -627,7 +625,7 @@ namespace Lucene.Net.Analysis.Core
             {
                 NormalizeCharMap.Builder builder = new NormalizeCharMap.Builder();
                 // we can't add duplicate keys, or NormalizeCharMap gets angry
-                ISet<string> keys = new HashSet<string>();
+                ISet<string> keys = new JCG.HashSet<string>();
                 int num = random.nextInt(5);
                 //System.out.println("NormalizeCharMap=");
                 for (int i = 0; i < num; i++)
@@ -854,7 +852,7 @@ namespace Lucene.Net.Analysis.Core
                 }
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Random random = new Random(seed);
                 TokenizerSpec tokenizerSpec = NewTokenizer(random, reader);
@@ -864,7 +862,7 @@ namespace Lucene.Net.Analysis.Core
                 return new TokenStreamComponents(tokenizerSpec.tokenizer, filterSpec.stream);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 Random random = new Random(seed);
                 CharFilterSpec charfilterspec = NewCharFilterChain(random, reader);
@@ -943,14 +941,12 @@ namespace Lucene.Net.Analysis.Core
 
             private bool Broken(ConstructorInfo ctor, object[] args)
             {
-                IPredicate<object[]> pred = brokenConstructors.ContainsKey(ctor) ? brokenConstructors[ctor] : null;
-                return pred != null && pred.Apply(args);
+                return brokenConstructors.TryGetValue(ctor, out IPredicate<object[]> pred) && pred != null && pred.Apply(args);
             }
 
             private bool BrokenOffsets(ConstructorInfo ctor, object[] args)
             {
-                IPredicate<object[]> pred = brokenOffsetsConstructors.ContainsKey(ctor) ? brokenOffsetsConstructors[ctor] : null;
-                return pred != null && pred.Apply(args);
+                return brokenOffsetsConstructors.TryGetValue(ctor, out IPredicate<object[]> pred) && pred != null && pred.Apply(args);
             }
 
             // create a new random tokenizer from classpath
@@ -1154,7 +1150,7 @@ namespace Lucene.Net.Analysis.Core
         public void TestRandomChains_()
         {
             int numIterations = AtLeast(20);
-            Random random = Random();
+            Random random = Random;
             for (int i = 0; i < numIterations; i++)
             {
                 MockRandomAnalyzer a = new MockRandomAnalyzer(random.Next());
@@ -1180,7 +1176,7 @@ namespace Lucene.Net.Analysis.Core
         public void TestRandomChainsWithLargeStrings()
         {
             int numIterations = AtLeast(20);
-            Random random = Random();
+            Random random = Random;
             for (int i = 0; i < numIterations; i++)
             {
                 MockRandomAnalyzer a = new MockRandomAnalyzer(random.Next());

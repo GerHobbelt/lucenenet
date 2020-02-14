@@ -1,13 +1,15 @@
-using System.Collections.Generic;
+using J2N.Collections.Generic.Extensions;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Support;
+using Lucene.Net.Util.Automaton;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using Lucene.Net.Support;
-    using Lucene.Net.Util.Automaton;
-    using NUnit.Framework;
-    using System;
     using AutomatonQuery = Lucene.Net.Search.AutomatonQuery;
     using BytesRef = Lucene.Net.Util.BytesRef;
     using CheckHits = Lucene.Net.Search.CheckHits;
@@ -46,7 +48,7 @@ namespace Lucene.Net.Index
         private Directory Dir;
         private IndexReader Reader;
         private IndexSearcher Searcher;
-        private SortedSet<BytesRef> Terms; // the terms we put in the index
+        private JCG.SortedSet<BytesRef> Terms; // the terms we put in the index
         private Automaton TermsAutomaton; // automata of the same
         internal int NumIterations;
 
@@ -58,16 +60,16 @@ namespace Lucene.Net.Index
             // but for preflex codec, the test can be very slow, so use less iterations.
             NumIterations = Codec.Default.Name.Equals("Lucene3x", StringComparison.Ordinal) ? 10 * RANDOM_MULTIPLIER : AtLeast(50);
             Dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Dir, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.KEYWORD, false)).SetMaxBufferedDocs(TestUtil.NextInt(Random(), 50, 1000)));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, Dir, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.KEYWORD, false)).SetMaxBufferedDocs(TestUtil.NextInt32(Random, 50, 1000)));
             Document doc = new Document();
             Field field = NewStringField("field", "", Field.Store.YES);
             doc.Add(field);
-            Terms = new SortedSet<BytesRef>();
+            Terms = new JCG.SortedSet<BytesRef>();
 
             int num = AtLeast(200);
             for (int i = 0; i < num; i++)
             {
-                string s = TestUtil.RandomUnicodeString(Random());
+                string s = TestUtil.RandomUnicodeString(Random);
                 field.SetStringValue(s);
                 Terms.Add(new BytesRef(s));
                 writer.AddDocument(doc);
@@ -75,7 +77,7 @@ namespace Lucene.Net.Index
 
             TermsAutomaton = BasicAutomata.MakeStringUnion(Terms);
 
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             Searcher = NewSearcher(Reader);
             writer.Dispose();
         }
@@ -95,7 +97,7 @@ namespace Lucene.Net.Index
         {
             for (int i = 0; i < NumIterations; i++)
             {
-                string reg = AutomatonTestUtil.RandomRegexp(Random());
+                string reg = AutomatonTestUtil.RandomRegexp(Random);
                 Automaton automaton = (new RegExp(reg, RegExpSyntax.NONE)).ToAutomaton();
                 IList<BytesRef> matchedTerms = new List<BytesRef>();
                 foreach (BytesRef t in Terms)
@@ -123,18 +125,18 @@ namespace Lucene.Net.Index
         {
             for (int i = 0; i < NumIterations; i++)
             {
-                string reg = AutomatonTestUtil.RandomRegexp(Random());
+                string reg = AutomatonTestUtil.RandomRegexp(Random);
                 Automaton automaton = (new RegExp(reg, RegExpSyntax.NONE)).ToAutomaton();
                 TermsEnum te = MultiFields.GetTerms(Reader, "field").GetIterator(null);
                 IList<BytesRef> unsortedTerms = new List<BytesRef>(Terms);
-                Collections.Shuffle(unsortedTerms);
+                unsortedTerms.Shuffle(Random);
 
                 foreach (BytesRef term in unsortedTerms)
                 {
                     if (BasicOperations.Run(automaton, term.Utf8ToString()))
                     {
                         // term is accepted
-                        if (Random().NextBoolean())
+                        if (Random.NextBoolean())
                         {
                             // seek exact
                             Assert.IsTrue(te.SeekExact(term));
@@ -161,7 +163,7 @@ namespace Lucene.Net.Index
 
                 foreach (BytesRef term in Terms)
                 {
-                    int c = Random().Next(3);
+                    int c = Random.Next(3);
                     if (c == 0)
                     {
                         Assert.AreEqual(term, te.Next());
@@ -186,12 +188,12 @@ namespace Lucene.Net.Index
         {
             for (int i = 0; i < NumIterations; i++)
             {
-                string reg = AutomatonTestUtil.RandomRegexp(Random());
+                string reg = AutomatonTestUtil.RandomRegexp(Random);
                 Automaton automaton = (new RegExp(reg, RegExpSyntax.NONE)).ToAutomaton();
                 CompiledAutomaton ca = new CompiledAutomaton(automaton, SpecialOperations.IsFinite(automaton), false);
                 TermsEnum te = MultiFields.GetTerms(Reader, "field").Intersect(ca, null);
                 Automaton expected = BasicOperations.Intersection(TermsAutomaton, automaton);
-                SortedSet<BytesRef> found = new SortedSet<BytesRef>();
+                JCG.SortedSet<BytesRef> found = new JCG.SortedSet<BytesRef>();
                 while (te.Next() != null)
                 {
                     found.Add(BytesRef.DeepCopyOf(te.Term));

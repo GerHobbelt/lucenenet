@@ -1,9 +1,9 @@
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Util
 {
@@ -42,13 +42,13 @@ namespace Lucene.Net.Util
 
         private ByteBlockPool NewPool()
         {
-            return Random().NextBoolean() && Pool != null ? Pool : new ByteBlockPool(new RecyclingByteBlockAllocator(ByteBlockPool.BYTE_BLOCK_SIZE, Random().Next(25)));
+            return Random.NextBoolean() && Pool != null ? Pool : new ByteBlockPool(new RecyclingByteBlockAllocator(ByteBlockPool.BYTE_BLOCK_SIZE, Random.Next(25)));
         }
 
         private BytesRefHash NewHash(ByteBlockPool blockPool)
         {
-            int initSize = 2 << 1 + Random().Next(5);
-            return Random().NextBoolean() ? new BytesRefHash(blockPool) : new BytesRefHash(blockPool, initSize, new BytesRefHash.DirectBytesStartArray(initSize));
+            int initSize = 2 << 1 + Random.Next(5);
+            return Random.NextBoolean() ? new BytesRefHash(blockPool) : new BytesRefHash(blockPool, initSize, new BytesRefHash.DirectBytesStartArray(initSize));
         }
 
         /// <summary>
@@ -61,13 +61,13 @@ namespace Lucene.Net.Util
             int num = AtLeast(2);
             for (int j = 0; j < num; j++)
             {
-                int mod = 1 + Random().Next(39);
+                int mod = 1 + Random.Next(39);
                 for (int i = 0; i < 797; i++)
                 {
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int count = Hash.Count;
@@ -110,7 +110,7 @@ namespace Lucene.Net.Util
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int count = Hash.Count;
@@ -158,7 +158,7 @@ namespace Lucene.Net.Util
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int key = Hash.Add(@ref);
@@ -203,13 +203,13 @@ namespace Lucene.Net.Util
                 // LUCENENET specific - to ensure sorting strings works the same in the SortedSet,
                 // we need to use StringComparer.Ordinal, which compares strings the same
                 // way they are done in Java.
-                SortedSet<string> strings = new SortedSet<string>(StringComparer.Ordinal);
+                JCG.SortedSet<string> strings = new JCG.SortedSet<string>(StringComparer.Ordinal);
                 for (int k = 0; k < 797; k++)
                 {
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     Hash.Add(@ref);
@@ -247,14 +247,14 @@ namespace Lucene.Net.Util
             int num = AtLeast(2);
             for (int j = 0; j < num; j++)
             {
-                HashSet<string> strings = new HashSet<string>();
+                ISet<string> strings = new JCG.HashSet<string>();
                 int uniqueCount = 0;
                 for (int i = 0; i < 797; i++)
                 {
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int count = Hash.Count;
@@ -291,14 +291,14 @@ namespace Lucene.Net.Util
             int num = AtLeast(2);
             for (int j = 0; j < num; j++)
             {
-                HashSet<string> strings = new HashSet<string>();
+                ISet<string> strings = new JCG.HashSet<string>();
                 int uniqueCount = 0;
                 for (int i = 0; i < 797; i++)
                 {
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int count = Hash.Count;
@@ -330,7 +330,7 @@ namespace Lucene.Net.Util
         [Test]
         public virtual void TestLargeValue()
         {
-            int[] sizes = { Random().Next(5), ByteBlockPool.BYTE_BLOCK_SIZE - 33 + Random().Next(31), ByteBlockPool.BYTE_BLOCK_SIZE - 1 + Random().Next(37) };
+            int[] sizes = { Random.Next(5), ByteBlockPool.BYTE_BLOCK_SIZE - 33 + Random.Next(31), ByteBlockPool.BYTE_BLOCK_SIZE - 1 + Random.Next(37) };
             BytesRef @ref = new BytesRef();
 
             var exceptionThrown = false;
@@ -373,14 +373,14 @@ namespace Lucene.Net.Util
             int num = AtLeast(2);
             for (int j = 0; j < num; j++)
             {
-                HashSet<string> strings = new HashSet<string>();
+                ISet<string> strings = new JCG.HashSet<string>();
                 int uniqueCount = 0;
                 for (int i = 0; i < 797; i++)
                 {
                     string str;
                     do
                     {
-                        str = TestUtil.RandomRealisticUnicodeString(Random(), 1000);
+                        str = TestUtil.RandomRealisticUnicodeString(Random, 1000);
                     } while (str.Length == 0);
                     @ref.CopyChars(str);
                     int count = Hash.Count;

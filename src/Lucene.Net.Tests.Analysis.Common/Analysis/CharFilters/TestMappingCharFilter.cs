@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.CharFilters
 {
@@ -214,7 +215,7 @@ namespace Lucene.Net.Analysis.CharFilters
             Analyzer analyzer = new AnalyzerAnonymousInnerClassHelper(this);
 
             int numRounds = RANDOM_MULTIPLIER * 10000;
-            CheckRandomData(Random(), analyzer, numRounds);
+            CheckRandomData(Random, analyzer, numRounds);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -227,13 +228,13 @@ namespace Lucene.Net.Analysis.CharFilters
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(outerInstance.normMap, reader);
             }
@@ -253,7 +254,7 @@ namespace Lucene.Net.Analysis.CharFilters
             Analyzer analyzer = new AnalyzerAnonymousInnerClassHelper2(this, map);
 
             string text = "gzw f quaxot";
-            CheckAnalysisConsistency(Random(), analyzer, false, text);
+            CheckAnalysisConsistency(Random, analyzer, false, text);
         }
 
         private class AnalyzerAnonymousInnerClassHelper2 : Analyzer
@@ -268,13 +269,13 @@ namespace Lucene.Net.Analysis.CharFilters
                 this.map = map;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(map, reader);
             }
@@ -290,7 +291,7 @@ namespace Lucene.Net.Analysis.CharFilters
                 NormalizeCharMap map = RandomMap();
                 Analyzer analyzer = new AnalyzerAnonymousInnerClassHelper3(this, map);
                 int numRounds = 100;
-                CheckRandomData(Random(), analyzer, numRounds);
+                CheckRandomData(Random, analyzer, numRounds);
             }
         }
 
@@ -306,13 +307,13 @@ namespace Lucene.Net.Analysis.CharFilters
                 this.map = map;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(map, reader);
             }
@@ -320,10 +321,10 @@ namespace Lucene.Net.Analysis.CharFilters
 
         private NormalizeCharMap RandomMap()
         {
-            Random random = Random();
+            Random random = Random;
             NormalizeCharMap.Builder builder = new NormalizeCharMap.Builder();
             // we can't add duplicate keys, or NormalizeCharMap gets angry
-            ISet<string> keys = new HashSet<string>();
+            ISet<string> keys = new JCG.HashSet<string>();
             int num = random.Next(5);
             //System.out.println("NormalizeCharMap=");
             for (int i = 0; i < num; i++)
@@ -343,7 +344,7 @@ namespace Lucene.Net.Analysis.CharFilters
         [Test]
         public virtual void TestRandomMaps2()
         {
-            Random random = Random();
+            Random random = Random;
             int numIterations = AtLeast(3);
             for (int iter = 0; iter < numIterations; iter++)
             {
@@ -353,7 +354,7 @@ namespace Lucene.Net.Analysis.CharFilters
                     Console.WriteLine("\nTEST iter=" + iter);
                 }
 
-                char endLetter = (char)TestUtil.NextInt(random, 'b', 'z');
+                char endLetter = (char)TestUtil.NextInt32(random, 'b', 'z');
                 IDictionary<string, string> map = new Dictionary<string, string>();
                 NormalizeCharMap.Builder builder = new NormalizeCharMap.Builder();
                 int numMappings = AtLeast(5);
@@ -516,7 +517,7 @@ namespace Lucene.Net.Analysis.CharFilters
                         }
                         else
                         {
-                            char[] buffer = new char[TestUtil.NextInt(random, 1, 100)];
+                            char[] buffer = new char[TestUtil.NextInt32(random, 1, 100)];
                             int off = buffer.Length == 1 ? 0 : random.Next(buffer.Length - 1);
                             int count = mapFilter.Read(buffer, off, buffer.Length - off);
                             if (count == -1)

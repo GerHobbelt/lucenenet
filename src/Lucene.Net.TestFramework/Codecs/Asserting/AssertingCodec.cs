@@ -1,3 +1,5 @@
+using Lucene.Net.Codecs.Lucene46;
+
 namespace Lucene.Net.Codecs.Asserting
 {
     /*
@@ -17,48 +19,30 @@ namespace Lucene.Net.Codecs.Asserting
      * limitations under the License.
      */
 
-    using Lucene46Codec = Lucene.Net.Codecs.Lucene46.Lucene46Codec;
-
     /// <summary>
-    /// Acts like <seealso cref="Lucene46Codec"/> but with additional asserts.
+    /// Acts like <see cref="Lucene46Codec"/> but with additional asserts.
     /// </summary>
     [CodecName("Asserting")]
     public sealed class AssertingCodec : FilterCodec
     {
-        private readonly PostingsFormat Postings = new AssertingPostingsFormat();
-        private readonly TermVectorsFormat Vectors = new AssertingTermVectorsFormat();
-        private readonly StoredFieldsFormat StoredFields = new AssertingStoredFieldsFormat();
-        private readonly DocValuesFormat DocValues = new AssertingDocValuesFormat();
-        private readonly NormsFormat Norms = new AssertingNormsFormat();
+        private readonly PostingsFormat postings = new AssertingPostingsFormat();
+        private readonly TermVectorsFormat vectors = new AssertingTermVectorsFormat();
+        private readonly StoredFieldsFormat storedFields = new AssertingStoredFieldsFormat();
+        private readonly DocValuesFormat docValues = new AssertingDocValuesFormat();
+        private readonly NormsFormat norms = new AssertingNormsFormat();
 
         public AssertingCodec()
             : base(new Lucene46Codec())
-        {
-        }
+        { }
 
-        public override PostingsFormat PostingsFormat
-        {
-            get { return Postings; }
-        }
+        public override PostingsFormat PostingsFormat => postings;
 
-        public override TermVectorsFormat TermVectorsFormat
-        {
-            get { return Vectors; }
-        }
+        public override TermVectorsFormat TermVectorsFormat => vectors;
 
-        public override StoredFieldsFormat StoredFieldsFormat
-        {
-            get { return StoredFields; }
-        }
+        public override StoredFieldsFormat StoredFieldsFormat => storedFields;
 
-        public override DocValuesFormat DocValuesFormat
-        {
-            get { return DocValues; }
-        }
+        public override DocValuesFormat DocValuesFormat => docValues;
 
-        public override NormsFormat NormsFormat
-        {
-            get { return Norms; }
-        }
+        public override NormsFormat NormsFormat => norms;
     }
 }

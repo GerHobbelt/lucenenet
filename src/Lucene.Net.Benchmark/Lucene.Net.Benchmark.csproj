@@ -24,21 +24,18 @@
   <Import Project="$(SolutionDir)build/NuGet.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOsPlatform('Windows'))">$(TargetFrameworks);net45</TargetFrameworks>
     <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.6' ">$(PackageTargetFallback);dnxcore50</PackageTargetFallback>
 
     <AssemblyTitle>Lucene.Net.Benchmark</AssemblyTitle>
     <Description>System for benchmarking the Lucene.Net full-text search engine library from The Apache Software Foundation.</Description>
     <PackageTags>$(PackageTags);benchmark</PackageTags>
-    <PackageReleaseNotes>This package runs natively on Linux. To run on Windows, install the Icu4c.Win.Full.Lib NuGet package into your application. See: https://github.com/sillsdev/icu-dotnet#windows-1.</PackageReleaseNotes>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <NoWarn>$(NoWarn);1591;1573</NoWarn>
-  </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="..\CommonAssemblyKeys.cs" Link="Properties\CommonAssemblyKeys.cs" />
-  </ItemGroup>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+  </PropertyGroup>
 
   <ItemGroup>
 	<ProjectReference Include="..\dotnet\Lucene.Net.ICU\Lucene.Net.ICU.csproj" />
@@ -52,18 +49,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="J2N" Version="$(J2NPackageVersion)" />
     <PackageReference Include="ICU4N.Collation" Version="$(ICU4NCollationPackageVersion)" />
     <PackageReference Include="Spatial4n.Core" Version="$(Spatial4nCorePackageVersion)" />
   </ItemGroup>
 
-  <!-- NOTE: Microsoft's recommendation is not to use the ICloneable interface. We put in a FEATURE_CLONEABLE constant in case anyone wants to add it to the build -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <PackageReference Include="SharpZipLib" Version="$(SharpZipLibPackageVersion)" />
+  </ItemGroup>
+  
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="SharpZipLib" Version="$(SharpZipLibPackageVersion)" />
   </ItemGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
     <PackageReference Include="SharpZipLib.NETStandard" Version="$(SharpZipLibNETStandardPackageVersion)" />
@@ -77,12 +74,6 @@
         We would just drop support for .NET Standard 1.6 for this library if
         it didn't mean adding a special case to the build/tests. -->
     <NoWarn>$(NoWarn);8002</NoWarn>
-    <DebugType>portable</DebugType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <DefineConstants>$(DefineConstants);FEATURE_SERIALIZABLE_EXCEPTIONS</DefineConstants>
-    <DebugType>full</DebugType>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">

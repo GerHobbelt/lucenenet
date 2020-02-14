@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis
 {
@@ -464,7 +465,8 @@ namespace Lucene.Net.Analysis
                 var componentsPerField = (IDictionary<string, TokenStreamComponents>)GetStoredValue(analyzer);
                 if (componentsPerField == null)
                 {
-                    componentsPerField = new Dictionary<string, TokenStreamComponents>();
+                    // LUCENENET-615: This needs to support nullable keys
+                    componentsPerField = new JCG.Dictionary<string, TokenStreamComponents>();
                     SetStoredValue(analyzer, componentsPerField);
                 }
                 componentsPerField[fieldName] = components;

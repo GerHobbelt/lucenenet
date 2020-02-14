@@ -2,11 +2,10 @@
 using ICU4N.Globalization;
 using ICU4N.Text;
 using ICU4N.Util;
+using J2N;
 using Lucene.Net.Analysis.Standard;
-using Lucene.Net.Support;
 using System;
 using System.IO;
-using System.Reflection;
 
 namespace Lucene.Net.Analysis.Icu.Segmentation
 {
@@ -113,17 +112,17 @@ namespace Lucene.Net.Analysis.Icu.Segmentation
             }
         }
 
-        public override string GetType(int script, RuleStatus ruleStatus)
+        public override string GetType(int script, int ruleStatus)
         {
             switch (ruleStatus)
             {
-                case RuleStatus.WordIdeo:
+                case BreakIterator.WordIdeo:
                     return WORD_IDEO;
-                case RuleStatus.WordKana: //RuleBasedBreakIterator.WORD_KANA:
+                case BreakIterator.WordKana: //RuleBasedBreakIterator.WORD_KANA:
                     return script == UScript.Hiragana ? WORD_HIRAGANA : WORD_KATAKANA;
-                case RuleStatus.WordLetter: //RuleBasedBreakIterator.WORD_LETTER:
+                case BreakIterator.WordLetter: //RuleBasedBreakIterator.WORD_LETTER:
                     return script == UScript.Hangul ? WORD_HANGUL : WORD_LETTER;
-                case RuleStatus.WordNumber: //RuleBasedBreakIterator.WORD_NUMBER:
+                case BreakIterator.WordNumber: //RuleBasedBreakIterator.WORD_NUMBER:
                     return WORD_NUMBER;
                 default: /* some other custom code */
                     return "<OTHER>";
@@ -132,8 +131,7 @@ namespace Lucene.Net.Analysis.Icu.Segmentation
 
         private static RuleBasedBreakIterator ReadBreakIterator(string filename)
         {
-            using (Stream @is =
-              typeof(DefaultICUTokenizerConfig).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(DefaultICUTokenizerConfig), filename))
+            using (Stream @is = typeof(DefaultICUTokenizerConfig).FindAndGetManifestResourceStream(filename))
             {
                 try
                 {

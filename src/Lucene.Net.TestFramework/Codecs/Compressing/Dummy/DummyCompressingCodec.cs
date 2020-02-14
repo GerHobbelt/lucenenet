@@ -1,32 +1,28 @@
-using System.Diagnostics;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
 
 namespace Lucene.Net.Codecs.Compressing.Dummy
 {
-    using ArrayUtil = Lucene.Net.Util.ArrayUtil;
-    using BytesRef = Lucene.Net.Util.BytesRef;
-
     /*
-         * Licensed to the Apache Software Foundation (ASF) under one or more
-         * contributor license agreements.  See the NOTICE file distributed with
-         * this work for additional information regarding copyright ownership.
-         * The ASF licenses this file to You under the Apache License, Version 2.0
-         * (the "License"); you may not use this file except in compliance with
-         * the License.  You may obtain a copy of the License at
-         *
-         *     http://www.apache.org/licenses/LICENSE-2.0
-         *
-         * Unless required by applicable law or agreed to in writing, software
-         * distributed under the License is distributed on an "AS IS" BASIS,
-         * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-         * See the License for the specific language governing permissions and
-         * limitations under the License.
-         */
-
-    using DataInput = Lucene.Net.Store.DataInput;
-    using DataOutput = Lucene.Net.Store.DataOutput;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
-    /// CompressionCodec that does not compress data, useful for testing. </summary>
+    /// <see cref="CompressingCodec"/> that does not compress data, useful for testing. </summary>
     // In its own package to make sure the oal.codecs.compressing classes are
     // visible enough to let people write their own CompressionMode
     [CodecName("DummyCompressingStoredFields")]
@@ -37,8 +33,7 @@ namespace Lucene.Net.Codecs.Compressing.Dummy
         private class CompressionModeAnonymousInnerClassHelper : CompressionMode
         {
             public CompressionModeAnonymousInnerClassHelper()
-            {
-            }
+            { }
 
             public override Compressor NewCompressor()
             {
@@ -60,10 +55,6 @@ namespace Lucene.Net.Codecs.Compressing.Dummy
 
         private class DecompressorAnonymousInnerClassHelper : Decompressor
         {
-            public DecompressorAnonymousInnerClassHelper()
-            {
-            }
-
             public override void Decompress(DataInput @in, int originalLength, int offset, int length, BytesRef bytes)
             {
                 Debug.Assert(offset + length <= originalLength);
@@ -86,10 +77,6 @@ namespace Lucene.Net.Codecs.Compressing.Dummy
 
         private class CompressorAnonymousInnerClassHelper : Compressor
         {
-            public CompressorAnonymousInnerClassHelper()
-            {
-            }
-
             public override void Compress(byte[] bytes, int off, int len, DataOutput @out)
             {
                 @out.WriteBytes(bytes, off, len);
@@ -97,17 +84,15 @@ namespace Lucene.Net.Codecs.Compressing.Dummy
         }
 
         /// <summary>
-        /// Constructor that allows to configure the chunk size. </summary>
+        /// Constructor that allows to configure the <paramref name="chunkSize"/>. </summary>
         public DummyCompressingCodec(int chunkSize, bool withSegmentSuffix)
             : base(withSegmentSuffix ? "DummyCompressingStoredFields" : "", DUMMY, chunkSize)
-        {
-        }
+        { }
 
         /// <summary>
         /// Default constructor. </summary>
         public DummyCompressingCodec()
             : this(1 << 14, false)
-        {
-        }
+        { }
     }
 }

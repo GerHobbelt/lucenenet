@@ -1,4 +1,8 @@
-﻿
+﻿---
+uid: Lucene.Net.QueryParsers.Flexible.Core.Messages
+summary: *content
+---
+
 <!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
@@ -16,8 +20,10 @@
  limitations under the License.
 -->
 
+
 Messages usually used by query parser implementations.
 
 ## Query Parser Messages
+
 
 Messages for the Flexible Query Parser, they use <tt>org.apache.lucene.messages.NLS</tt> API.

@@ -43,24 +43,18 @@ namespace Lucene.Net.Analysis.Ja.Dict
             this.fst = new TokenInfoFST(fst, true);
         }
 
-        public TokenInfoFST FST
-        {
-            get { return fst; }
-        }
+        public TokenInfoFST FST => fst;
 
-        public static TokenInfoDictionary GetInstance()
-        {
-            return SingletonHolder.INSTANCE;
-        }
+        public static TokenInfoDictionary Instance => SingletonHolder.INSTANCE;
 
         private class SingletonHolder
         {
-            internal static readonly TokenInfoDictionary INSTANCE;
-            static SingletonHolder()
+            internal static readonly TokenInfoDictionary INSTANCE = LoadInstance();
+            private static TokenInfoDictionary LoadInstance() // LUCENENET: Avoid static constructors (see https://github.com/apache/lucenenet/pull/224#issuecomment-469284006)
             {
                 try
                 {
-                    INSTANCE = new TokenInfoDictionary();
+                    return new TokenInfoDictionary();
                 }
                 catch (IOException ioe)
                 {

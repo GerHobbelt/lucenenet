@@ -5,7 +5,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Util
 {
@@ -36,7 +36,7 @@ namespace Lucene.Net.Analysis.Util
 
             var buffer = new RollingCharBuffer();
 
-            var random = Random();
+            var random = LuceneTestCase.Random;
             for (var iter = 0; iter < ITERS; iter++)
             {   
                 var stringLen = random.NextBoolean() ? random.Next(50) : random.Next(20000);
@@ -77,7 +77,7 @@ namespace Lucene.Net.Analysis.Util
                     else if (random.NextBoolean())
                     {
                         // Read previous char
-                        var pos = TestUtil.NextInt(random, nextRead - availCount, nextRead - 1);
+                        var pos = TestUtil.NextInt32(random, nextRead - availCount, nextRead - 1);
                         if (VERBOSE)
                         {
                             Console.WriteLine("    old char pos=" + pos);
@@ -94,7 +94,7 @@ namespace Lucene.Net.Analysis.Util
                         }
                         else
                         {
-                            length = TestUtil.NextInt(random, 1, availCount);
+                            length = TestUtil.NextInt32(random, 1, availCount);
                         }
                         int start;
                         if (length == availCount)

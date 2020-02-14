@@ -40,7 +40,11 @@ namespace Lucene.Net.Index
 
             // initialize directory
             Directory = NewDirectory();
-            Writer = new RandomIndexWriter(Random(), Directory, Similarity, TimeZone);
+            Writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, Directory);
 
             // write document
             Document doc = new Document();
@@ -64,7 +68,7 @@ namespace Lucene.Net.Index
         public virtual void TestDeleteByTermIsCurrent()
         {
             // get reader
-            DirectoryReader reader = Writer.Reader;
+            DirectoryReader reader = Writer.GetReader();
 
             // assert index has a document and reader is up2date
             Assert.AreEqual(1, Writer.NumDocs, "One document should be in the index");
@@ -89,7 +93,7 @@ namespace Lucene.Net.Index
         public virtual void TestDeleteAllIsCurrent()
         {
             // get reader
-            DirectoryReader reader = Writer.Reader;
+            DirectoryReader reader = Writer.GetReader();
 
             // assert index has a document and reader is up2date
             Assert.AreEqual(1, Writer.NumDocs, "One document should be in the index");

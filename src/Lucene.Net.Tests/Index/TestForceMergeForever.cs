@@ -1,8 +1,9 @@
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using J2N.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -63,15 +64,15 @@ namespace Lucene.Net.Index
         public virtual void Test()
         {
             Directory d = NewDirectory();
-            MockAnalyzer analyzer = new MockAnalyzer(Random());
-            analyzer.MaxTokenLength = TestUtil.NextInt(Random(), 1, IndexWriter.MAX_TERM_LENGTH);
+            MockAnalyzer analyzer = new MockAnalyzer(Random);
+            analyzer.MaxTokenLength = TestUtil.NextInt32(Random, 1, IndexWriter.MAX_TERM_LENGTH);
 
             MyIndexWriter w = new MyIndexWriter(d, NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer));
 
             // Try to make an index that requires merging:
-            w.Config.SetMaxBufferedDocs(TestUtil.NextInt(Random(), 2, 11));
+            w.Config.SetMaxBufferedDocs(TestUtil.NextInt32(Random, 2, 11));
             int numStartDocs = AtLeast(20);
-            LineFileDocs docs = new LineFileDocs(Random(), DefaultCodecSupportsDocValues());
+            LineFileDocs docs = new LineFileDocs(Random, DefaultCodecSupportsDocValues);
             for (int docIDX = 0; docIDX < numStartDocs; docIDX++)
             {
                 w.AddDocument(docs.NextDoc());
@@ -96,18 +97,18 @@ namespace Lucene.Net.Index
 
             AtomicBoolean doStop = new AtomicBoolean();
             w.Config.SetMaxBufferedDocs(2);
-            ThreadClass t = new ThreadAnonymousInnerClassHelper(this, w, numStartDocs, docs, doStop);
+            ThreadJob t = new ThreadAnonymousInnerClassHelper(this, w, numStartDocs, docs, doStop);
             t.Start();
             w.ForceMerge(1);
-            doStop.Set(true);
+            doStop.Value = true;
             t.Join();
-            Assert.IsTrue(w.MergeCount.Get() <= 1, "merge count is " + w.MergeCount.Get());
+            Assert.IsTrue(w.MergeCount <= 1, "merge count is " + w.MergeCount);
             w.Dispose();
             d.Dispose();
             docs.Dispose();
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestForceMergeForever OuterInstance;
 
@@ -129,9 +130,9 @@ namespace Lucene.Net.Index
             {
                 try
                 {
-                    while (!DoStop.Get())
+                    while (!DoStop)
                     {
-                        w.UpdateDocument(new Term("docid", "" + Random().Next(NumStartDocs)), Docs.NextDoc());
+                        w.UpdateDocument(new Term("docid", "" + Random.Next(NumStartDocs)), Docs.NextDoc());
                         // Force deletes to apply
                         w.GetReader().Dispose();
                     }

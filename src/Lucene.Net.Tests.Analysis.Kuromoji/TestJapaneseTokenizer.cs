@@ -1,15 +1,15 @@
-﻿using Lucene.Net.Analysis.Ja.Dict;
+﻿using J2N.Text;
+using Lucene.Net.Analysis.Ja.Dict;
 using Lucene.Net.Analysis.Ja.TokenAttributes;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Ja
 {
@@ -200,15 +200,15 @@ namespace Lucene.Net.Analysis.Ja
         [Test]
         public void TestRandomStrings()
         {
-            CheckRandomData(Random(), analyzer, 1000 * RANDOM_MULTIPLIER);
-            CheckRandomData(Random(), analyzerNoPunct, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, analyzer, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, analyzerNoPunct, 1000 * RANDOM_MULTIPLIER);
         }
 
         /** blast some random large strings through the analyzer */
         [Test, LongRunningTest]
         public void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             CheckRandomData(random, analyzer, 100 * RANDOM_MULTIPLIER, 8192);
             CheckRandomData(random, analyzerNoPunct, 100 * RANDOM_MULTIPLIER, 8192);
         }
@@ -217,12 +217,12 @@ namespace Lucene.Net.Analysis.Ja
         public void TestRandomHugeStringsMockGraphAfter()
         {
             // Randomly inject graph tokens after JapaneseTokenizer:
-            Random random = Random();
+            Random random = Random;
             CheckRandomData(random,
                             Analyzer.NewAnonymous(createComponents: (fieldName, reader) =>
                             {
                                 Tokenizer tokenizer = new JapaneseTokenizer(reader, ReadDict(), false, JapaneseTokenizerMode.SEARCH);
-                                TokenStream graph = new MockGraphTokenFilter(Random(), tokenizer);
+                                TokenStream graph = new MockGraphTokenFilter(Random, tokenizer);
                                 return new TokenStreamComponents(tokenizer, graph);
                             }),
                     100 * RANDOM_MULTIPLIER, 8192);
@@ -233,7 +233,7 @@ namespace Lucene.Net.Analysis.Ja
         {
             for (int i = 0; i < 100; i++)
             {
-                String s = TestUtil.RandomUnicodeString(Random(), 10000);
+                String s = TestUtil.RandomUnicodeString(Random, 10000);
                 TokenStream ts = analyzer.GetTokenStream("foo", s);
                 try
                 {
@@ -269,7 +269,7 @@ namespace Lucene.Net.Analysis.Ja
                 {
                     Console.WriteLine("\nTEST: iter=" + i);
                 }
-                String s = TestUtil.RandomUnicodeString(Random(), 100);
+                String s = TestUtil.RandomUnicodeString(Random, 100);
                 TokenStream ts = analyzer.GetTokenStream("foo", s);
                 try
                 {
@@ -418,7 +418,7 @@ namespace Lucene.Net.Analysis.Ja
         [Test]
         public void TestLatticeToDot()
         {
-            GraphvizFormatter gv2 = new GraphvizFormatter(ConnectionCosts.GetInstance());
+            GraphvizFormatter gv2 = new GraphvizFormatter(ConnectionCosts.Instance);
             Analyzer analyzer = Analyzer.NewAnonymous(createComponents: (fieldName, reader) =>
             {
                 JapaneseTokenizer tokenizer = new JapaneseTokenizer(reader, ReadDict(), false, JapaneseTokenizerMode.SEARCH)

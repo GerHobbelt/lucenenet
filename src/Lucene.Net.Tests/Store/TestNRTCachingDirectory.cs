@@ -3,7 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Store
 {
@@ -48,12 +48,12 @@ namespace Lucene.Net.Store
         {
             Directory dir = NewDirectory();
             NRTCachingDirectory cachedDir = new NRTCachingDirectory(dir, 2.0, 25.0);
-            MockAnalyzer analyzer = new MockAnalyzer(Random());
-            analyzer.MaxTokenLength = TestUtil.NextInt(Random(), 1, IndexWriter.MAX_TERM_LENGTH);
+            MockAnalyzer analyzer = new MockAnalyzer(Random);
+            analyzer.MaxTokenLength = TestUtil.NextInt32(Random, 1, IndexWriter.MAX_TERM_LENGTH);
             IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
-            RandomIndexWriter w = new RandomIndexWriter(Random(), cachedDir, conf);
-            LineFileDocs docs = new LineFileDocs(Random(), DefaultCodecSupportsDocValues());
-            int numDocs = TestUtil.NextInt(Random(), 100, 400);
+            RandomIndexWriter w = new RandomIndexWriter(Random, cachedDir, conf);
+            LineFileDocs docs = new LineFileDocs(Random, DefaultCodecSupportsDocValues);
+            int numDocs = TestUtil.NextInt32(Random, 100, 400);
 
             if (VERBOSE)
             {
@@ -67,11 +67,11 @@ namespace Lucene.Net.Store
                 Document doc = docs.NextDoc();
                 ids.Add(new BytesRef(doc.Get("docid")));
                 w.AddDocument(doc);
-                if (Random().Next(20) == 17)
+                if (Random.Next(20) == 17)
                 {
                     if (r == null)
                     {
-                        r = DirectoryReader.Open(w.w, false);
+                        r = DirectoryReader.Open(w.IndexWriter, false);
                     }
                     else
                     {
@@ -159,6 +159,11 @@ namespace Lucene.Net.Store
             }
         }
 
+        private static bool ContainsFile(Directory directory, string file) // LUCENENET specific method to prevent having to use Arrays.AsList(), which creates unnecessary memory allocations
+        {
+            return Array.IndexOf(directory.ListAll(), file) > -1;
+        }
+
         // LUCENE-3382 test that we can add a file, and then when we call list() we get it back
         [Test]
         public virtual void TestDirectoryFilter()
@@ -167,9 +172,9 @@ namespace Lucene.Net.Store
             string name = "file";
             try
             {
-                dir.CreateOutput(name, NewIOContext(Random())).Dispose();
+                dir.CreateOutput(name, NewIOContext(Random)).Dispose();
                 Assert.IsTrue(SlowFileExists(dir, name));
-                Assert.IsTrue(Arrays.AsList(dir.ListAll()).Contains(name));
+                Assert.IsTrue(ContainsFile(dir, name));
             }
             finally
             {
@@ -182,9 +187,9 @@ namespace Lucene.Net.Store
         public virtual void TestCompoundFileAppendTwice()
         {
             Directory newDir = new NRTCachingDirectory(NewDirectory(), 2.0, 25.0);
-            CompoundFileDirectory csw = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random()), true);
+            CompoundFileDirectory csw = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random), true);
             CreateSequenceFile(newDir, "d1", (sbyte)0, 15);
-            IndexOutput @out = csw.CreateOutput("d.xyz", NewIOContext(Random()));
+            IndexOutput @out = csw.CreateOutput("d.xyz", NewIOContext(Random));
             @out.WriteInt32(0);
             @out.Dispose();
             Assert.AreEqual(1, csw.ListAll().Length);
@@ -192,7 +197,7 @@ namespace Lucene.Net.Store
 
             csw.Dispose();
 
-            CompoundFileDirectory cfr = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random()), false);
+            CompoundFileDirectory cfr = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random), false);
             Assert.AreEqual(1, cfr.ListAll().Length);
             Assert.AreEqual("d.xyz", cfr.ListAll()[0]);
             cfr.Dispose();
@@ -206,7 +211,7 @@ namespace Lucene.Net.Store
         /// </summary>
         private void CreateSequenceFile(Directory dir, string name, sbyte start, int size)
         {
-            IndexOutput os = dir.CreateOutput(name, NewIOContext(Random()));
+            IndexOutput os = dir.CreateOutput(name, NewIOContext(Random));
             for (int i = 0; i < size; i++)
             {
                 os.WriteByte((byte)start);

@@ -1,4 +1,4 @@
-using Lucene.Net.Support;
+using J2N.Collections.Generic.Extensions;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
@@ -190,7 +190,7 @@ namespace Lucene.Net.Index
                         readers.Add(reader);
                     }
                 }
-                return Collections.UnmodifiableList(readers);
+                return readers.AsReadOnly();
             }
 
             /// <summary>
@@ -515,7 +515,7 @@ namespace Lucene.Net.Index
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public MergeException(SerializationInfo info, StreamingContext context)
+            protected MergeException(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
             }
@@ -569,7 +569,7 @@ namespace Lucene.Net.Index
             /// </summary>
             /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
             /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
-            public MergeAbortedException(SerializationInfo info, StreamingContext context)
+            protected MergeAbortedException(SerializationInfo info, StreamingContext context)
                 : base(info, context)
             {
             }

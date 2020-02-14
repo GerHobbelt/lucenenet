@@ -1,10 +1,11 @@
-using Lucene.Net.Codecs;
+using J2N.Threading.Atomic;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -112,7 +113,7 @@ namespace Lucene.Net.Index
             }
         }
 
-        private readonly ISet<ICoreDisposedListener> coreClosedListeners = new ConcurrentHashSet<ICoreDisposedListener>(new IdentityComparer<ICoreDisposedListener>());
+        private readonly ISet<ICoreDisposedListener> coreClosedListeners = new JCG.LinkedHashSet<ICoreDisposedListener>().AsConcurrent();
 
         internal SegmentCoreReaders(SegmentReader owner, Directory dir, SegmentCommitInfo si, IOContext context, int termsIndexDivisor)
         {
@@ -185,18 +186,12 @@ namespace Lucene.Net.Index
             }
         }
 
-        internal int RefCount
-        {
-            get
-            {
-                return @ref.Get();
-            }
-        }
+        internal int RefCount => @ref;
 
         internal void IncRef()
         {
             int count;
-            while ((count = @ref.Get()) > 0)
+            while ((count = @ref) > 0)
             {
                 if (@ref.CompareAndSet(count, count + 1))
                 {

@@ -1,9 +1,11 @@
-﻿using Lucene.Net.Support;
+﻿using J2N.Text;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 /*
                     Egothor Software License version 1.00
@@ -76,7 +78,7 @@ namespace Egothor.Stemmer
         internal static int Get(int i, string s)
         {
             int result;
-            if (!int.TryParse(s.Substring(i, 1), out result))
+            if (!int.TryParse(s.Substring(i, 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out result))
             {
                 return 1;
             }
@@ -131,11 +133,12 @@ namespace Egothor.Stemmer
                         {
                             line = line.ToLowerInvariant();
                             StringTokenizer st = new StringTokenizer(line);
-                            string stem = st.NextToken();
+                            st.MoveNext();
+                            string stem = st.Current;
                             Console.WriteLine(stem + " -a");
-                            while (st.HasMoreTokens())
+                            while (st.MoveNext())
                             {
-                                string token = st.NextToken();
+                                string token = st.Current;
                                 if (token.Equals(stem, StringComparison.Ordinal) == false)
                                 {
                                     Console.WriteLine(stem + " " + diff.Exec(token, stem));

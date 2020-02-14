@@ -4,7 +4,7 @@
 // This class is in the Public Domain.  NO WARRANTY!
 // $Id: NamespaceSupport.java,v 1.15 2004/04/26 17:34:35 dmegginson Exp $
 
-using Lucene.Net.Support;
+using J2N.Text;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -644,9 +644,9 @@ namespace Sax.Helpers
                 // Start by looking in the cache, and
                 // return immediately if the name
                 // is already known in this content
-                if (table.ContainsKey(qName))
+                if (table.TryGetValue(qName, out string[] value))
                 {
-                    return (string[])table[qName];
+                    return value;
                 }
 
                 // We haven't seen this name in this

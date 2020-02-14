@@ -1,6 +1,8 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Collections.Generic.Extensions;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Search.Similarities;
 using Lucene.Net.Store;
@@ -11,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index.Sorter
 {
@@ -51,7 +53,7 @@ namespace Lucene.Net.Index.Sorter
             {
                 if (state.Name.Equals(NORMS_FIELD, StringComparison.Ordinal))
                 {
-                    return Number.SingleToInt32Bits(state.Boost);
+                    return J2N.BitConversion.SingleToInt32Bits(state.Boost);
                 }
                 else
                 {
@@ -147,7 +149,7 @@ namespace Lucene.Net.Index.Sorter
             doc.Add(new StringField(ID_FIELD, id.ToString(), Field.Store.YES));
             doc.Add(new StringField(DOCS_ENUM_FIELD, DOCS_ENUM_TERM, Field.Store.NO));
             positions.SetId(id);
-            if (DoesntSupportOffsets.contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
+            if (DoesntSupportOffsets.Contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
             {
                 // codec doesnt support offsets: just index positions for the field
                 doc.Add(new Field(DOC_POSITIONS_FIELD, positions, TextField.TYPE_NOT_STORED));
@@ -158,11 +160,11 @@ namespace Lucene.Net.Index.Sorter
             }
             doc.Add(new NumericDocValuesField(NUMERIC_DV_FIELD, id));
             TextField norms = new TextField(NORMS_FIELD, id.ToString(), Field.Store.NO);
-            norms.Boost = (Number.Int32BitsToSingle(id));
+            norms.Boost = (J2N.BitConversion.Int32BitsToSingle(id));
             doc.Add(norms);
             doc.Add(new BinaryDocValuesField(BINARY_DV_FIELD, new BytesRef(id.ToString())));
             doc.Add(new SortedDocValuesField(SORTED_DV_FIELD, new BytesRef(id.ToString())));
-            if (DefaultCodecSupportsSortedSet())
+            if (DefaultCodecSupportsSortedSet)
             {
                 doc.Add(new SortedSetDocValuesField(SORTED_SET_DV_FIELD, new BytesRef(id.ToString())));
                 doc.Add(new SortedSetDocValuesField(SORTED_SET_DV_FIELD, new BytesRef((id + 1).ToString())));
@@ -180,7 +182,7 @@ namespace Lucene.Net.Index.Sorter
                 ids.Add(i * 10);
             }
             // shuffle them for indexing
-            Collections.Shuffle(ids);
+            ids.Shuffle(Random);
 
             if (VERBOSE)
             {
@@ -193,7 +195,7 @@ namespace Lucene.Net.Index.Sorter
             conf.SetSimilarity(new NormsSimilarity(conf.Similarity)); // for testing norms field
             using (RandomIndexWriter writer = new RandomIndexWriter(random, dir, conf))
             {
-                writer.RandomForceMerge = (false);
+                writer.DoRandomForceMerge = (false);
                 foreach (int id in ids)
                 {
                     writer.AddDocument(Doc(id, positions));
@@ -221,7 +223,7 @@ namespace Lucene.Net.Index.Sorter
 
             dir = NewDirectory();
             int numDocs = AtLeast(20);
-            CreateIndex(dir, numDocs, Random());
+            CreateIndex(dir, numDocs, Random);
 
             reader = SlowCompositeReaderWrapper.Wrap(DirectoryReader.Open(dir));
         }
@@ -235,7 +237,7 @@ namespace Lucene.Net.Index.Sorter
             base.AfterClass();
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestBinaryDocValuesField()
         {
             BinaryDocValues dv = reader.GetBinaryDocValues(BINARY_DV_FIELD);
@@ -247,7 +249,7 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestDocsAndPositionsEnum()
         {
             TermsEnum termsEnum = reader.GetTerms(DOC_POSITIONS_FIELD).GetIterator(null);
@@ -263,7 +265,7 @@ namespace Lucene.Net.Index.Sorter
                 for (int i = 0; i < freq; i++)
                 {
                     assertEquals("incorrect position for doc=" + doc, i, sortedPositions.NextPosition());
-                    if (!DoesntSupportOffsets.contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
+                    if (!DoesntSupportOffsets.Contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
                     {
                         assertEquals("incorrect startOffset for doc=" + doc, i, sortedPositions.StartOffset);
                         assertEquals("incorrect endOffset for doc=" + doc, i, sortedPositions.EndOffset);
@@ -280,14 +282,14 @@ namespace Lucene.Net.Index.Sorter
                 assertTrue(((SortingAtomicReader.SortingDocsAndPositionsEnum)sortedPositions).Reused(reuse)); // make sure reuse worked
             }
             doc = 0;
-            while ((doc = sortedPositions.Advance(doc + TestUtil.NextInt(Random(), 1, 5))) != DocIdSetIterator.NO_MORE_DOCS)
+            while ((doc = sortedPositions.Advance(doc + TestUtil.NextInt32(Random, 1, 5))) != DocIdSetIterator.NO_MORE_DOCS)
             {
                 int freq = sortedPositions.Freq;
                 assertEquals("incorrect freq for doc=" + doc, sortedValues[doc] / 10 + 1, freq);
                 for (int i = 0; i < freq; i++)
                 {
                     assertEquals("incorrect position for doc=" + doc, i, sortedPositions.NextPosition());
-                    if (!DoesntSupportOffsets.contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
+                    if (!DoesntSupportOffsets.Contains(TestUtil.GetPostingsFormat(DOC_POSITIONS_FIELD)))
                     {
                         assertEquals("incorrect startOffset for doc=" + doc, i, sortedPositions.StartOffset);
                         assertEquals("incorrect endOffset for doc=" + doc, i, sortedPositions.EndOffset);
@@ -301,7 +303,7 @@ namespace Lucene.Net.Index.Sorter
         {
             if (Rarely())
             {
-                if (Random().nextBoolean())
+                if (Random.nextBoolean())
                 {
                     return null;
                 }
@@ -311,12 +313,12 @@ namespace Lucene.Net.Index.Sorter
                 }
             }
             FixedBitSet bits = new FixedBitSet(maxDoc);
-            int bitsSet = TestUtil.NextInt(Random(), 1, maxDoc - 1);
+            int bitsSet = TestUtil.NextInt32(Random, 1, maxDoc - 1);
             for (int i = 0; i < bitsSet; ++i)
             {
                 while (true)
                 {
-                    int index = Random().nextInt(maxDoc);
+                    int index = Random.nextInt(maxDoc);
                     if (!bits.Get(index))
                     {
                         bits.Set(index);
@@ -327,7 +329,7 @@ namespace Lucene.Net.Index.Sorter
             return bits;
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestDocsEnum()
         {
             IBits mappedLiveDocs = RandomLiveDocs(reader.MaxDoc);
@@ -374,7 +376,7 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestNormValues()
         {
             NumericDocValues dv = reader.GetNormValues(NORMS_FIELD);
@@ -385,7 +387,7 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestNumericDocValuesField()
         {
             NumericDocValues dv = reader.GetNumericDocValues(NUMERIC_DV_FIELD);
@@ -396,7 +398,7 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestSortedDocValuesField()
         {
             SortedDocValues dv = reader.GetSortedDocValues(SORTED_DV_FIELD);
@@ -409,10 +411,10 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestSortedSetDocValuesField()
         {
-            AssumeTrue("default codec does not support SORTED_SET", DefaultCodecSupportsSortedSet());
+            AssumeTrue("default codec does not support SORTED_SET", DefaultCodecSupportsSortedSet);
             SortedSetDocValues dv = reader.GetSortedSetDocValues(SORTED_SET_DV_FIELD);
             int maxDoc = reader.MaxDoc;
             BytesRef bytes = new BytesRef();
@@ -428,7 +430,7 @@ namespace Lucene.Net.Index.Sorter
             }
         }
 
-        // [Test] // LUCENENET NOTE: For now, we are overriding this test in every subclass to pull it into the right context for the subclass
+        [Test]
         public virtual void TestTermVectors()
         {
             int maxDoc = reader.MaxDoc;

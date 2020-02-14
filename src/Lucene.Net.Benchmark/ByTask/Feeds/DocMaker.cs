@@ -1,6 +1,6 @@
-﻿using Lucene.Net.Benchmarks.ByTask.Utils;
+﻿using J2N.Threading.Atomic;
+using Lucene.Net.Benchmarks.ByTask.Utils;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -285,7 +285,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Feeds
 
             //util.cal.setTime(date);
             //int sec = util.cal.get(Calendar.HOUR_OF_DAY) * 3600 + util.cal.get(Calendar.MINUTE) * 60 + util.cal.get(Calendar.SECOND);
-            int sec = Convert.ToInt32(date.Value.ToUniversalTime().TimeOfDay.TotalSeconds);
+            int sec = Convert.ToInt32(date.Value.ToUniversalTime().TimeOfDay.TotalSeconds, CultureInfo.InvariantCulture);
 
             Field timeSecField = ds.GetNumericField(TIME_SEC_FIELD, NumericType.INT32);
             timeSecField.SetInt32Value(sec);
@@ -452,7 +452,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Feeds
             // re-initiate since properties by round may have changed.
             SetConfig(m_config, m_source);
             m_source.ResetInputs();
-            numDocsCreated.Set(0);
+            numDocsCreated.Value = 0;
             ResetLeftovers();
         }
 

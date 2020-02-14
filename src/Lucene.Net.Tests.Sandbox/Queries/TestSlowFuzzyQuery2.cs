@@ -1,9 +1,11 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N;
+using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Search.Similarities;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -12,7 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Sandbox.Queries
 {
@@ -77,7 +79,7 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestFromTestData()
         {
             // TODO: randomize!
-            assertFromTestData(mappings[Random().nextInt(mappings.Length)]);
+            assertFromTestData(mappings[Random.nextInt(mappings.Length)]);
         }
 
         public void assertFromTestData(int[] codePointTable)
@@ -93,7 +95,7 @@ namespace Lucene.Net.Sandbox.Queries
             int terms = (int)Math.Pow(2, bits);
 
             Store.Directory dir = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.KEYWORD, false)).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.KEYWORD, false)).SetMergePolicy(NewLogMergePolicy()));
 
             Document doc = new Document();
             Field field = NewTextField("field", "", Field.Store.NO);
@@ -105,7 +107,7 @@ namespace Lucene.Net.Sandbox.Queries
                 writer.AddDocument(doc);
             }
 
-            IndexReader r = writer.Reader;
+            IndexReader r = writer.GetReader();
             IndexSearcher searcher = NewSearcher(r);
             if (VERBOSE)
             {
@@ -148,7 +150,7 @@ namespace Lucene.Net.Sandbox.Queries
         private static String MapInt(int[] codePointTable, int i)
         {
             StringBuilder sb = new StringBuilder();
-            String binary = Number.ToBinaryString(i);
+            String binary = i.ToBinaryString();
             for (int j = 0; j < binary.Length; j++)
                 sb.AppendCodePoint(codePointTable[binary[j] - '0']);
             return sb.toString();

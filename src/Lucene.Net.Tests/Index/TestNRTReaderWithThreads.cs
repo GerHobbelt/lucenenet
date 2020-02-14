@@ -1,10 +1,11 @@
+using J2N.Threading;
+using J2N.Threading.Atomic;
 using NUnit.Framework;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Index.Extensions;
 using System;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -46,7 +47,7 @@ namespace Lucene.Net.Index
             {
                 wrapper.AssertNoDeleteOpenFile = true;
             }
-            var writer = new IndexWriter(mainDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMaxBufferedDocs(10).SetMergePolicy(NewLogMergePolicy(false, 2)));
+            var writer = new IndexWriter(mainDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMaxBufferedDocs(10).SetMergePolicy(NewLogMergePolicy(false, 2)));
             IndexReader reader = writer.GetReader(); // start pooling readers
             reader.Dispose();
             var indexThreads = new RunThread[4];
@@ -85,7 +86,7 @@ namespace Lucene.Net.Index
             mainDir.Dispose();
         }
 
-        public class RunThread : ThreadClass
+        public class RunThread : ThreadJob
         {
             private readonly TestNRTReaderWithThreads OuterInstance;
 
@@ -95,7 +96,7 @@ namespace Lucene.Net.Index
             internal int DelCount = 0;
             internal int AddCount = 0;
             internal int Type;
-            internal readonly Random r = new Random(Random().Next());
+            internal readonly Random r = new Random(Random.Next());
 
             public RunThread(TestNRTReaderWithThreads outerInstance, int type, IndexWriter writer)
             {
@@ -123,7 +124,7 @@ namespace Lucene.Net.Index
                             // we may or may not delete because the term may not exist,
                             // however we're opening and closing the reader rapidly
                             IndexReader reader = Writer.GetReader();
-                            int id = r.Next(OuterInstance.Seq.Get());
+                            int id = r.Next(OuterInstance.Seq);
                             Term term = new Term("id", Convert.ToString(id));
                             int count = TestIndexWriterReader.Count(term, reader);
                             Writer.DeleteDocuments(term);

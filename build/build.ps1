@@ -27,7 +27,7 @@ properties {
 	[string]$publish_directory = "$release_directory/Publish"
 	[string]$solutionFile = "$base_directory/Lucene.Net.sln"
 	[string]$sdkPath = "$env:programfiles/dotnet/sdk"
-	[string]$sdkVersion = "2.2.300"
+	[string]$sdkVersion = "3.1.100"
 	[string]$globalJsonFile = "$base_directory/global.json"
 	[string]$versionPropsFile = "$base_directory/Version.props"
 	[string]$build_bat = "$base_directory/build.bat"
@@ -48,7 +48,7 @@ properties {
 	[int]$maximumParalellJobs = 8
 	
 	#test paramters
-	[string]$frameworks_to_test = "netcoreapp2.1,netcoreapp1.0,net451"
+	[string]$frameworks_to_test = "netcoreapp3.1,netcoreapp2.2,net48"
 	[string]$where = ""
 }
 
@@ -86,7 +86,7 @@ task InstallSDK -description "This task makes sure the correct SDK version is in
 	& where.exe dotnet.exe
 
 	if ($LASTEXITCODE -ne 0) {
-		throw "Could not find dotnet CLI in PATH. Please install the .NET Core 2.0 SDK, version $sdkVersion."
+		throw "Could not find dotnet CLI in PATH. Please install the .NET Core 3.1 SDK, version $sdkVersion."
 	}
 }
 
@@ -210,8 +210,18 @@ task Publish -depends Compile -description "This task uses dotnet publish to pac
 
 				$projectName = [System.IO.Path]::GetFileNameWithoutExtension($testProject)
 
-				# Special case - our CLI tool only supports .NET Core 2.1
-				if ($projectName.Contains("Tests.Cli") -and (!$framework.StartsWith("netcoreapp2."))) {
+				# Special case - our CLI tool only supports .NET Core 3.1
+				if ($projectName.Contains("Tests.Cli") -and (!$framework.StartsWith("netcoreapp3.1"))) {
+					continue
+				}
+
+				# Special case - OpenNLP.NET only supports .NET Framework
+				if ($projectName.Contains("Tests.Analysis.OpenNLP") -and (!$framework.StartsWith("net4"))) {
+					continue
+				}
+
+				# Special case - Morfologik doesn't support .NET Standard 1.x
+				if ($projectName.Contains("Tests.Analysis.Morfologik") -and ($framework.StartsWith("netcoreapp1."))) {
 					continue
 				}
 
@@ -272,7 +282,7 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 	$testProjects = $testProjects | Sort-Object -Property FullName
 
 	$frameworksToTest = Get-FrameworksToTest
-	
+
 	Write-Host "frameworksToTest: $frameworksToTest" -ForegroundColor Yellow
 
 	[int]$totalProjects = $testProjects.Length * $frameworksToTest.Length
@@ -285,8 +295,22 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 		foreach ($framework in $frameworksToTest) {
 			$testName = $testProject.Directory.Name
 
-			# Special case - our CLI tool only supports .NET Core 2.1
-			if ($testName.Contains("Tests.Cli") -and (!$framework.StartsWith("netcoreapp2."))) {
+			# Special case - our CLI tool only supports .NET Core 3.1
+			if ($testName.Contains("Tests.Cli") -and (!$framework.StartsWith("netcoreapp3.1"))) {
+				$totalProjects--
+				$remainingProjects--
+				continue
+			}
+			
+			# Special case - OpenNLP.NET only supports .NET Framework
+			if ($testName.Contains("Tests.Analysis.OpenNLP") -and (!$framework.StartsWith("net4"))) {
+				$totalProjects--
+				$remainingProjects--
+				continue
+			}
+
+			# Special case - Morfologik doesn't support .NET Standard 1.x
+			if ($testName.Contains("Tests.Analysis.Morfologik") -and ($framework.StartsWith("netcoreapp1."))) {
 				$totalProjects--
 				$remainingProjects--
 				continue
@@ -323,8 +347,8 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 			# doing release inspection and on the CI server.
 			$testExpression = "$testExpression --logger:""trx;LogFileName=TestResults.trx"""
 			
-			if ($where -ne $null -and (-Not [System.String]::IsNullOrEmpty($where))) {
-				$testExpression = "$testExpression --filter $where"
+			if (![string]::IsNullOrEmpty($where)) {
+				$testExpression = "$testExpression --TestCaseFilter:""$where"""
 			}
 
 			Write-Host $testExpression -ForegroundColor Magenta
@@ -336,7 +360,7 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 			}
 
 			# Execute the jobs in parallel
-			Start-Job $scriptBlock -ArgumentList $testExpression,$testResultDirectory
+			Start-Job -Name "$testName,$framework" -ScriptBlock $scriptBlock -ArgumentList $testExpression,$testResultDirectory
 
 			#Invoke-Expression $testExpression
 			## fail the build on negative exit codes (NUnit errors - if positive it is a test count or, if 1, it could be a dotnet error)
@@ -351,6 +375,12 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 		if ($running.Count -gt 0) {
 			Write-Host ""
 			Write-Host "  Almost finished, only $($running.Count) test projects left..." -ForegroundColor Cyan
+			[int]$number = 0
+			foreach ($runningJob in $running) {
+				$number++
+				$jobName = $runningJob | Select-Object -ExpandProperty Name
+				Write-Host "$number. $jobName"
+			}
 			$running | Wait-Job -Any
 		}
 	} until ($running.Count -eq 0)
@@ -361,7 +391,7 @@ task Test -depends InstallSDK, UpdateLocalSDKVersion, Restore -description "This
 function Get-Package-Version() {
 	Write-Host $parameters.packageVersion -ForegroundColor Red
 
-	#If $packageVersion is not passed in (as a parameter or environment variable), get it from Version.proj
+	#If $packageVersion is not passed in (as a parameter or environment variable), get it from Directory.Build.props
 	if (![string]::IsNullOrWhiteSpace($parameters.packageVersion) -and $parameters.packageVersion -ne "0.0.0") {
 		return $parameters.packageVersion
 	} elseif (![string]::IsNullOrWhiteSpace($env:PackageVersion) -and $env:PackageVersion -ne "0.0.0") {

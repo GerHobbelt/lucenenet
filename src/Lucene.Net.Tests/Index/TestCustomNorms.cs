@@ -1,6 +1,6 @@
-using NUnit.Framework;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
+using NUnit.Framework;
 using System;
 using System.Globalization;
 
@@ -49,19 +49,19 @@ namespace Lucene.Net.Index
         public virtual void TestFloatNorms()
         {
             Directory dir = NewDirectory();
-            MockAnalyzer analyzer = new MockAnalyzer(Random());
-            analyzer.MaxTokenLength = TestUtil.NextInt(Random(), 1, IndexWriter.MAX_TERM_LENGTH);
+            MockAnalyzer analyzer = new MockAnalyzer(Random);
+            analyzer.MaxTokenLength = TestUtil.NextInt32(Random, 1, IndexWriter.MAX_TERM_LENGTH);
 
             IndexWriterConfig config = NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer);
             Similarity provider = new MySimProvider(this);
             config.SetSimilarity(provider);
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, config);
-            LineFileDocs docs = new LineFileDocs(Random());
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, config);
+            LineFileDocs docs = new LineFileDocs(Random);
             int num = AtLeast(100);
             for (int i = 0; i < num; i++)
             {
                 Document doc = docs.NextDoc();
-                float nextFloat = Random().nextFloat();
+                float nextFloat = Random.nextFloat();
                 // Cast to a double to get more precision output to the string.
                 Field f = new TextField(floatTestField, "" + ((double)nextFloat).ToString(CultureInfo.InvariantCulture), Field.Store.YES);
                 f.Boost = nextFloat;
@@ -83,7 +83,7 @@ namespace Lucene.Net.Index
             {
                 Document document = open.Document(i);
                 float expected = Convert.ToSingle(document.Get(floatTestField), CultureInfo.InvariantCulture);
-                Assert.AreEqual(expected, Number.Int32BitsToSingle((int)norms.Get(i)), 0.0f);
+                Assert.AreEqual(expected, J2N.BitConversion.Int32BitsToSingle((int)norms.Get(i)), 0.0f);
             }
             open.Dispose();
             dir.Dispose();
@@ -128,7 +128,7 @@ namespace Lucene.Net.Index
         {
             public override long ComputeNorm(FieldInvertState state)
             {
-                return Number.SingleToInt32Bits(state.Boost);
+                return J2N.BitConversion.SingleToInt32Bits(state.Boost);
             }
 
             public override SimWeight ComputeWeight(float queryBoost, CollectionStatistics collectionStats, params TermStatistics[] termStats)

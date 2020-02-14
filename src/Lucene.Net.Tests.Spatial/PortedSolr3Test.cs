@@ -11,6 +11,7 @@ using Spatial4n.Core.Shapes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Spatial
 {
@@ -86,7 +87,7 @@ namespace Lucene.Net.Spatial
         public override void SetUp()
         {
             base.SetUp();
-            SpatialStrategy strategy = ((Param)(RandomInts.RandomFrom(Random(), Parameters()))[0]).strategy;
+            SpatialStrategy strategy = ((Param)(RandomPicks.RandomFrom(Random, Parameters()))[0]).strategy;
             this.ctx = strategy.SpatialContext;
             this.strategy = strategy;
         }
@@ -174,7 +175,7 @@ namespace Lucene.Net.Spatial
             SpatialArgs args = new SpatialArgs(op, shape);
             //args.setDistPrecision(0.025);
             Query query;
-            if (Random().nextBoolean())
+            if (Random.nextBoolean())
             {
                 query = strategy.MakeQuery(args);
             }
@@ -186,7 +187,7 @@ namespace Lucene.Net.Spatial
             assertEquals("" + shape, assertNumFound, results.numFound);
             if (assertIds != null)
             {
-                ISet<int?> resultIds = new HashSet<int?>();
+                ISet<int?> resultIds = new JCG.HashSet<int?>();
                 foreach (SearchResult result in results.results)
                 {
                     resultIds.add(int.Parse(result.document.Get("id"), CultureInfo.InvariantCulture));

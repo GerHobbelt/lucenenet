@@ -157,13 +157,13 @@ namespace Lucene.Net.Analysis.Cjk
                 this.norm = norm;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new StandardTokenizer(TEST_VERSION_CURRENT, reader);
                 return new TokenStreamComponents(tokenizer, new CJKBigramFilter(tokenizer));
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(norm, reader);
             }
@@ -211,7 +211,7 @@ namespace Lucene.Net.Analysis.Cjk
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filter = new FakeStandardTokenizer(tokenizer);
@@ -226,7 +226,7 @@ namespace Lucene.Net.Analysis.Cjk
         [Test]
         public virtual void TestRandomStrings()
         {
-            CheckRandomData(Random(), new CJKAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, new CJKAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
         }
 
         /// <summary>
@@ -234,7 +234,7 @@ namespace Lucene.Net.Analysis.Cjk
         [Test]
         public virtual void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             CheckRandomData(random, new CJKAnalyzer(TEST_VERSION_CURRENT), 100 * RANDOM_MULTIPLIER, 8192);
         }
 
@@ -254,7 +254,7 @@ namespace Lucene.Net.Analysis.Cjk
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new CJKBigramFilter(tokenizer));

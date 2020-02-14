@@ -1,7 +1,8 @@
-using System.Collections.Generic;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
+using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search.Spans
 {
@@ -65,7 +66,7 @@ namespace Lucene.Net.Search.Spans
             base.BeforeClass();
 
             Directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, Directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             writer.AddDocument(Doc(new Field[] { GetField("id", "0"), GetField("gender", "male"), GetField("first", "james"), GetField("last", "jones") }));
 
@@ -76,7 +77,7 @@ namespace Lucene.Net.Search.Spans
             writer.AddDocument(Doc(new Field[] { GetField("id", "3"), GetField("gender", "female"), GetField("first", "lisa"), GetField("last", "jones"), GetField("gender", "male"), GetField("first", "bob"), GetField("last", "costas") }));
 
             writer.AddDocument(Doc(new Field[] { GetField("id", "4"), GetField("gender", "female"), GetField("first", "sally"), GetField("last", "smith"), GetField("gender", "female"), GetField("first", "linda"), GetField("last", "dixit"), GetField("gender", "male"), GetField("first", "bubba"), GetField("last", "jones") }));
-            Reader = writer.Reader;
+            Reader = writer.GetReader();
             writer.Dispose();
             Searcher = NewSearcher(Reader);
         }
@@ -94,7 +95,11 @@ namespace Lucene.Net.Search.Spans
 
         protected internal virtual void Check(SpanQuery q, int[] docs)
         {
-            CheckHits.CheckHitCollector(Random(), q, null, Searcher, docs, Similarity);
+            CheckHits.CheckHitCollector(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, q, null, Searcher, docs);
         }
 
         [Test]
@@ -106,7 +111,7 @@ namespace Lucene.Net.Search.Spans
 
             QueryUtils.CheckEqual(q, qr);
 
-            HashSet<Term> terms = new HashSet<Term>();
+            ISet<Term> terms = new JCG.HashSet<Term>();
             qr.ExtractTerms(terms);
             Assert.AreEqual(1, terms.Count);
         }
@@ -121,7 +126,7 @@ namespace Lucene.Net.Search.Spans
 
             QueryUtils.CheckUnequal(q, qr);
 
-            HashSet<Term> terms = new HashSet<Term>();
+            ISet<Term> terms = new JCG.HashSet<Term>();
             qr.ExtractTerms(terms);
             Assert.AreEqual(2, terms.Count);
         }
@@ -152,7 +157,7 @@ namespace Lucene.Net.Search.Spans
 
             QueryUtils.CheckEqual(q, qr);
 
-            HashSet<Term> set = new HashSet<Term>();
+            ISet<Term> set = new JCG.HashSet<Term>();
             qr.ExtractTerms(set);
             Assert.AreEqual(2, set.Count);
         }

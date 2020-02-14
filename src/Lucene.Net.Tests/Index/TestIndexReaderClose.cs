@@ -1,11 +1,10 @@
+using J2N.Threading.Atomic;
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using Lucene.Net.Support;
-    using NUnit.Framework;
-    using System;
     using Directory = Lucene.Net.Store.Directory;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
 
@@ -34,12 +33,12 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestCloseUnderException()
         {
-            int iters = 1000 + 1 + Random().nextInt(20);
+            int iters = 1000 + 1 + Random.nextInt(20);
             for (int j = 0; j < iters; j++)
             {
                 Directory dir = NewDirectory();
                 IndexWriter writer = new IndexWriter(dir,
-                    NewIndexWriterConfig(Random(), TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+                    NewIndexWriterConfig(Random, TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
                 writer.Commit();
                 writer.Dispose();
                 DirectoryReader open = DirectoryReader.Open(dir);
@@ -47,7 +46,7 @@ namespace Lucene.Net.Index
                 AtomicReader wrap = SlowCompositeReaderWrapper.Wrap(open);
                 FilterAtomicReader reader = new FilterAtomicReaderAnonymousInnerClassHelper(this, wrap, throwOnClose);
                 IList<IndexReader.IReaderClosedListener> listeners = new List<IndexReader.IReaderClosedListener>();
-                int listenerCount = Random().Next(20);
+                int listenerCount = Random.Next(20);
                 AtomicInt32 count = new AtomicInt32();
                 bool faultySet = false;
                 for (int i = 0; i < listenerCount; i++)
@@ -95,11 +94,11 @@ namespace Lucene.Net.Index
                 {
                 }
 
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
                     reader.Dispose(); // call it again
                 }
-                Assert.AreEqual(0, count.Get());
+                Assert.AreEqual(0, count);
                 wrap.Dispose();
                 dir.Dispose();
             }

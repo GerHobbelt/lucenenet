@@ -1,8 +1,8 @@
+using Lucene.Net.Codecs.Lucene42;
+using Lucene.Net.Util.Packed;
+
 namespace Lucene.Net.Codecs.Compressing
 {
-    using Lucene42NormsFormat = Lucene.Net.Codecs.Lucene42.Lucene42NormsFormat;
-    using PackedInt32s = Lucene.Net.Util.Packed.PackedInt32s;
-
     /*
      * Licensed to the Apache Software Foundation (ASF) under one or more
      * contributor license agreements.  See the NOTICE file distributed with
@@ -21,27 +21,24 @@ namespace Lucene.Net.Codecs.Compressing
      */
 
     /// <summary>
-    /// CompressionCodec that uses <seealso cref="CompressionMode#HIGH_COMPRESSION"/> </summary>
+    /// CompressionCodec that uses <see cref="CompressionMode.HIGH_COMPRESSION"/>. </summary>
     [CodecName("HighCompressionCompressingStoredFields")]
     public class HighCompressionCompressingCodec : CompressingCodec
     {
         /// <summary>
-        /// Constructor that allows to configure the chunk size. </summary>
+        /// Constructor that allows to configure the <paramref name="chunkSize"/>. </summary>
         public HighCompressionCompressingCodec(int chunkSize, bool withSegmentSuffix)
-            : base(withSegmentSuffix ? "HighCompressionCompressingStoredFields" : "", CompressionMode.HIGH_COMPRESSION, chunkSize)
-        {
-        }
+            : base(
+                  withSegmentSuffix ? "HighCompressionCompressingStoredFields" : "", 
+                  CompressionMode.HIGH_COMPRESSION, chunkSize)
+        { }
 
         /// <summary>
         /// Default constructor. </summary>
         public HighCompressionCompressingCodec()
             : this(1 << 14, false)
-        {
-        }
+        { }
 
-        public override NormsFormat NormsFormat
-        {
-            get { return new Lucene42NormsFormat(PackedInt32s.COMPACT); }
-        }
+        public override NormsFormat NormsFormat => new Lucene42NormsFormat(PackedInt32s.COMPACT);
     }
 }

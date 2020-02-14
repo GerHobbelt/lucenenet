@@ -2,7 +2,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Util.Automaton
 {
@@ -75,7 +76,7 @@ namespace Lucene.Net.Util.Automaton
 
             for (int iter = 0; iter < 100 * RANDOM_MULTIPLIER; iter++)
             {
-                string s = Random().Next(10) == 1 ? terms[Random().Next(terms.Length)] : RandomString();
+                string s = Random.Next(10) == 1 ? terms[Random.Next(terms.Length)] : RandomString();
                 if (VERBOSE)
                 {
                     Console.WriteLine("\nTEST: floor(" + s + ")");
@@ -116,7 +117,7 @@ namespace Lucene.Net.Util.Automaton
                 Console.WriteLine("Testing with {0} terms", numTerms);
             }
 
-            ISet<string> terms = new HashSet<string>();
+            ISet<string> terms = new JCG.HashSet<string>();
             while (terms.Count < numTerms)
             {
                 terms.Add(RandomString());
@@ -127,7 +128,7 @@ namespace Lucene.Net.Util.Automaton
         private string RandomString()
         {
             // return TestUtil.randomSimpleString(random);
-            return TestUtil.RandomRealisticUnicodeString(Random());
+            return TestUtil.RandomRealisticUnicodeString(Random);
         }
 
         [Test]

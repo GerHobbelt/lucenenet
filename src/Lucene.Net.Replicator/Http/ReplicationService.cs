@@ -1,6 +1,6 @@
-﻿using Lucene.Net.Replicator.Http.Abstractions;
-using Lucene.Net.Support.IO;
-using Lucene.Net.Support;
+﻿using J2N.IO;
+using J2N.Text;
+using Lucene.Net.Replicator.Http.Abstractions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

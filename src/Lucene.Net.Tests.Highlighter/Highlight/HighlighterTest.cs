@@ -1,8 +1,10 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Queries;
 using Lucene.Net.Search.Spans;
 using Lucene.Net.Support;
@@ -15,26 +17,27 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Xml;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Highlight
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// NUnit Test for Highlighter class.
@@ -61,7 +64,7 @@ namespace Lucene.Net.Search.Highlight
         [Test]
         public void TestQueryScorerHits()
         {
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
 
             PhraseQuery phraseQuery = new PhraseQuery();
             phraseQuery.Add(new Term(FIELD_NAME, "very"));
@@ -96,7 +99,7 @@ namespace Lucene.Net.Search.Highlight
         [Test]
         public void TestHighlightingCommonTermsQuery()
         {
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
             CommonTermsQuery query = new CommonTermsQuery(Occur.MUST, Occur.SHOULD, 3);
             query.Add(new Term(FIELD_NAME, "this"));
             query.Add(new Term(FIELD_NAME, "long"));
@@ -160,7 +163,7 @@ namespace Lucene.Net.Search.Highlight
         {
             Query query = new TestHighlightUnknowQueryAnonymousHelper();
 
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true);
 
             searcher = NewSearcher(reader);
             TopDocs hits = searcher.Search(query, 10);
@@ -233,7 +236,7 @@ namespace Lucene.Net.Search.Highlight
          */
         private String highlightField(Query query, String fieldName, String text)
         {
-            TokenStream tokenStream = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)
+            TokenStream tokenStream = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)
                 .GetTokenStream(fieldName, text);
             // Assuming "<B>", "</B>" used to highlight
             SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();
@@ -316,7 +319,7 @@ namespace Lucene.Net.Search.Highlight
 
             Highlighter h = new Highlighter(this, scorer);
 
-            Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
+            Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
 
             h.GetBestFragment(analyzer, f1, content);
 
@@ -813,7 +816,7 @@ namespace Lucene.Net.Search.Highlight
             TestHighlightRunner helper = new TestHighlightRunner((instance) =>
             {
                 numHighlights = 0;
-                if (Random().nextBoolean())
+                if (Random.nextBoolean())
                 {
                     BooleanQuery bq = new BooleanQuery();
                     bq.Add(new ConstantScoreQuery(new QueryWrapperFilter(new TermQuery(
@@ -1240,7 +1243,7 @@ namespace Lucene.Net.Search.Highlight
         {
             TestHighlightRunner helper = new TestHighlightRunner((instance) =>
             {
-                HashMap<String, String> synonyms = new HashMap<String, String>();
+                IDictionary<String, String> synonyms = new JCG.Dictionary<String, String>();
                 synonyms.Put("football", "soccer,footie");
                 Analyzer analyzer = new SynonymAnalyzer(synonyms);
 
@@ -1331,7 +1334,7 @@ namespace Lucene.Net.Search.Highlight
         [Test]
         public void TestMaxSizeHighlight()
         {
-            MockAnalyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
+            MockAnalyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
             // we disable MockTokenizer checks because we will forcefully limit the 
             // tokenstream and call end() before incrementToken() returns false.
             analyzer.EnableChecks = (false);
@@ -1364,7 +1367,7 @@ namespace Lucene.Net.Search.Highlight
                 CharacterRunAutomaton stopWords = new CharacterRunAutomaton(BasicAutomata.MakeString("stoppedtoken"));
                 // we disable MockTokenizer checks because we will forcefully limit the 
                 // tokenstream and call end() before incrementToken() returns false.
-                MockAnalyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, stopWords);
+                MockAnalyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, stopWords);
                 analyzer.EnableChecks = (false);
                 TermQuery query = new TermQuery(new Term("data", goodWord));
 
@@ -1416,7 +1419,7 @@ namespace Lucene.Net.Search.Highlight
                 Highlighter hg = instance.GetHighlighter(query, "text", fm);
                 hg.TextFragmenter = (new NullFragmenter());
                 hg.MaxDocCharsToAnalyze = (36);
-                String match = hg.GetBestFragment(new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, stopWords), "text", text);
+                String match = hg.GetBestFragment(new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, stopWords), "text", text);
                 assertTrue(
                     "Matched text should contain remainder of text after highlighted query ",
                     match.EndsWith("in it", StringComparison.Ordinal));
@@ -1433,7 +1436,7 @@ namespace Lucene.Net.Search.Highlight
                 numHighlights = 0;
                 // test to show how rewritten query can still be used
                 searcher = NewSearcher(reader);
-                Analyzer analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
+                Analyzer analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
 
                 BooleanQuery query = new BooleanQuery();
                 query.Add(new WildcardQuery(new Term(FIELD_NAME, "jf?")), Occur.SHOULD);
@@ -1849,7 +1852,7 @@ namespace Lucene.Net.Search.Highlight
 
         private void makeIndex()
         {
-            IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false)));
+            IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false)));
             writer.AddDocument(doc("t_text1", "random words for highlighting tests del"));
             writer.AddDocument(doc("t_text1", "more random words for second field del"));
             writer.AddDocument(doc("t_text1", "random words for highlighting tests del"));
@@ -1860,7 +1863,7 @@ namespace Lucene.Net.Search.Highlight
 
         private void deleteDocument()
         {
-            IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false)).SetOpenMode(OpenMode.APPEND));
+            IndexWriter writer = new IndexWriter(dir, new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false)).SetOpenMode(OpenMode.APPEND));
             writer.DeleteDocuments(new Term("t_text1", "del"));
             // To see negative idf, keep comment the following line
             //writer.forceMerge(1);
@@ -1962,12 +1965,12 @@ namespace Lucene.Net.Search.Highlight
         {
             base.SetUp();
 
-            a = new MockAnalyzer(Random(), MockTokenizer.WHITESPACE, false);
-            analyzer = new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
+            a = new MockAnalyzer(Random, MockTokenizer.WHITESPACE, false);
+            analyzer = new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET);
             dir = NewDirectory();
             ramDir = NewDirectory();
             IndexWriter writer = new IndexWriter(ramDir, NewIndexWriterConfig(
-                TEST_VERSION_CURRENT, new MockAnalyzer(Random(), MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)));
+                TEST_VERSION_CURRENT, new MockAnalyzer(Random, MockTokenizer.SIMPLE, true, MockTokenFilter.ENGLISH_STOPSET)));
             foreach (String text in texts)
             {
                 addDoc(writer, text);
@@ -2061,7 +2064,7 @@ namespace Lucene.Net.Search.Highlight
          *      java.io.Reader)
          */
 
-        protected override TokenStreamComponents CreateComponents(String arg0, TextReader arg1)
+        protected internal override TokenStreamComponents CreateComponents(String arg0, TextReader arg1)
         {
             Tokenizer stream = new MockTokenizer(arg1, MockTokenizer.SIMPLE, true);
             stream.AddAttribute<ICharTermAttribute>();
@@ -2080,7 +2083,7 @@ namespace Lucene.Net.Search.Highlight
         private readonly TokenStream realStream;
         private Token currentRealToken = null;
         private readonly IDictionary<String, String> synonyms;
-        private StringTokenizer st = null;
+        private J2N.Text.StringTokenizer st = null;
         private readonly ICharTermAttribute realTermAtt;
         private readonly IPositionIncrementAttribute realPosIncrAtt;
         private readonly IOffsetAttribute realOffsetAtt;
@@ -2120,13 +2123,12 @@ namespace Lucene.Net.Search.Highlight
 
                 //String expansions = synonyms.Get(realTermAtt.toString());
                 //if (expansions == null)
-                String expansions;
-                if (!synonyms.TryGetValue(realTermAtt.toString(), out expansions) || expansions == null)
+                if (!synonyms.TryGetValue(realTermAtt.ToString(), out string expansions) || expansions == null)
                 {
                     return true;
                 }
-                st = new StringTokenizer(expansions, ",");
-                if (st.HasMoreTokens())
+                st = new J2N.Text.StringTokenizer(expansions, ",");
+                if (st.MoveNext())
                 {
                     currentRealToken = new Token(realOffsetAtt.StartOffset, realOffsetAtt.EndOffset);
                     currentRealToken.CopyBuffer(realTermAtt.Buffer, 0, realTermAtt.Length);
@@ -2136,12 +2138,13 @@ namespace Lucene.Net.Search.Highlight
             }
             else
             {
-                String tok = st.NextToken();
+                st.MoveNext();
+                String tok = st.Current;
                 ClearAttributes();
                 termAtt.SetEmpty().Append(tok);
                 offsetAtt.SetOffset(currentRealToken.StartOffset, currentRealToken.EndOffset);
                 posIncrAtt.PositionIncrement = (0);
-                if (!st.HasMoreTokens())
+                if (!st.MoveNext())
                 {
                     currentRealToken = null;
                     st = null;

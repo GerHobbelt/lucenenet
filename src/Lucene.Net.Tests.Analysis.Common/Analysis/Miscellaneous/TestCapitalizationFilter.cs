@@ -1,6 +1,5 @@
 ﻿using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -33,7 +32,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         [Test]
         public virtual void TestCapitalization()
         {
-            CharArraySet keep = new CharArraySet(TEST_VERSION_CURRENT, Arrays.AsList("and", "the", "it", "BIG"), false);
+            CharArraySet keep = new CharArraySet(TEST_VERSION_CURRENT, new string[] { "and", "the", "it", "BIG" }, false);
 
             AssertCapitalizesTo("kiTTEN", new string[] { "Kitten" }, true, keep, true, null, 0, CapitalizationFilter.DEFAULT_MAX_WORD_COUNT, CapitalizationFilter.DEFAULT_MAX_TOKEN_LENGTH);
 
@@ -97,7 +96,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
 
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -109,7 +108,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new CapitalizationFilter(tokenizer));
@@ -132,7 +131,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new CapitalizationFilter(tokenizer));

@@ -1,8 +1,8 @@
-using Lucene.Net.Support;
-using Lucene.Net.Support.Compatibility;
+using J2N.Threading.Atomic;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -113,7 +113,7 @@ namespace Lucene.Net.Store
 
         public override string GetLockID()
         {
-            return "lucene-" + GetHashCode().ToString("x");
+            return "lucene-" + GetHashCode().ToString("x", CultureInfo.InvariantCulture);
         }
 
         public override sealed string[] ListAll()
@@ -155,7 +155,7 @@ namespace Lucene.Net.Store
         public long GetSizeInBytes()
         {
             EnsureOpen();
-            return m_sizeInBytes.Get();
+            return m_sizeInBytes;
         }
 
         /// <summary>

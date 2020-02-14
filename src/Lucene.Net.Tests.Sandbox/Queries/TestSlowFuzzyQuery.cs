@@ -2,7 +2,6 @@
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -40,7 +39,11 @@ namespace Lucene.Net.Sandbox.Queries
             //is exercising the Automaton, not the brute force linear method
 
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("aaaaa", writer);
             addDoc("aaaab", writer);
             addDoc("aaabb", writer);
@@ -49,7 +52,7 @@ namespace Lucene.Net.Sandbox.Queries
             addDoc("bbbbb", writer);
             addDoc("ddddd", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -81,7 +84,7 @@ namespace Lucene.Net.Sandbox.Queries
             query = new SlowFuzzyQuery(new Term("field", "bbbbb"), SlowFuzzyQuery.defaultMinSimilarity, 0);
             hits = searcher.Search(query, null, 1000).ScoreDocs;
             assertEquals("3 documents should match", 3, hits.Length);
-            List<String> order = Arrays.AsList("bbbbb", "abbbb", "aabbb");
+            IList<String> order = new string[] { "bbbbb", "abbbb", "aabbb" };
             for (int i = 0; i < hits.Length; i++)
             {
                 string term = searcher.Doc(hits[i].Doc).Get("field");
@@ -94,7 +97,7 @@ namespace Lucene.Net.Sandbox.Queries
             query = new SlowFuzzyQuery(new Term("field", "bbbbb"), SlowFuzzyQuery.defaultMinSimilarity, 0, 2);
             hits = searcher.Search(query, null, 1000).ScoreDocs;
             assertEquals("only 2 documents should match", 2, hits.Length);
-            order = Arrays.AsList("bbbbb", "abbbb");
+            order = new string[] { "bbbbb", "abbbb" };
             for (int i = 0; i < hits.Length; i++)
             {
                 string term = searcher.Doc(hits[i].Doc).Get("field");
@@ -197,11 +200,15 @@ namespace Lucene.Net.Sandbox.Queries
         {
             //Lucene-5033
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("abcdef", writer);
             addDoc("segment", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -222,11 +229,15 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestFuzzinessLong()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("aaaaaaa", writer);
             addDoc("segment", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -330,14 +341,22 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestTieBreaker()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("a123456", writer);
             addDoc("c123456", writer);
             addDoc("d123456", writer);
             addDoc("e123456", writer);
 
             Directory directory2 = NewDirectory();
-            RandomIndexWriter writer2 = new RandomIndexWriter(Random(), directory2, Similarity, TimeZone);
+            RandomIndexWriter writer2 = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory2);
             addDoc("a123456", writer2);
             addDoc("b123456", writer2);
             addDoc("b123456", writer2);
@@ -345,8 +364,8 @@ namespace Lucene.Net.Sandbox.Queries
             addDoc("c123456", writer2);
             addDoc("f123456", writer2);
 
-            IndexReader ir1 = writer.Reader;
-            IndexReader ir2 = writer2.Reader;
+            IndexReader ir1 = writer.GetReader();
+            IndexReader ir2 = writer2.GetReader();
 
             MultiReader mr = new MultiReader(ir1, ir2);
             IndexSearcher searcher = NewSearcher(mr);
@@ -366,11 +385,15 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestTokenLengthOpt()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("12345678911", writer);
             addDoc("segment", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -404,12 +427,16 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestBoostOnlyRewrite()
         {
             Directory directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, Similarity, TimeZone);
+            RandomIndexWriter writer = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, directory);
             addDoc("Lucene", writer);
             addDoc("Lucene", writer);
             addDoc("Lucenne", writer);
 
-            IndexReader reader = writer.Reader;
+            IndexReader reader = writer.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             writer.Dispose();
 
@@ -430,7 +457,11 @@ namespace Lucene.Net.Sandbox.Queries
         {
 
             Directory index = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), index, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, index);
 
             addDoc("Lucene in Action", w);
             addDoc("Lucene for Dummies", w);
@@ -449,7 +480,7 @@ namespace Lucene.Net.Sandbox.Queries
             addDoc("Willis bruce", w);
             addDoc("Brute willis", w);
             addDoc("B. willis", w);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             Query q = new SlowFuzzyQuery(new Term("field", "giga"), 0.9f);
@@ -467,11 +498,15 @@ namespace Lucene.Net.Sandbox.Queries
         public void TestDistanceAsEditsSearching()
         {
             Directory index = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), index, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, index);
             addDoc("foobar", w);
             addDoc("test", w);
             addDoc("working", w);
-            IndexReader reader = w.Reader;
+            IndexReader reader = w.GetReader();
             IndexSearcher searcher = NewSearcher(reader);
             w.Dispose();
 

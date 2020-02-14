@@ -1,4 +1,6 @@
-﻿using Lucene.Net.Support;
+﻿using J2N;
+using J2N.Text;
+using J2N.Globalization;
 using Lucene.Net.Util;
 using System;
 using System.Collections;
@@ -12,21 +14,21 @@ using System.Text;
 namespace Lucene.Net.Analysis.Util
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// A simple class that stores key <see cref="string"/>s as <see cref="T:char[]"/>'s in a
@@ -190,8 +192,8 @@ namespace Lucene.Net.Analysis.Util
         public virtual void Clear()
         {
             count = 0;
-            Arrays.Fill(keys, null);
-            Arrays.Fill(values, null);
+            keys.Fill(null);
+            values.Fill(null);
         }
 
         /// <summary>
@@ -766,10 +768,10 @@ namespace Lucene.Net.Analysis.Util
             {
                 while (iter.MoveNext())
                 {
-                    if (!this.ContainsKey(iter.Current.Key))
+                    if (!this.TryGetValue(iter.Current.Key, out TValue value))
                         return false;
 
-                    if (!EqualityComparer<TValue>.Default.Equals(this[iter.Current.Key], iter.Current.Value))
+                    if (!EqualityComparer<TValue>.Default.Equals(value, iter.Current.Value))
                         return false;
                 }
             }
@@ -1424,7 +1426,7 @@ namespace Lucene.Net.Analysis.Util
         {
             var sb = new StringBuilder("{");
 
-            using (IEnumerator<KeyValuePair<string, TValue>> iter1 = DictionaryExtensions.EntrySet(this).GetEnumerator())
+            using (var iter1 = this.GetEnumerator())
             {
                 while (iter1.MoveNext())
                 {

@@ -1,40 +1,37 @@
+using Lucene.Net.Index;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
+using JCG = J2N.Collections.Generic;
+using Assert = Lucene.Net.TestFramework.Assert;
 
 namespace Lucene.Net.Search
 {
-    using NUnit.Framework;
-    using Similarities;
-    using System.IO;
-
     /*
-             * Licensed to the Apache Software Foundation (ASF) under one or more
-             * contributor license agreements.  See the NOTICE file distributed with
-             * this work for additional information regarding copyright ownership.
-             * The ASF licenses this file to You under the Apache License, Version 2.0
-             * (the "License"); you may not use this file except in compliance with
-             * the License.  You may obtain a copy of the License at
-             *
-             *     http://www.apache.org/licenses/LICENSE-2.0
-             *
-             * Unless required by applicable law or agreed to in writing, software
-             * distributed under the License is distributed on an "AS IS" BASIS,
-             * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-             * See the License for the specific language governing permissions and
-             * limitations under the License.
-             */
-
-    using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
-    using IndexReader = Lucene.Net.Index.IndexReader;
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// Utility class for asserting expected hits in tests.
     /// </summary>
-    public class CheckHits
+    public static class CheckHits // LUCENENET specific - made static because all of its members are static
     {
         /// <summary>
         /// Some explains methods calculate their values though a slightly
@@ -59,7 +56,7 @@ namespace Lucene.Net.Search
         public static void CheckNoMatchExplanations(Query q, string defaultFieldName, IndexSearcher searcher, int[] results)
         {
             string d = q.ToString(defaultFieldName);
-            SortedSet<int?> ignore = new SortedSet<int?>();
+            JCG.SortedSet<int?> ignore = new JCG.SortedSet<int?>();
             for (int i = 0; i < results.Length; i++)
             {
                 ignore.Add(Convert.ToInt32(results[i], CultureInfo.InvariantCulture));
@@ -79,35 +76,55 @@ namespace Lucene.Net.Search
             }
         }
 
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         /// <summary>
         /// Tests that a query matches the an expected set of documents using a
         /// HitCollector.
-        ///
-        /// <p>
+        /// <para>
         /// Note that when using the HitCollector API, documents will be collected
         /// if they "match" regardless of what their score is.
-        /// </p> </summary>
-        /// <param name="query"> the query to test </param>
-        /// <param name="searcher"> the searcher to test the query against </param>
-        /// <param name="defaultFieldName"> used for displaying the query in assertion messages </param>
-        /// <param name="results"> a list of documentIds that must match the query </param>
-        /// <param name="similarity">
-        /// LUCENENET specific
-        /// Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
-        /// </param>
-        /// <seealso cref=#checkHits </seealso>
-        public static void CheckHitCollector(Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results, Similarity similarity)
+        /// </para>
+        /// </summary>
+        /// <param name="query"> The query to test. </param>
+        /// <param name="searcher"> The searcher to test the query against. </param>
+        /// <param name="defaultFieldName"> Used for displaying the query in assertion messages. </param>
+        /// <param name="results"> A list of documentIds that must match the query. </param>
+        /// <seealso cref="DoCheckHits(Random, Query, string, IndexSearcher, int[])"/>
+        public static void CheckHitCollector(Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results)
+#else
+        /// <summary>
+        /// Tests that a query matches the an expected set of documents using a
+        /// HitCollector.
+        /// <para>
+        /// Note that when using the HitCollector API, documents will be collected
+        /// if they "match" regardless of what their score is.
+        /// </para>
+        /// </summary>
+        /// <param name="luceneTestCase"> The current test instance. </param>
+        /// <param name="query"> The query to test. </param>
+        /// <param name="searcher"> The searcher to test the query against. </param>
+        /// <param name="defaultFieldName"> Used for displaying the query in assertion messages. </param>
+        /// <param name="results"> A list of documentIds that must match the query. </param>
+        /// <seealso cref="DoCheckHits(LuceneTestCase, Random, Query, string, IndexSearcher, int[])"/>
+        // LUCENENET specific
+        // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
+        public static void CheckHitCollector(LuceneTestCase luceneTestCase, Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results)
+#endif
         {
-            QueryUtils.Check(random, query, searcher, similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                luceneTestCase,
+#endif
+                random, query, searcher);
 
             Trace.TraceInformation("Checked");
 
-            SortedSet<int?> correct = new SortedSet<int?>();
+            JCG.SortedSet<int?> correct = new JCG.SortedSet<int?>();
             for (int i = 0; i < results.Length; i++)
             {
                 correct.Add(Convert.ToInt32(results[i], CultureInfo.InvariantCulture));
             }
-            SortedSet<int?> actual = new SortedSet<int?>();
+            JCG.SortedSet<int?> actual = new JCG.SortedSet<int?>();
             ICollector c = new SetCollector(actual);
 
             searcher.Search(query, c);
@@ -117,63 +134,50 @@ namespace Lucene.Net.Search
             for (int i = -1; i < 2; i++)
             {
                 actual.Clear();
-                IndexSearcher s = QueryUtils.WrapUnderlyingReader(random, searcher, i, similarity);
+                IndexSearcher s = QueryUtils.WrapUnderlyingReader(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    luceneTestCase,
+#endif
+                    random, searcher, i);
                 s.Search(query, c);
                 Assert.AreEqual(correct, actual, "Wrap Reader " + i + ": " + query.ToString(defaultFieldName));
             }
         }
 
-        /// <summary>
-        /// Just collects document ids into a set.
-        /// </summary>
-        public class SetCollector : ICollector
-        {
-            internal readonly ISet<int?> Bag;
+        // LUCENENET specific - de-nested SetCollector
 
-            public SetCollector(ISet<int?> bag)
-            {
-                this.Bag = bag;
-            }
-
-            internal int @base = 0;
-
-            public virtual void SetScorer(Scorer scorer)
-            {
-            }
-
-            public virtual void Collect(int doc)
-            {
-                Bag.Add(Convert.ToInt32(doc + @base, CultureInfo.InvariantCulture));
-            }
-
-            public virtual void SetNextReader(AtomicReaderContext context)
-            {
-                @base = context.DocBase;
-            }
-
-            public virtual bool AcceptsDocsOutOfOrder
-            {
-                get { return true; }
-            }
-        }
-
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         /// <summary>
         /// Tests that a query matches the an expected set of documents using Hits.
         ///
-        /// <p>
-        /// Note that when using the Hits API, documents will only be returned
+        /// <para>Note that when using the Hits API, documents will only be returned
         /// if they have a positive normalized score.
-        /// </p> </summary>
+        /// </para>
+        /// </summary>
         /// <param name="query"> the query to test </param>
         /// <param name="searcher"> the searcher to test the query against </param>
         /// <param name="defaultFieldName"> used for displaing the query in assertion messages </param>
         /// <param name="results"> a list of documentIds that must match the query </param>
-        /// <param name="similarity">
-        /// LUCENENET specific
-        /// Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
-        /// </param>
-        /// <seealso cref= #checkHitCollector </seealso>
-        public static void DoCheckHits(Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results, Similarity similarity)
+        /// <seealso cref="CheckHitCollector(Random, Query, string, IndexSearcher, int[])"/>
+        public static void DoCheckHits(Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results)
+#else
+        /// <summary>
+        /// Tests that a query matches the an expected set of documents using Hits.
+        ///
+        /// <para>Note that when using the Hits API, documents will only be returned
+        /// if they have a positive normalized score.
+        /// </para>
+        /// </summary>
+        /// <param name="luceneTestCase"> The current test instance. </param>
+        /// <param name="query"> the query to test </param>
+        /// <param name="searcher"> the searcher to test the query against </param>
+        /// <param name="defaultFieldName"> used for displaing the query in assertion messages </param>
+        /// <param name="results"> a list of documentIds that must match the query </param>
+        /// <seealso cref="CheckHitCollector(LuceneTestCase, Random, Query, string, IndexSearcher, int[])"/>
+        // LUCENENET specific
+        // Removes dependency on <see cref="LuceneTestCase.ClassEnv.Similarity"/>
+        public static void DoCheckHits(LuceneTestCase luceneTestCase, Random random, Query query, string defaultFieldName, IndexSearcher searcher, int[] results)
+#endif
         {
             ScoreDoc[] hits = searcher.Search(query, 1000).ScoreDocs;
 
@@ -191,11 +195,15 @@ namespace Lucene.Net.Search
 
             Assert.AreEqual(correct, actual, query.ToString(defaultFieldName));
 
-            QueryUtils.Check(random, query, searcher, LuceneTestCase.Rarely(random), similarity);
+            QueryUtils.Check(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                luceneTestCase,
+#endif
+                random, query, searcher, LuceneTestCase.Rarely(random));
         }
 
         /// <summary>
-        /// Tests that a Hits has an expected order of documents </summary>
+        /// Tests that a Hits has an expected order of documents. </summary>
         public static void CheckDocIds(string mes, int[] results, ScoreDoc[] hits)
         {
             Assert.AreEqual(hits.Length, results.Length, mes + " nr of hits");
@@ -271,7 +279,7 @@ namespace Lucene.Net.Search
             return sb.ToString();
         }
 
-        public static string TopdocsString(TopDocs docs, int start, int end)
+        public static string TopDocsString(TopDocs docs, int start, int end) // LUCENENET specific - renamed from TopdocsString
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("TopDocs totalHits=").Append(docs.TotalHits).Append(" top=").Append(docs.ScoreDocs.Length).Append('\n');
@@ -299,14 +307,15 @@ namespace Lucene.Net.Search
         /// <summary>
         /// Asserts that the explanation value for every document matching a
         /// query corresponds with the true score.
-        /// </summary>
-        /// <seealso cref= ExplanationAsserter </seealso>
-        /// <seealso cref= #checkExplanations(Query, String, IndexSearcher, boolean) for a
+        /// <para/>
+        /// See <see cref="CheckExplanations(Query, String, IndexSearcher, bool)"/> for a
         /// "deep" testing of the explanation details.
-        /// </seealso>
-        /// <param name="query"> the query to test </param>
-        /// <param name="searcher"> the searcher to test the query against </param>
-        /// <param name="defaultFieldName"> used for displaing the query in assertion messages </param>
+        /// </summary>
+        /// <seealso cref="ExplanationAsserter"/>
+        /// <seealso cref="CheckExplanations(Query, String, IndexSearcher, bool)"/>
+        /// <param name="query"> The query to test. </param>
+        /// <param name="searcher"> The searcher to test the query against. </param>
+        /// <param name="defaultFieldName"> Used for displaing the query in assertion messages. </param>
         public static void CheckExplanations(Query query, string defaultFieldName, IndexSearcher searcher)
         {
             CheckExplanations(query, defaultFieldName, searcher, false);
@@ -317,19 +326,19 @@ namespace Lucene.Net.Search
         /// query corresponds with the true score.  Optionally does "deep"
         /// testing of the explanation details.
         /// </summary>
-        /// <seealso cref= ExplanationAsserter </seealso>
-        /// <param name="query"> the query to test </param>
-        /// <param name="searcher"> the searcher to test the query against </param>
-        /// <param name="defaultFieldName"> used for displaing the query in assertion messages </param>
-        /// <param name="deep"> indicates whether a deep comparison of sub-Explanation details should be executed </param>
+        /// <seealso cref="ExplanationAsserter"/>
+        /// <param name="query"> The query to test. </param>
+        /// <param name="searcher"> The searcher to test the query against. </param>
+        /// <param name="defaultFieldName"> Used for displaing the query in assertion messages. </param>
+        /// <param name="deep"> Indicates whether a deep comparison of sub-Explanation details should be executed. </param>
         public static void CheckExplanations(Query query, string defaultFieldName, IndexSearcher searcher, bool deep)
         {
             searcher.Search(query, new ExplanationAsserter(query, defaultFieldName, searcher, deep));
         }
 
         /// <summary>
-        /// returns a reasonable epsilon for comparing two floats,
-        ///  where minor differences are acceptable such as score vs. explain
+        /// Returns a reasonable epsilon for comparing two floats,
+        /// where minor differences are acceptable such as score vs. explain.
         /// </summary>
         public static float ExplainToleranceDelta(float f1, float f2)
         {
@@ -340,11 +349,11 @@ namespace Lucene.Net.Search
         /// Assert that an explanation has the expected score, and optionally that its
         /// sub-details max/sum/factor match to that score.
         /// </summary>
-        /// <param name="q"> String representation of the query for assertion messages </param>
-        /// <param name="doc"> Document ID for assertion messages </param>
-        /// <param name="score"> Real score value of doc with query q </param>
-        /// <param name="deep"> indicates whether a deep comparison of sub-Explanation details should be executed </param>
-        /// <param name="expl"> The Explanation to match against score </param>
+        /// <param name="q"> String representation of the query for assertion messages. </param>
+        /// <param name="doc"> Document ID for assertion messages. </param>
+        /// <param name="score"> Real score value of doc with query <paramref name="q"/>. </param>
+        /// <param name="deep"> Indicates whether a deep comparison of sub-Explanation details should be executed. </param>
+        /// <param name="expl"> The <see cref="Explanation"/> to match against score. </param>
         public static void VerifyExplanation(string q, int doc, float score, bool deep, Explanation expl)
         {
             float value = expl.Value;
@@ -447,113 +456,145 @@ namespace Lucene.Net.Search
             }
         }
 
-        /// <summary>
-        /// an IndexSearcher that implicitly checks hte explanation of every match
-        /// whenever it executes a search.
-        /// </summary>
-        /// <seealso cref= ExplanationAsserter </seealso>
-        public class ExplanationAssertingSearcher : IndexSearcher
+        // LUCENENET specific - de-nested ExplanationAssertingSearcher
+
+        // LUCENENET specific - de-nested ExplanationAsserter
+    }
+
+    /// <summary>
+    /// Just collects document ids into a set.
+    /// </summary>
+    public class SetCollector : ICollector
+    {
+        internal readonly ISet<int?> bag;
+
+        public SetCollector(ISet<int?> bag)
         {
-            public ExplanationAssertingSearcher(IndexReader r)
-                : base(r)
-            {
-            }
-
-            protected internal virtual void CheckExplanations(Query q)
-            {
-                base.Search(q, null, new ExplanationAsserter(q, null, this));
-            }
-
-            public override TopFieldDocs Search(Query query, Filter filter, int n, Sort sort)
-            {
-                CheckExplanations(query);
-                return base.Search(query, filter, n, sort);
-            }
-
-            public override void Search(Query query, ICollector results)
-            {
-                CheckExplanations(query);
-                base.Search(query, results);
-            }
-
-            public override void Search(Query query, Filter filter, ICollector results)
-            {
-                CheckExplanations(query);
-                base.Search(query, filter, results);
-            }
-
-            public override TopDocs Search(Query query, Filter filter, int n)
-            {
-                CheckExplanations(query);
-                return base.Search(query, filter, n);
-            }
+            this.bag = bag;
         }
 
-        /// <summary>
-        /// Asserts that the score explanation for every document matching a
-        /// query corresponds with the true score.
-        ///
-        /// NOTE: this HitCollector should only be used with the Query and Searcher
-        /// specified at when it is constructed.
-        /// </summary>
-        /// <seealso cref= CheckHits#verifyExplanation </seealso>
-        public class ExplanationAsserter : ICollector
+        internal int @base = 0;
+
+        public virtual void SetScorer(Scorer scorer)
         {
-            internal Query q;
-            internal IndexSearcher s;
-            internal string d;
-            internal bool Deep;
-
-            internal Scorer Scorer_Renamed;
-            internal int @base = 0;
-
-            /// <summary>
-            /// Constructs an instance which does shallow tests on the Explanation </summary>
-            public ExplanationAsserter(Query q, string defaultFieldName, IndexSearcher s)
-                : this(q, defaultFieldName, s, false)
-            {
-            }
-
-            public ExplanationAsserter(Query q, string defaultFieldName, IndexSearcher s, bool deep)
-            {
-                this.q = q;
-                this.s = s;
-                this.d = q.ToString(defaultFieldName);
-                this.Deep = deep;
-            }
-
-            public virtual void SetScorer(Scorer scorer)
-            {
-                this.Scorer_Renamed = scorer;
-            }
-
-            public virtual void Collect(int doc)
-            {
-                Explanation exp = null;
-                doc = doc + @base;
-                try
-                {
-                    exp = s.Explain(q, doc);
-                }
-                catch (IOException e)
-                {
-                    throw new Exception("exception in hitcollector of [[" + d + "]] for #" + doc, e);
-                }
-
-                Assert.IsNotNull(exp, "Explanation of [[" + d + "]] for #" + doc + " is null");
-                VerifyExplanation(d, doc, Scorer_Renamed.GetScore(), Deep, exp);
-                Assert.IsTrue(exp.IsMatch, "Explanation of [[" + d + "]] for #" + doc + " does not indicate match: " + exp.ToString());
-            }
-
-            public virtual void SetNextReader(AtomicReaderContext context)
-            {
-                @base = context.DocBase;
-            }
-
-            public virtual bool AcceptsDocsOutOfOrder
-            {
-                get { return true; }
-            }
         }
+
+        public virtual void Collect(int doc)
+        {
+            bag.Add(Convert.ToInt32(doc + @base, CultureInfo.InvariantCulture));
+        }
+
+        public virtual void SetNextReader(AtomicReaderContext context)
+        {
+            @base = context.DocBase;
+        }
+
+        public virtual bool AcceptsDocsOutOfOrder => true;
+    }
+
+    /// <summary>
+    /// An <see cref="IndexSearcher"/> that implicitly checks hte explanation of every match
+    /// whenever it executes a search.
+    /// </summary>
+    /// <seealso cref="ExplanationAsserter"/>
+    public class ExplanationAssertingSearcher : IndexSearcher
+    {
+        public ExplanationAssertingSearcher(IndexReader r)
+            : base(r)
+        {
+        }
+
+        protected virtual void CheckExplanations(Query q)
+        {
+            base.Search(q, null, new ExplanationAsserter(q, null, this));
+        }
+
+        public override TopFieldDocs Search(Query query, Filter filter, int n, Sort sort)
+        {
+            CheckExplanations(query);
+            return base.Search(query, filter, n, sort);
+        }
+
+        public override void Search(Query query, ICollector results)
+        {
+            CheckExplanations(query);
+            base.Search(query, results);
+        }
+
+        public override void Search(Query query, Filter filter, ICollector results)
+        {
+            CheckExplanations(query);
+            base.Search(query, filter, results);
+        }
+
+        public override TopDocs Search(Query query, Filter filter, int n)
+        {
+            CheckExplanations(query);
+            return base.Search(query, filter, n);
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the score explanation for every document matching a
+    /// query corresponds with the true score.
+    /// <para/>
+    /// NOTE: this HitCollector should only be used with the <see cref="Query"/> and <see cref="IndexSearcher"/>
+    /// specified at when it is constructed.
+    /// </summary>
+    /// <seealso cref="CheckHits.VerifyExplanation(string, int, float, bool, Explanation)"/>
+    public class ExplanationAsserter : ICollector
+    {
+        internal Query q;
+        internal IndexSearcher s;
+        internal string d;
+        internal bool deep;
+
+        internal Scorer scorer;
+        internal int @base = 0;
+
+        /// <summary>
+        /// Constructs an instance which does shallow tests on the Explanation </summary>
+        public ExplanationAsserter(Query q, string defaultFieldName, IndexSearcher s)
+            : this(q, defaultFieldName, s, false)
+        {
+        }
+
+        public ExplanationAsserter(Query q, string defaultFieldName, IndexSearcher s, bool deep)
+        {
+            this.q = q;
+            this.s = s;
+            this.d = q.ToString(defaultFieldName);
+            this.deep = deep;
+        }
+
+        public virtual void SetScorer(Scorer scorer)
+        {
+            this.scorer = scorer;
+        }
+
+        public virtual void Collect(int doc)
+        {
+            Explanation exp = null;
+            doc = doc + @base;
+            try
+            {
+                exp = s.Explain(q, doc);
+            }
+            catch (IOException e)
+            {
+                throw new Exception("exception in hitcollector of [[" + d + "]] for #" + doc, e);
+            }
+
+            Assert.IsNotNull(exp, "Explanation of [[" + d + "]] for #" + doc + " is null");
+            CheckHits.VerifyExplanation(d, doc, scorer.GetScore(), deep, exp);
+            Assert.IsTrue(exp.IsMatch, "Explanation of [[" + d + "]] for #" + doc + " does not indicate match: " + exp.ToString());
+        }
+
+        public virtual void SetNextReader(AtomicReaderContext context)
+        {
+            @base = context.DocBase;
+        }
+
+        public virtual bool AcceptsDocsOutOfOrder => true;
     }
 }

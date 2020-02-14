@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Index;
+﻿using J2N;
+using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
@@ -182,7 +183,7 @@ namespace Lucene.Net.Sandbox.Queries
         {
             int prime = 31;
             int result = base.GetHashCode();
-            result = prime * result + Number.SingleToInt32Bits(minimumSimilarity);
+            result = prime * result + J2N.BitConversion.SingleToInt32Bits(minimumSimilarity);
             result = prime * result + prefixLength;
             result = prime * result + ((m_term == null) ? 0 : m_term.GetHashCode());
             return result;
@@ -197,7 +198,7 @@ namespace Lucene.Net.Sandbox.Queries
             if (GetType() != obj.GetType())
                 return false;
             SlowFuzzyQuery other = (SlowFuzzyQuery)obj;
-            if (Number.SingleToInt32Bits(minimumSimilarity) != Number
+            if (J2N.BitConversion.SingleToInt32Bits(minimumSimilarity) != J2N.BitConversion
                 .SingleToInt32Bits(other.minimumSimilarity))
                 return false;
             if (prefixLength != other.prefixLength)

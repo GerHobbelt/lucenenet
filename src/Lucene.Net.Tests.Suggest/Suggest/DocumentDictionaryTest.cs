@@ -1,6 +1,8 @@
 ﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
+using Lucene.Net.Documents.Extensions;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search.Spell;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
@@ -9,6 +11,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search.Suggest
 {
@@ -40,7 +43,7 @@ namespace Lucene.Net.Search.Suggest
         /** Returns Pair(list of invalid document terms, Map of document term -> document) */
         private KeyValuePair<List<string>, IDictionary<string, Document>> GenerateIndexDocuments(int ndocs, bool requiresPayload, bool requiresContexts)
         {
-            IDictionary<string, Document> docs = new HashMap<string, Document>();
+            IDictionary<string, Document> docs = new JCG.Dictionary<string, Document>();
             List<string> invalidDocTerms = new List<string>();
             for (int i = 0; i < ndocs; i++)
             {
@@ -114,10 +117,10 @@ namespace Lucene.Net.Search.Suggest
         public void TestEmptyReader()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
             // Make sure the index is created?
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             writer.Commit();
             writer.Dispose();
             IndexReader ir = DirectoryReader.Open(dir);
@@ -136,9 +139,9 @@ namespace Lucene.Net.Search.Suggest
         public void TestBasic()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             KeyValuePair<List<string>, IDictionary<string, Document>> res = GenerateIndexDocuments(AtLeast(1000), true, false);
             IDictionary<string, Document> docs = res.Value;
             List<String> invalidDocTerms = res.Key;
@@ -155,7 +158,7 @@ namespace Lucene.Net.Search.Suggest
             while ((f = inputIterator.Next()) != null)
             {
                 string field = f.Utf8ToString();
-                Document doc = docs.ContainsKey(field) ? docs[field] : null;
+                Document doc = docs[field];
                 docs.Remove(field);
                 //Document doc = docs.Remove(f.Utf8ToString());
                 assertTrue(f.equals(new BytesRef(doc.Get(FIELD_NAME))));
@@ -180,9 +183,9 @@ namespace Lucene.Net.Search.Suggest
         public void TestWithoutPayload()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             KeyValuePair<List<string>, IDictionary<string, Document>> res = GenerateIndexDocuments(AtLeast(1000), false, false);
             IDictionary<string, Document> docs = res.Value;
             List<string> invalidDocTerms = res.Key;
@@ -199,7 +202,7 @@ namespace Lucene.Net.Search.Suggest
             while ((f = inputIterator.Next()) != null)
             {
                 var field = f.Utf8ToString();
-                Document doc = docs.ContainsKey(field) ? docs[field] : null;
+                Document doc = docs[field];
                 docs.Remove(field);
                 assertTrue(f.equals(new BytesRef(doc.Get(FIELD_NAME))));
                 IIndexableField weightField = doc.GetField(WEIGHT_FIELD_NAME);
@@ -225,9 +228,9 @@ namespace Lucene.Net.Search.Suggest
         public void TestWithContexts()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             KeyValuePair<List<string>, IDictionary<string, Document>> res = GenerateIndexDocuments(AtLeast(1000), true, true);
             IDictionary<string, Document> docs = res.Value;
             List<string> invalidDocTerms = res.Key;
@@ -244,14 +247,14 @@ namespace Lucene.Net.Search.Suggest
             while ((f = inputIterator.Next()) != null)
             {
                 string field = f.Utf8ToString();
-                Document doc = docs.ContainsKey(field) ? docs[field] : null;
+                Document doc = docs[field];
                 docs.Remove(field);
                 //Document doc = docs.remove(f.utf8ToString());
                 assertTrue(f.equals(new BytesRef(doc.Get(FIELD_NAME))));
                 IIndexableField weightField = doc.GetField(WEIGHT_FIELD_NAME);
                 assertEquals(inputIterator.Weight, (weightField != null) ? weightField.GetInt64ValueOrDefault() : 0);
                 assertTrue(inputIterator.Payload.equals(doc.GetField(PAYLOAD_FIELD_NAME).GetBinaryValue()));
-                ISet<BytesRef> oriCtxs = new HashSet<BytesRef>();
+                ISet<BytesRef> oriCtxs = new JCG.HashSet<BytesRef>();
                 IEnumerable<BytesRef> contextSet = inputIterator.Contexts;
                 foreach (IIndexableField ctxf in doc.GetFields(CONTEXT_FIELD_NAME))
                 {
@@ -276,13 +279,13 @@ namespace Lucene.Net.Search.Suggest
         public void TestWithDeletions()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMergePolicy(NewLogMergePolicy());
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), dir, iwc);
+            RandomIndexWriter writer = new RandomIndexWriter(Random, dir, iwc);
             KeyValuePair<List<string>, IDictionary<string, Document>> res = GenerateIndexDocuments(AtLeast(1000), false, false);
             IDictionary<string, Document> docs = res.Value;
             List<String> invalidDocTerms = res.Key;
-            Random rand = Random();
+            Random rand = Random;
             List<string> termsToDel = new List<string>();
             foreach (Document doc in docs.Values)
             {
@@ -323,7 +326,7 @@ namespace Lucene.Net.Search.Suggest
             while ((f = inputIterator.Next()) != null)
             {
                 var field = f.Utf8ToString();
-                Document doc = docs.ContainsKey(field) ? docs[field] : null;
+                Document doc = docs[field];
                 docs.Remove(field);
                 assertTrue(f.equals(new BytesRef(doc.Get(FIELD_NAME))));
                 IIndexableField weightField = doc.GetField(WEIGHT_FIELD_NAME);

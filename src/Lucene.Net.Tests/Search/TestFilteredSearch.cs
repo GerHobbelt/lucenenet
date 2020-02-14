@@ -1,4 +1,3 @@
-using System;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -16,8 +15,9 @@ using System;
  * limitations under the License.
  */
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
+using System;
 
 namespace Lucene.Net.Search
 {
@@ -47,12 +47,12 @@ namespace Lucene.Net.Search
             Directory directory = NewDirectory();
             int[] filterBits = new int[] { 1, 36 };
             SimpleDocIdSetFilter filter = new SimpleDocIdSetFilter(filterBits);
-            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
             SearchFiltered(writer, directory, filter, enforceSingleSegment);
             // run the test on more than one segment
             enforceSingleSegment = false;
             writer.Dispose();
-            writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetOpenMode(OpenMode.CREATE).SetMaxBufferedDocs(10).SetMergePolicy(NewLogMergePolicy()));
+            writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetOpenMode(OpenMode.CREATE).SetMaxBufferedDocs(10).SetMergePolicy(NewLogMergePolicy()));
             // we index 60 docs - this will create 6 segments
             SearchFiltered(writer, directory, filter, enforceSingleSegment);
             writer.Dispose();

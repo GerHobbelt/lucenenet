@@ -1,14 +1,13 @@
+using J2N;
+using J2N.Threading;
 using Lucene.Net.Attributes;
-using Lucene.Net.Randomized.Generators;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Store
 {
@@ -32,8 +31,6 @@ namespace Lucene.Net.Store
          * limitations under the License.
          */
 
-    using Throttling = Lucene.Net.Store.MockDirectoryWrapper.Throttling_e;
-
     [TestFixture]
     public class TestDirectory : LuceneTestCase
     {
@@ -48,7 +45,7 @@ namespace Lucene.Net.Store
                 dir.Dispose();
                 try
                 {
-                    dir.CreateOutput("test", NewIOContext(Random()));
+                    dir.CreateOutput("test", NewIOContext(Random));
                     Assert.Fail("did not hit expected exception");
                 }
 #pragma warning disable 168
@@ -65,7 +62,7 @@ namespace Lucene.Net.Store
         public virtual void TestThreadSafety()
         {
             BaseDirectoryWrapper dir = NewDirectory();
-            dir.CheckIndexOnClose = false; // we arent making an index
+            dir.CheckIndexOnDispose = false; // we arent making an index
             if (dir is MockDirectoryWrapper)
             {
                 ((MockDirectoryWrapper)dir).Throttling = Throttling.NEVER; // makes this test really slow
@@ -87,7 +84,7 @@ namespace Lucene.Net.Store
             dir.Dispose();
         }
 
-        private class TheThread : ThreadClass
+        private class TheThread : ThreadJob
         {
             private readonly string name;
             private readonly BaseDirectoryWrapper outerBDWrapper;
@@ -106,7 +103,7 @@ namespace Lucene.Net.Store
 
                     try
                     {
-                        using (IndexOutput output = outerBDWrapper.CreateOutput(fileName, NewIOContext(Random()))) { }
+                        using (IndexOutput output = outerBDWrapper.CreateOutput(fileName, NewIOContext(Random))) { }
                         Assert.IsTrue(SlowFileExists(outerBDWrapper, fileName));
                     }
                     catch (IOException e)
@@ -117,7 +114,7 @@ namespace Lucene.Net.Store
             }
         }
 
-        private class TheThread2 : ThreadClass
+        private class TheThread2 : ThreadJob
         {
             private string _name;
             private readonly BaseDirectoryWrapper outerBDWrapper;
@@ -139,7 +136,7 @@ namespace Lucene.Net.Store
                         {
                             try
                             {
-                                using (IndexInput input = outerBDWrapper.OpenInput(file, NewIOContext(Random()))) { }
+                                using (IndexInput input = outerBDWrapper.OpenInput(file, NewIOContext(Random))) { }
                             }
 #pragma warning disable 168
                             catch (FileNotFoundException fne)
@@ -158,7 +155,7 @@ namespace Lucene.Net.Store
                                     throw new Exception(e.ToString(), e);
                                 }
                             }
-                            if (Random().NextBoolean())
+                            if (Random.NextBoolean())
                             {
                                 break;
                             }
@@ -179,7 +176,7 @@ namespace Lucene.Net.Store
         {
             DirectoryInfo path = CreateTempDir("testDirectInstantiation");
 
-            byte[] largeBuffer = new byte[Random().Next(256 * 1024)], largeReadBuffer = new byte[largeBuffer.Length];
+            byte[] largeBuffer = new byte[Random.Next(256 * 1024)], largeReadBuffer = new byte[largeBuffer.Length];
             for (int i = 0; i < largeBuffer.Length; i++)
             {
                 largeBuffer[i] = (byte)i; // automatically loops with modulo
@@ -193,7 +190,7 @@ namespace Lucene.Net.Store
                 dir.EnsureOpen();
                 string fname = "foo." + i;
                 string lockname = "foo" + i + ".lck";
-                IndexOutput @out = dir.CreateOutput(fname, NewIOContext(Random()));
+                IndexOutput @out = dir.CreateOutput(fname, NewIOContext(Random));
                 @out.WriteByte((byte)(sbyte)i);
                 @out.WriteBytes(largeBuffer, largeBuffer.Length);
                 @out.Dispose();
@@ -212,7 +209,7 @@ namespace Lucene.Net.Store
                     //    continue;
                     //}
 
-                    IndexInput input = d2.OpenInput(fname, NewIOContext(Random()));
+                    IndexInput input = d2.OpenInput(fname, NewIOContext(Random));
                     Assert.AreEqual((byte)i, input.ReadByte());
                     // read array with buffering enabled
                     Arrays.Fill(largeReadBuffer, (byte)0);
@@ -304,15 +301,20 @@ namespace Lucene.Net.Store
             CheckDirectoryFilter(NewFSDirectory(CreateTempDir("test")));
         }
 
+        private static bool ContainsFile(Directory directory, string file) // LUCENENET specific method to prevent having to use Arrays.AsList(), which creates unnecessary memory allocations
+        {
+            return Array.IndexOf(directory.ListAll(), file) > -1;
+        }
+
         // LUCENE-1468
         private void CheckDirectoryFilter(Directory dir)
         {
             string name = "file";
             try
             {
-                dir.CreateOutput(name, NewIOContext(Random())).Dispose();
+                dir.CreateOutput(name, NewIOContext(Random)).Dispose();
                 Assert.IsTrue(SlowFileExists(dir, name));
-                Assert.IsTrue(Arrays.AsList(dir.ListAll()).Contains(name));
+                Assert.IsTrue(ContainsFile(dir, name));
             }
             finally
             {
@@ -332,7 +334,7 @@ namespace Lucene.Net.Store
                 //(new File(path, "subdir")).mkdirs();
                 System.IO.Directory.CreateDirectory(new DirectoryInfo(Path.Combine(path.FullName, "subdir")).FullName);
                 Directory fsDir = new SimpleFSDirectory(path, null);
-                Assert.AreEqual(0, (new RAMDirectory(fsDir, NewIOContext(Random()))).ListAll().Length);
+                Assert.AreEqual(0, (new RAMDirectory(fsDir, NewIOContext(Random))).ListAll().Length);
             }
             finally
             {
@@ -348,7 +350,7 @@ namespace Lucene.Net.Store
             Directory fsDir = new SimpleFSDirectory(path, null);
             try
             {
-                IndexOutput @out = fsDir.CreateOutput("afile", NewIOContext(Random()));
+                IndexOutput @out = fsDir.CreateOutput("afile", NewIOContext(Random));
                 @out.Dispose();
                 Assert.IsTrue(SlowFileExists(fsDir, "afile"));
                 try
@@ -379,7 +381,7 @@ namespace Lucene.Net.Store
             using (Directory fsdir = new SimpleFSDirectory(path))
             {
                 // write a file
-                using (var o = fsdir.CreateOutput("afile", NewIOContext(Random())))
+                using (var o = fsdir.CreateOutput("afile", NewIOContext(Random)))
                 {
                     o.WriteString("boo");
                 }
@@ -430,7 +432,7 @@ namespace Lucene.Net.Store
             DirectoryInfo tempDir = CreateTempDir(GetType().Name);
             using (Directory dir = new SimpleFSDirectory(tempDir))
             {
-                var ioContext = NewIOContext(Random());
+                var ioContext = NewIOContext(Random);
                 var threads = new Thread[Environment.ProcessorCount];
                 int file = 0;
                 Exception exception = null;
@@ -483,7 +485,7 @@ namespace Lucene.Net.Store
         public void TestLUCENENET521()
         {
             var newDirectoryInfo = CreateTempDir("LUCENENET521");
-            using (var zipFileStream = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(this.GetType(), "LUCENENET521.zip"))
+            using (var zipFileStream = this.GetType().FindAndGetManifestResourceStream("LUCENENET521.zip"))
             {
                 TestUtil.Unzip(zipFileStream, newDirectoryInfo);
             }

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs.PerField
 {
@@ -31,12 +31,9 @@ namespace Lucene.Net.Codecs.PerField
     [TestFixture]
     public class TestPerFieldPostingsFormat : BasePostingsFormatTestCase
     {
-        protected override Codec Codec
+        protected override Codec GetCodec()
         {
-            get
-            {
-                return new RandomCodec(new Random(Random().Next()), new HashSet<string>());
-            }
+            return new RandomCodec(new Random(Random.Next()), new JCG.HashSet<string>());
         }
 
         [Test]
@@ -44,56 +41,5 @@ namespace Lucene.Net.Codecs.PerField
         {
             AssumeTrue("The MockRandom PF randomizes content on the fly, so we can't check it", false);
         }
-
-
-        #region BasePostingsFormatTestCase
-        // LUCENENET NOTE: Tests in an abstract base class are not pulled into the correct
-        // context in Visual Studio. This fixes that with the minimum amount of code necessary
-        // to run them in the correct context without duplicating all of the tests.
-
-        [Test]
-        public override void TestDocsOnly()
-        {
-            base.TestDocsOnly();
-        }
-
-        [Test]
-        public override void TestDocsAndFreqs()
-        {
-            base.TestDocsAndFreqs();
-        }
-
-        [Test]
-        public override void TestDocsAndFreqsAndPositions()
-        {
-            base.TestDocsAndFreqsAndPositions();
-        }
-
-        [Test]
-        public override void TestDocsAndFreqsAndPositionsAndPayloads()
-        {
-            base.TestDocsAndFreqsAndPositionsAndPayloads();
-        }
-
-        [Test]
-        public override void TestDocsAndFreqsAndPositionsAndOffsets()
-        {
-            base.TestDocsAndFreqsAndPositionsAndOffsets();
-        }
-
-        [Test]
-        public override void TestDocsAndFreqsAndPositionsAndOffsetsAndPayloads()
-        {
-            base.TestDocsAndFreqsAndPositionsAndOffsetsAndPayloads();
-        }
-
-        [Test]
-        public override void TestRandom()
-        {
-            base.TestRandom();
-        }
-
-        #endregion
-
     }
 }

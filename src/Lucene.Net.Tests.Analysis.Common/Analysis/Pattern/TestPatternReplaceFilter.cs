@@ -72,10 +72,10 @@ namespace Lucene.Net.Analysis.Pattern
         public virtual void TestRandomStrings()
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
 
             Analyzer b = new AnalyzerAnonymousInnerClassHelper2(this);
-            CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -87,7 +87,7 @@ namespace Lucene.Net.Analysis.Pattern
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenStream filter = new PatternReplaceFilter(tokenizer, new Regex("a", RegexOptions.Compiled), "b", false);
@@ -104,7 +104,7 @@ namespace Lucene.Net.Analysis.Pattern
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenStream filter = new PatternReplaceFilter(tokenizer, new Regex("a", RegexOptions.Compiled), "b", true);
@@ -128,7 +128,7 @@ namespace Lucene.Net.Analysis.Pattern
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new PatternReplaceFilter(tokenizer, new Regex("a", RegexOptions.Compiled), "b", true));

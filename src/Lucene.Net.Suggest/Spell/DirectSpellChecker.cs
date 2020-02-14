@@ -1,10 +1,13 @@
-﻿using Lucene.Net.Index;
+﻿using J2N;
+using Lucene.Net.Index;
 using Lucene.Net.Support;
 using Lucene.Net.Util;
 using Lucene.Net.Util.Automaton;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Search.Spell
 {
@@ -92,6 +95,11 @@ namespace Lucene.Net.Search.Spell
         private IStringDistance distance = INTERNAL_LEVENSHTEIN;
 
         /// <summary>
+        /// The culture to use for lowercasing terms.
+        /// </summary>
+        private CultureInfo lowerCaseTermsCulture = null; // LUCENENET specific
+
+        /// <summary>
         /// Creates a DirectSpellChecker with default configuration values 
         /// </summary>
         public DirectSpellChecker()
@@ -108,17 +116,14 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual int MaxEdits
         {
-            get
-            {
-                return maxEdits;
-            }
+            get => maxEdits;
             set
             {
                 if (value < 1 || value > LevenshteinAutomata.MAXIMUM_SUPPORTED_DISTANCE)
                 {
                     throw new NotSupportedException("Invalid maxEdits");
                 }
-                this.maxEdits = value;
+                maxEdits = value;
             }
         }
 
@@ -131,14 +136,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual int MinPrefix
         {
-            get
-            {
-                return minPrefix;
-            }
-            set
-            {
-                this.minPrefix = value;
-            }
+            get => minPrefix;
+            set => minPrefix = value;
         }
 
 
@@ -150,14 +149,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual int MaxInspections
         {
-            get
-            {
-                return maxInspections;
-            }
-            set
-            {
-                this.maxInspections = value;
-            }
+            get => maxInspections;
+            set => maxInspections = value;
         }
 
 
@@ -167,14 +160,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual float Accuracy
         {
-            get
-            {
-                return accuracy;
-            }
-            set
-            {
-                this.accuracy = value;
-            }
+            get => accuracy;
+            set => accuracy = value;
         }
 
 
@@ -192,17 +179,14 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual float ThresholdFrequency
         {
-            get
-            {
-                return thresholdFrequency;
-            }
+            get => thresholdFrequency;
             set
             {
                 if (value >= 1f && value != (int)value)
                 {
                     throw new System.ArgumentException("Fractional absolute document frequencies are not allowed");
                 }
-                this.thresholdFrequency = value;
+                thresholdFrequency = value;
             }
         }
 
@@ -215,14 +199,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual int MinQueryLength
         {
-            get
-            {
-                return minQueryLength;
-            }
-            set
-            {
-                this.minQueryLength = value;
-            }
+            get => minQueryLength;
+            set => minQueryLength = value;
         }
 
 
@@ -240,17 +218,14 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual float MaxQueryFrequency
         {
-            get
-            {
-                return maxQueryFrequency;
-            }
+            get => maxQueryFrequency;
             set
             {
                 if (value >= 1f && value != (int)value)
                 {
                     throw new System.ArgumentException("Fractional absolute document frequencies are not allowed");
                 }
-                this.maxQueryFrequency = value;
+                maxQueryFrequency = value;
             }
         }
 
@@ -267,16 +242,19 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual bool LowerCaseTerms
         {
-            get
-            {
-                return lowerCaseTerms;
-            }
-            set
-            {
-                this.lowerCaseTerms = value;
-            }
+            get => lowerCaseTerms;
+            set => lowerCaseTerms = value;
         }
 
+        /// <summary>
+        /// Gets or sets the culture to use for lowercasing terms.
+        /// Set to <c>null</c> (the default) to use <see cref="CultureInfo.CurrentCulture"/>.
+        /// </summary>
+        public virtual CultureInfo LowerCaseTermsCulture // LUCENENET specific
+        {
+            get => lowerCaseTermsCulture ?? CultureInfo.CurrentCulture;
+            set => lowerCaseTermsCulture = value;
+        }
 
         /// <summary>
         /// Gets or sets the comparer for sorting suggestions.
@@ -284,14 +262,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual IComparer<SuggestWord> Comparer
         {
-            get
-            {
-                return comparer;
-            }
-            set
-            {
-                this.comparer = value;
-            }
+            get => comparer;
+            set => comparer = value;
         }
 
 
@@ -307,14 +279,8 @@ namespace Lucene.Net.Search.Spell
         /// </summary>
         public virtual IStringDistance Distance
         {
-            get
-            {
-                return distance;
-            }
-            set
-            {
-                this.distance = value;
-            }
+            get => distance;
+            set => distance = value;
         }
 
 
@@ -364,7 +330,7 @@ namespace Lucene.Net.Search.Spell
 
             if (lowerCaseTerms)
             {
-                term = new Term(term.Field, text.ToLower());
+                term = new Term(term.Field, LowerCaseTermsCulture.TextInfo.ToLower(text));
             }
 
             int docfreq = ir.DocFreq(term);
@@ -406,9 +372,9 @@ namespace Lucene.Net.Search.Spell
             terms = SuggestSimilar(term, inspections, ir, docfreq, 1, accuracy, spare);
             if (maxEdits > 1 && terms.Count() < inspections)
             {
-                var moreTerms = new HashSet<ScoreTerm>();
-                moreTerms.AddAll(terms);
-                moreTerms.AddAll(SuggestSimilar(term, inspections, ir, docfreq, maxEdits, accuracy, spare));
+                var moreTerms = new JCG.HashSet<ScoreTerm>();
+                moreTerms.UnionWith(terms);
+                moreTerms.UnionWith(SuggestSimilar(term, inspections, ir, docfreq, maxEdits, accuracy, spare));
                 terms = moreTerms;
             }
 
@@ -465,7 +431,7 @@ namespace Lucene.Net.Search.Spell
             }
             FuzzyTermsEnum e = new FuzzyTermsEnum(terms, atts, term, editDistance, Math.Max(minPrefix, editDistance - 1), true);
 
-            var stQueue = new Support.PriorityQueue<ScoreTerm>();
+            var stQueue = new JCG.PriorityQueue<ScoreTerm>();
 
             BytesRef queryTerm = new BytesRef(term.Text());
             BytesRef candidateTerm;
@@ -521,9 +487,9 @@ namespace Lucene.Net.Search.Spell
                 st.Docfreq = df;
                 st.TermAsString = termAsString;
                 st.Score = score;
-                stQueue.Offer(st);
+                stQueue.Enqueue(st);
                 // possibly drop entries from queue
-                st = (stQueue.Count > numSug) ? stQueue.Poll() : new ScoreTerm();
+                st = (stQueue.Count > numSug) ? stQueue.Dequeue() : new ScoreTerm();
                 maxBoostAtt.MaxNonCompetitiveBoost = (stQueue.Count >= numSug) ? stQueue.Peek().Boost : float.NegativeInfinity;
             }
 

@@ -48,7 +48,7 @@ namespace Lucene.Net.Tests.Join
         public override void SetUp()
         {
             Directory = NewDirectory();
-            IndexWriterConfig config = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig config = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             IndexWriter indexWriter = new IndexWriter(Directory, config);
             for (int i = 0; i < AMOUNT_OF_SEGMENTS; i++)
             {
@@ -56,7 +56,7 @@ namespace Lucene.Net.Tests.Join
                 indexWriter.AddDocuments(segmentDocs);
                 indexWriter.Commit();
             }
-            IndexReader = DirectoryReader.Open(indexWriter, Random().NextBoolean());
+            IndexReader = DirectoryReader.Open(indexWriter, Random.NextBoolean());
             indexWriter.Dispose();
             IndexSearcher = new IndexSearcher(IndexReader);
             ParentsFilter = new FixedBitSetCachingWrapperFilter(new QueryWrapperFilter(new WildcardQuery(new Term("parent", "*"))));
@@ -75,7 +75,7 @@ namespace Lucene.Net.Tests.Join
             Query parentQueryWithRandomChild = CreateChildrenQueryWithOneParent(GetRandomChildNumber(0));
             var blockJoinQuery = new ToParentBlockJoinQuery(parentQueryWithRandomChild, ParentsFilter, ScoreMode.None);
 
-            var ex = Throws<InvalidOperationException>(() => IndexSearcher.Search(blockJoinQuery, 1));
+            var ex = Assert.Throws<InvalidOperationException>(() => IndexSearcher.Search(blockJoinQuery, 1));
             StringAssert.Contains("child query must only match non-parent docs", ex.Message);
 
         }
@@ -95,7 +95,7 @@ namespace Lucene.Net.Tests.Join
             conjunctionQuery.Add(new BooleanClause(childQuery, Occur.MUST));
             conjunctionQuery.Add(new BooleanClause(blockJoinQuery, Occur.MUST));
 
-            var ex = Throws<InvalidOperationException>(() => IndexSearcher.Search(conjunctionQuery, 1));
+            var ex = Assert.Throws<InvalidOperationException>(() => IndexSearcher.Search(conjunctionQuery, 1));
             StringAssert.Contains("child query must only match non-parent docs", ex.Message);
         }
 
@@ -105,7 +105,7 @@ namespace Lucene.Net.Tests.Join
             Query parentQueryWithRandomChild = CreateParentsQueryWithOneChild(GetRandomChildNumber(0));
             var blockJoinQuery = new ToChildBlockJoinQuery(parentQueryWithRandomChild, ParentsFilter, false);
 
-            var ex = Throws<InvalidOperationException>(() => IndexSearcher.Search(blockJoinQuery, 1));
+            var ex = Assert.Throws<InvalidOperationException>(() => IndexSearcher.Search(blockJoinQuery, 1));
             StringAssert.Contains(ToChildBlockJoinQuery.INVALID_QUERY_MESSAGE, ex.Message);
         }
         
@@ -124,7 +124,7 @@ namespace Lucene.Net.Tests.Join
             conjunctionQuery.Add(new BooleanClause(childQuery, Occur.MUST));
             conjunctionQuery.Add(new BooleanClause(blockJoinQuery, Occur.MUST));
             
-            var ex = Throws<InvalidOperationException>(() => IndexSearcher.Search(conjunctionQuery, 1));
+            var ex = Assert.Throws<InvalidOperationException>(() => IndexSearcher.Search(conjunctionQuery, 1));
             StringAssert.Contains(ToChildBlockJoinQuery.INVALID_QUERY_MESSAGE, ex.Message);
         }
 
@@ -205,12 +205,12 @@ namespace Lucene.Net.Tests.Join
 
         private static int RandomParentId
         {
-            get { return Random().Next(AMOUNT_OF_PARENT_DOCS*AMOUNT_OF_SEGMENTS); }
+            get { return Random.Next(AMOUNT_OF_PARENT_DOCS*AMOUNT_OF_SEGMENTS); }
         }
 
         private static int RandomParentNumber
         {
-            get { return Random().Next(AMOUNT_OF_PARENT_DOCS); }
+            get { return Random.Next(AMOUNT_OF_PARENT_DOCS); }
         }
 
         private static Query RandomChildQuery(int randomChildNumber)
@@ -220,7 +220,7 @@ namespace Lucene.Net.Tests.Join
 
         private static int GetRandomChildNumber(int notLessThan)
         {
-            return notLessThan + Random().Next(AMOUNT_OF_CHILD_DOCS - notLessThan);
+            return notLessThan + Random.Next(AMOUNT_OF_CHILD_DOCS - notLessThan);
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿using Lucene.Net.Analysis.Core;
+﻿using J2N;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Miscellaneous;
 using Lucene.Net.Analysis.Shingle;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -241,7 +241,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filters = new ASCIIFoldingFilter(tokenizer);
@@ -259,15 +259,15 @@ namespace Lucene.Net.Analysis.NGram
         {
             for (int i = 0; i < 10; i++)
             {
-                int min = TestUtil.NextInt(Random(), 2, 10);
-                int max = TestUtil.NextInt(Random(), min, 20);
+                int min = TestUtil.NextInt32(Random, 2, 10);
+                int max = TestUtil.NextInt32(Random, min, 20);
 
                 Analyzer a = new AnalyzerAnonymousInnerClassHelper2(this, min, max);
-                CheckRandomData(Random(), a, 100 * RANDOM_MULTIPLIER);
+                CheckRandomData(Random, a, 100 * RANDOM_MULTIPLIER);
             }
 
             Analyzer b = new AnalyzerAnonymousInnerClassHelper3(this);
-            CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER, 20, false, false);
+            CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER, 20, false, false);
         }
 
         private class AnalyzerAnonymousInnerClassHelper2 : Analyzer
@@ -284,7 +284,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.max = max;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new EdgeNGramTokenFilter(TEST_VERSION_CURRENT, tokenizer, min, max));
@@ -300,7 +300,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
 #pragma warning disable 612, 618
@@ -312,7 +312,7 @@ namespace Lucene.Net.Analysis.NGram
         [Test]
         public virtual void TestEmptyTerm()
         {
-            Random random = Random();
+            Random random = Random;
             Analyzer a = new AnalyzerAnonymousInnerClassHelper4(this);
             CheckAnalysisConsistency(random, a, random.nextBoolean(), "");
 
@@ -329,7 +329,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
 #pragma warning disable 612, 618
@@ -347,7 +347,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
 #pragma warning disable 612, 618
@@ -368,10 +368,10 @@ namespace Lucene.Net.Analysis.NGram
         [Test]
         public virtual void TestSupplementaryCharacters()
         {
-            string s = TestUtil.RandomUnicodeString(Random(), 10);
+            string s = TestUtil.RandomUnicodeString(Random, 10);
             int codePointCount = s.CodePointCount(0, s.Length);
-            int minGram = TestUtil.NextInt(Random(), 1, 3);
-            int maxGram = TestUtil.NextInt(Random(), minGram, 10);
+            int minGram = TestUtil.NextInt32(Random, 1, 3);
+            int maxGram = TestUtil.NextInt32(Random, minGram, 10);
             TokenStream tk = new KeywordTokenizer(new StringReader(s));
             tk = new EdgeNGramTokenFilter(TEST_VERSION_CURRENT, tk, minGram, maxGram);
             ICharTermAttribute termAtt = tk.AddAttribute<ICharTermAttribute>();

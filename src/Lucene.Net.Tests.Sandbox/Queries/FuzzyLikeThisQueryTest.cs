@@ -1,12 +1,13 @@
 ﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System.Collections.Generic;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Sandbox.Queries
 {
@@ -38,9 +39,9 @@ namespace Lucene.Net.Sandbox.Queries
         {
             base.SetUp();
 
-            analyzer = new MockAnalyzer(Random());
+            analyzer = new MockAnalyzer(Random);
             directory = NewDirectory();
-            RandomIndexWriter writer = new RandomIndexWriter(Random(), directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy()));
+            RandomIndexWriter writer = new RandomIndexWriter(Random, directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy()));
 
             //Add series of docs with misspelt names
             AddDoc(writer, "jonathon smythe", "1");
@@ -49,7 +50,7 @@ namespace Lucene.Net.Sandbox.Queries
             AddDoc(writer, "johnny smith", "4");
             AddDoc(writer, "jonny smith", "5");
             AddDoc(writer, "johnathon smythe", "6");
-            reader = writer.Reader;
+            reader = writer.GetReader();
             writer.Dispose();
             searcher = NewSearcher(reader);
         }
@@ -77,7 +78,7 @@ namespace Lucene.Net.Sandbox.Queries
             FuzzyLikeThisQuery flt = new FuzzyLikeThisQuery(10, analyzer);
             flt.AddTerms("smith", "name", 0.3f, 1);
             Query q = flt.Rewrite(searcher.IndexReader);
-            HashSet<Term> queryTerms = new HashSet<Term>();
+            ISet<Term> queryTerms = new JCG.HashSet<Term>();
             q.ExtractTerms(queryTerms);
             assertTrue("Should have variant smythe", queryTerms.contains(new Term("name", "smythe")));
             assertTrue("Should have variant smith", queryTerms.contains(new Term("name", "smith")));
@@ -96,7 +97,7 @@ namespace Lucene.Net.Sandbox.Queries
             FuzzyLikeThisQuery flt = new FuzzyLikeThisQuery(10, analyzer);
             flt.AddTerms("jonathin smoth", "name", 0.3f, 1);
             Query q = flt.Rewrite(searcher.IndexReader);
-            HashSet<Term> queryTerms = new HashSet<Term>();
+            ISet<Term> queryTerms = new JCG.HashSet<Term>();
             q.ExtractTerms(queryTerms);
             assertTrue("Should have variant jonathan", queryTerms.contains(new Term("name", "jonathan")));
             assertTrue("Should have variant smith", queryTerms.contains(new Term("name", "smith")));
@@ -116,7 +117,7 @@ namespace Lucene.Net.Sandbox.Queries
             flt.AddTerms("jonathin smoth", "this field does not exist", 0.3f, 1);
             // don't fail here just because the field doesn't exits
             Query q = flt.Rewrite(searcher.IndexReader);
-            HashSet<Term> queryTerms = new HashSet<Term>();
+            ISet<Term> queryTerms = new JCG.HashSet<Term>();
             q.ExtractTerms(queryTerms);
             assertTrue("Should have variant jonathan", queryTerms.contains(new Term("name", "jonathan")));
             assertTrue("Should have variant smith", queryTerms.contains(new Term("name", "smith")));
@@ -135,7 +136,7 @@ namespace Lucene.Net.Sandbox.Queries
             FuzzyLikeThisQuery flt = new FuzzyLikeThisQuery(10, analyzer);
             flt.AddTerms("fernando smith", "name", 0.3f, 1);
             Query q = flt.Rewrite(searcher.IndexReader);
-            HashSet<Term> queryTerms = new HashSet<Term>();
+            ISet<Term> queryTerms = new JCG.HashSet<Term>();
             q.ExtractTerms(queryTerms);
             assertTrue("Should have variant smith", queryTerms.contains(new Term("name", "smith")));
             TopDocs topDocs = searcher.Search(flt, 1);
@@ -148,7 +149,7 @@ namespace Lucene.Net.Sandbox.Queries
         [Test]
         public void TestFuzzyLikeThisQueryEquals()
         {
-            Analyzer analyzer = new MockAnalyzer(Random());
+            Analyzer analyzer = new MockAnalyzer(Random);
             FuzzyLikeThisQuery fltq1 = new FuzzyLikeThisQuery(10, analyzer);
             fltq1.AddTerms("javi", "subject", 0.5f, 2);
             FuzzyLikeThisQuery fltq2 = new FuzzyLikeThisQuery(10, analyzer);

@@ -168,7 +168,7 @@ namespace Lucene.Net.Analysis.Br
         [Test]
         public virtual void TestRandomStrings()
         {
-            CheckRandomData(Random(), new BrazilianAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, new BrazilianAnalyzer(TEST_VERSION_CURRENT), 1000 * RANDOM_MULTIPLIER);
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace Lucene.Net.Analysis.Br
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new BrazilianStemFilter(tokenizer));

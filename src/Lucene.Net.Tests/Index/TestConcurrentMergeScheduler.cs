@@ -1,22 +1,23 @@
 #if FEATURE_CONCURRENTMERGESCHEDULER
-using System;
-using System.Diagnostics;
-using System.Threading;
+using J2N.Threading.Atomic;
+using Lucene.Net.Attributes;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Lucene.Net.Index.Extensions;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
+using NUnit.Framework;
+using System;
+using System.IO;
+using System.Threading;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
-    using Lucene.Net.Randomized.Generators;
-    using Lucene.Net.Support;
-    using NUnit.Framework;
-    using System.IO;
     using Directory = Lucene.Net.Store.Directory;
     using Document = Documents.Document;
     using Field = Field;
     using Lucene41PostingsFormat = Lucene.Net.Codecs.Lucene41.Lucene41PostingsFormat;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-
     /*
          * Licensed to the Apache Software Foundation (ASF) under one or more
          * contributor license agreements.  See the NOTICE file distributed with
@@ -39,38 +40,36 @@ namespace Lucene.Net.Index
     using StringField = StringField;
     using TestUtil = Lucene.Net.Util.TestUtil;
     using TextField = TextField;
-    using Attributes;
-    using Lucene.Net.Util;
 
     [TestFixture]
     public class TestConcurrentMergeScheduler : LuceneTestCase
     {
-        private class FailOnlyOnFlush : MockDirectoryWrapper.Failure
+        private class FailOnlyOnFlush : Failure
         {
-            private readonly TestConcurrentMergeScheduler OuterInstance;
+            private readonly TestConcurrentMergeScheduler outerInstance;
 
             public FailOnlyOnFlush(TestConcurrentMergeScheduler outerInstance)
             {
-                this.OuterInstance = outerInstance;
+                this.outerInstance = outerInstance;
             }
 
-            new internal bool DoFail;
-            internal bool HitExc;
+            internal bool doFail;
+            internal bool hitExc;
 
             public override void SetDoFail()
             {
-                this.DoFail = true;
-                HitExc = false;
+                this.doFail = true;
+                hitExc = false;
             }
 
             public override void ClearDoFail()
             {
-                this.DoFail = false;
+                this.doFail = false;
             }
 
             public override void Eval(MockDirectoryWrapper dir)
             {
-                if (DoFail && TestThread())
+                if (doFail && IsTestThread)
                 {
                     // LUCENENET specific: for these to work in release mode, we have added [MethodImpl(MethodImplOptions.NoInlining)]
                     // to each possible target of the StackTraceHelper. If these change, so must the attribute on the target methods.
@@ -78,9 +77,9 @@ namespace Lucene.Net.Index
                     bool isClose = Util.StackTraceHelper.DoesStackTraceContainMethod("Close") ||
                         Util.StackTraceHelper.DoesStackTraceContainMethod("Dispose");
 
-                    if (isDoFlush && !isClose && Random().NextBoolean())
+                    if (isDoFlush && !isClose && Random.NextBoolean())
                     {
-                        HitExc = true;
+                        hitExc = true;
                         throw new IOException(Thread.CurrentThread.Name + ": now failing during flush");
                     }
                 }
@@ -92,11 +91,14 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestFlushExceptions()
         {
+#if NETCOREAPP2_0
+            fail("LUCENENET TODO: Causing fatal crashes intermittently on NETCOREAPP2.0");
+#endif
             MockDirectoryWrapper directory = NewMockDirectory();
             FailOnlyOnFlush failure = new FailOnlyOnFlush(this);
             directory.FailOn(failure);
 
-            IndexWriter writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMaxBufferedDocs(2));
+            IndexWriter writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMaxBufferedDocs(2));
             Document doc = new Document();
             Field idField = NewStringField("id", "", Field.Store.YES);
             doc.Add(idField);
@@ -125,7 +127,7 @@ namespace Lucene.Net.Index
                     try
                     {
                         writer.Flush(true, true);
-                        if (failure.HitExc)
+                        if (failure.hitExc)
                         {
                             Assert.Fail("failed to hit IOException");
                         }
@@ -163,7 +165,7 @@ namespace Lucene.Net.Index
             // merging of segments with and without deletes at the
             // start:
             mp.MinMergeDocs = 1000;
-            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(mp));
+            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(mp));
 
             Document doc = new Document();
             Field idField = NewStringField("id", "", Field.Store.YES);
@@ -206,7 +208,7 @@ namespace Lucene.Net.Index
         public virtual void TestNoExtraFiles()
         {
             Directory directory = NewDirectory();
-            IndexWriter writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMaxBufferedDocs(2));
+            IndexWriter writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMaxBufferedDocs(2));
 
             for (int iter = 0; iter < 7; iter++)
             {
@@ -226,7 +228,7 @@ namespace Lucene.Net.Index
                 TestIndexWriter.AssertNoUnreferencedFiles(directory, "testNoExtraFiles");
 
                 // Reopen
-                writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetOpenMode(OpenMode.APPEND).SetMaxBufferedDocs(2));
+                writer = new IndexWriter(directory, (IndexWriterConfig)NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetOpenMode(OpenMode.APPEND).SetMaxBufferedDocs(2));
             }
 
             writer.Dispose();
@@ -242,7 +244,7 @@ namespace Lucene.Net.Index
             Field idField = NewStringField("id", "", Field.Store.YES);
             doc.Add(idField);
 
-            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMaxBufferedDocs(2).SetMergePolicy(NewLogMergePolicy(100)));
+            IndexWriter writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMaxBufferedDocs(2).SetMergePolicy(NewLogMergePolicy(100)));
 
             for (int iter = 0; iter < 10; iter++)
             {
@@ -272,7 +274,7 @@ namespace Lucene.Net.Index
                 reader.Dispose();
 
                 // Reopen
-                writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetOpenMode(OpenMode.APPEND).SetMergePolicy(NewLogMergePolicy(100)));
+                writer = new IndexWriter(directory, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetOpenMode(OpenMode.APPEND).SetMergePolicy(NewLogMergePolicy(100)));
             }
             writer.Dispose();
 
@@ -284,10 +286,10 @@ namespace Lucene.Net.Index
         public virtual void TestMaxMergeCount()
         {
             Directory dir = NewDirectory();
-            IndexWriterConfig iwc = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
 
-            int maxMergeCount = TestUtil.NextInt(Random(), 1, 5);
-            int maxMergeThreads = TestUtil.NextInt(Random(), 1, maxMergeCount);
+            int maxMergeCount = TestUtil.NextInt32(Random, 1, 5);
+            int maxMergeThreads = TestUtil.NextInt32(Random, 1, maxMergeCount);
             CountdownEvent enoughMergesWaiting = new CountdownEvent(maxMergeCount);
             AtomicInt32 runningMergeCount = new AtomicInt32(0);
             AtomicBoolean failed = new AtomicBoolean();
@@ -310,7 +312,7 @@ namespace Lucene.Net.Index
             IndexWriter w = new IndexWriter(dir, iwc);
             Document doc = new Document();
             doc.Add(NewField("field", "field", TextField.TYPE_NOT_STORED));
-            while (enoughMergesWaiting.CurrentCount != 0 && !failed.Get())
+            while (enoughMergesWaiting.CurrentCount != 0 && !failed)
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -356,7 +358,7 @@ namespace Lucene.Net.Index
                         while (true)
                         {
                             // wait for 10 milliseconds
-                            if (EnoughMergesWaiting.Wait(new TimeSpan(0, 0, 0, 0, 10)) || Failed.Get())
+                            if (EnoughMergesWaiting.Wait(new TimeSpan(0, 0, 0, 0, 10)) || Failed)
                             {
                                 break;
                             }
@@ -373,7 +375,7 @@ namespace Lucene.Net.Index
                 }
                 catch (Exception /*t*/)
                 {
-                    Failed.Set(true);
+                    Failed.Value = (true);
                     m_writer.MergeFinish(merge);
 
                     // LUCENENET specific - throwing an exception on a background thread causes the test
@@ -405,9 +407,9 @@ namespace Lucene.Net.Index
             Directory d = NewDirectory();
             if (d is MockDirectoryWrapper)
             {
-                ((MockDirectoryWrapper)d).Throttling = MockDirectoryWrapper.Throttling_e.NEVER;
+                ((MockDirectoryWrapper)d).Throttling = Throttling.NEVER;
             }
-            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()));
+            IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random));
             iwc.SetMaxBufferedDocs(5);
             iwc.SetMergeScheduler(new TrackingCMS());
             if (TestUtil.GetPostingsFormat("id").Equals("SimpleText", StringComparison.Ordinal))
@@ -415,26 +417,26 @@ namespace Lucene.Net.Index
                 // no
                 iwc.SetCodec(TestUtil.AlwaysPostingsFormat(new Lucene41PostingsFormat()));
             }
-            RandomIndexWriter w = new RandomIndexWriter(Random(), d, iwc);
+            RandomIndexWriter w = new RandomIndexWriter(Random, d, iwc);
             for (int i = 0; i < 1000; i++)
             {
                 Document doc = new Document();
                 doc.Add(new StringField("id", "" + i, Field.Store.NO));
                 w.AddDocument(doc);
 
-                if (Random().NextBoolean())
+                if (Random.NextBoolean())
                 {
-                    w.DeleteDocuments(new Term("id", "" + Random().Next(i + 1)));
+                    w.DeleteDocuments(new Term("id", "" + Random.Next(i + 1)));
                 }
             }
-            Assert.IsTrue(((TrackingCMS)w.w.Config.MergeScheduler).TotMergedBytes != 0);
+            Assert.IsTrue(((TrackingCMS)w.IndexWriter.Config.MergeScheduler).TotMergedBytes != 0);
             w.Dispose();
             d.Dispose();
         }
 
 
         // LUCENENET specific
-        private class FailOnlyOnMerge : MockDirectoryWrapper.Failure
+        private class FailOnlyOnMerge : Failure
         {
             public override void Eval(MockDirectoryWrapper dir)
             {
@@ -460,7 +462,7 @@ namespace Lucene.Net.Index
                 doc.Add(idField);
 
                 var mergeScheduler = new ConcurrentMergeScheduler();
-                using (IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergeScheduler(mergeScheduler).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy())))
+                using (IndexWriter writer = new IndexWriter(dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergeScheduler(mergeScheduler).SetMaxBufferedDocs(2).SetRAMBufferSizeMB(IndexWriterConfig.DISABLE_AUTO_FLUSH).SetMergePolicy(NewLogMergePolicy())))
                 {
                     LogMergePolicy logMP = (LogMergePolicy)writer.Config.MergePolicy;
                     logMP.MergeFactor = 10;

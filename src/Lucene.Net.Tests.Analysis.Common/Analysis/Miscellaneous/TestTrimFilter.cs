@@ -110,10 +110,10 @@ namespace Lucene.Net.Analysis.Miscellaneous
         public virtual void TestRandomStrings()
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
 
             Analyzer b = new AnalyzerAnonymousInnerClassHelper2(this);
-            CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -125,7 +125,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.KEYWORD, false);
                 return new TokenStreamComponents(tokenizer, new TrimFilter(LuceneVersion.LUCENE_43, tokenizer, true));
@@ -141,7 +141,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.KEYWORD, false);
                 return new TokenStreamComponents(tokenizer, new TrimFilter(TEST_VERSION_CURRENT, tokenizer, false));
@@ -164,10 +164,10 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
-                bool updateOffsets = Random().nextBoolean();
+                bool updateOffsets = Random.nextBoolean();
                 LuceneVersion version = updateOffsets ? LuceneVersion.LUCENE_43 : TEST_VERSION_CURRENT;
                 return new TokenStreamComponents(tokenizer, new TrimFilter(version, tokenizer, updateOffsets));
             }

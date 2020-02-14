@@ -1,9 +1,9 @@
+using J2N.Threading;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support.Threading;
-using NUnit.Framework;
+using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,7 +11,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Assert = Lucene.Net.TestFramework.Assert;
+using AssertionError = Lucene.Net.Diagnostics.AssertionException;
+using Attribute = Lucene.Net.Util.Attribute;
+using AttributeFactory = Lucene.Net.Util.AttributeSource.AttributeFactory;
+using Console = Lucene.Net.Util.SystemConsole;
+using Directory = Lucene.Net.Store.Directory;
 
 namespace Lucene.Net.Analysis
 {
@@ -31,81 +36,92 @@ namespace Lucene.Net.Analysis
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-    
-    using Attribute = Lucene.Net.Util.Attribute;
-    using Directory = Lucene.Net.Store.Directory;
-    using Document = Documents.Document;
-    using Field = Field;
-    using FieldType = FieldType;
-    using IAttribute = Lucene.Net.Util.IAttribute;
-    using IOUtils = Lucene.Net.Util.IOUtils;
-    using LineFileDocs = Lucene.Net.Util.LineFileDocs;
-    using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
-    using RandomIndexWriter = Lucene.Net.Index.RandomIndexWriter;
-    using TestUtil = Lucene.Net.Util.TestUtil;
-    using TextField = TextField;
 
     /// <summary>
-    /// base class for all Lucene unit tests that use TokenStreams.
-    /// <p>
+    /// Attribute that records if it was cleared or not.  this is used
+    /// for testing that <see cref="Lucene.Net.Util.AttributeSource.ClearAttributes()"/> was called correctly.
+    /// </summary>
+    public interface ICheckClearAttributesAttribute : IAttribute
+    {
+        bool GetAndResetClearCalled();
+    }
+
+    /// <summary>
+    /// Attribute that records if it was cleared or not.  this is used
+    /// for testing that <see cref="Lucene.Net.Util.AttributeSource.ClearAttributes()"/> was called correctly.
+    /// </summary>
+    public sealed class CheckClearAttributesAttribute : Attribute, ICheckClearAttributesAttribute
+    {
+        private bool clearCalled = false;
+
+        public bool GetAndResetClearCalled()
+        {
+            bool old = clearCalled;
+            clearCalled = false;
+            return old;
+        }
+
+        public override void Clear()
+        {
+            clearCalled = true;
+        }
+
+        public override bool Equals(object other)
+        {
+            return (other is CheckClearAttributesAttribute && ((CheckClearAttributesAttribute)other).clearCalled == this.clearCalled);
+        }
+
+        public override int GetHashCode()
+        {
+            return 76137213 ^ clearCalled.GetHashCode();
+        }
+
+        public override void CopyTo(IAttribute target)
+        {
+            ((CheckClearAttributesAttribute)target).Clear();
+        }
+    }
+
+    /// <summary>
+    /// Base class for all Lucene unit tests that use <see cref="TokenStream"/>s.
+    /// <para/>
     /// When writing unit tests for analysis components, its highly recommended
-    /// to use the helper methods here (especially in conjunction with <seealso cref="MockAnalyzer"/> or
-    /// <seealso cref="MockTokenizer"/>), as they contain many assertions and checks to
+    /// to use the helper methods here (especially in conjunction with <see cref="MockAnalyzer"/> or
+    /// <see cref="MockTokenizer"/>), as they contain many assertions and checks to
     /// catch bugs.
     /// </summary>
-    /// <seealso cref= MockAnalyzer </seealso>
-    /// <seealso cref= MockTokenizer </seealso>
+    /// <seealso cref="MockAnalyzer"/>
+    /// <seealso cref="MockTokenizer"/>
     public abstract class BaseTokenStreamTestCase : LuceneTestCase
+#if TESTFRAMEWORK_XUNIT
+        , Xunit.IClassFixture<BeforeAfterClass>
     {
+        public BaseTokenStreamTestCase(BeforeAfterClass beforeAfter)
+            : base(beforeAfter)
+        {
+        }
+#else
+    {
+#endif
+//#if TESTFRAMEWORK_MSTEST
+//        [Microsoft.VisualStudio.TestTools.UnitTesting.ClassInitializeAttribute(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//        new public static void BeforeClass(Microsoft.VisualStudio.TestTools.UnitTesting.TestContext context)
+//        {
+//            Lucene.Net.Util.LuceneTestCase.BeforeClass(context);
+//        }
+
+//        [Microsoft.VisualStudio.TestTools.UnitTesting.ClassCleanupAttribute(Microsoft.VisualStudio.TestTools.UnitTesting.InheritanceBehavior.BeforeEachDerivedClass)]
+//        new public static void AfterClass()
+//        {
+//            Lucene.Net.Util.LuceneTestCase.AfterClass();
+//        }
+//#endif
+
         // some helpers to test Analyzers and TokenStreams:
 
-        /// <summary>
-        /// Attribute that records if it was cleared or not.  this is used
-        /// for testing that ClearAttributes() was called correctly.
-        /// </summary>
-        public interface ICheckClearAttributesAttribute : IAttribute
-        {
-            bool AndResetClearCalled { get; }
-        }
+        // LUCENENET specific - de-nested ICheckClearAttributesAttribute
 
-        /// <summary>
-        /// Attribute that records if it was cleared or not.  this is used
-        /// for testing that ClearAttributes() was called correctly.
-        /// </summary>
-        public sealed class CheckClearAttributesAttribute : Attribute, ICheckClearAttributesAttribute
-        {
-            internal bool ClearCalled = false;
-
-            public bool AndResetClearCalled
-            {
-                get
-                {
-                    bool old = ClearCalled;
-                    ClearCalled = false;
-                    return old;
-                }
-            }
-
-            public override void Clear()
-            {
-                ClearCalled = true;
-            }
-
-            public override bool Equals(object other)
-            {
-                return (other is CheckClearAttributesAttribute && ((CheckClearAttributesAttribute)other).ClearCalled == this.ClearCalled);
-            }
-
-            public override int GetHashCode()
-            {
-                return 76137213 ^ ClearCalled.GetHashCode();
-            }
-
-            public override void CopyTo(IAttribute target)
-            {
-                ((CheckClearAttributesAttribute)target).Clear();
-            }
-        }
+        // LUCENENET specific - de-nested CheckClearAttributesAttribute
 
         // offsetsAreCorrect also validates:
         //   - graph offsets are correct (all tokens leaving from
@@ -113,7 +129,7 @@ namespace Lucene.Net.Analysis
         //     arriving to pos Y have the same endOffset)
         //   - offsets only move forwards (startOffset >=
         //     lastStartOffset)
-        public static void AssertTokenStreamContents(TokenStream ts, string[] output, int[] startOffsets, int[] endOffsets, string[] types, int[] posIncrements, int[] posLengths, int? finalOffset, int? finalPosInc, bool[] keywordAtts, bool offsetsAreCorrect)
+        public static void AssertTokenStreamContents(TokenStream ts, string[] output, int[] startOffsets, int[] endOffsets, string[] types, int[] posIncrements, int[] posLengths, int? finalOffset, int? finalPosInc, bool[] keywordAtts, bool offsetsAreCorrect, byte[][] payloads)
         {
             // LUCENENET: Bug fix: NUnit throws an exception when something fails. 
             // This causes Dispose() to be skipped and it pollutes other tests indicating false negatives.
@@ -166,6 +182,17 @@ namespace Lucene.Net.Analysis
                     keywordAtt = ts.GetAttribute<IKeywordAttribute>();
                 }
 
+                // *********** From Lucene 8.2.0 **************
+
+                IPayloadAttribute payloadAtt = null;
+                if (payloads != null)
+                {
+                    Assert.IsTrue(ts.HasAttribute<IPayloadAttribute>(), "has no PayloadAttribute");
+                    payloadAtt = ts.GetAttribute<IPayloadAttribute>();
+                }
+
+                // *********** End From Lucene 8.2.0 **************
+
                 // Maps position to the start/end offset:
                 IDictionary<int?, int?> posToStartOffset = new Dictionary<int?, int?>();
                 IDictionary<int?, int?> posToEndOffset = new Dictionary<int?, int?>();
@@ -198,8 +225,14 @@ namespace Lucene.Net.Analysis
                     {
                         keywordAtt.IsKeyword = (i & 1) == 0;
                     }
+                    // *********** From Lucene 8.2.0 **************
+                    if (payloadAtt != null)
+                    {
+                        payloadAtt.Payload = new BytesRef(new byte[] { 0x00, unchecked((byte)-0x21), 0x12, unchecked((byte)-0x43), 0x24 });
+                    }
+                    // *********** End From Lucene 8.2.0 **************
 
-                    bool reset = checkClearAtt.AndResetClearCalled; // reset it, because we called clearAttribute() before
+                    bool reset = checkClearAtt.GetAndResetClearCalled(); // reset it, because we called clearAttribute() before
                     Assert.IsTrue(ts.IncrementToken(), "token " + i + " does not exist");
                     Assert.IsTrue(reset, "ClearAttributes() was not called correctly in TokenStream chain");
 
@@ -228,6 +261,20 @@ namespace Lucene.Net.Analysis
                     {
                         Assert.AreEqual(keywordAtts[i], keywordAtt.IsKeyword, "keywordAtt " + i);
                     }
+                    // *********** From Lucene 8.2.0 **************
+                    if (payloads != null)
+                    {
+                        if (payloads[i] != null)
+                        {
+                            Assert.AreEqual(new BytesRef(payloads[i]), payloadAtt.Payload, "payloads " + i);
+                        }
+                        else
+                        {
+                            Assert.IsNull(payloads[i], "payloads " + i);
+                        }
+                    }
+                    // *********** End From Lucene 8.2.0 **************
+
 
                     // we can enforce some basic things about a few attributes even if the caller doesn't check:
                     if (offsetAtt != null)
@@ -257,7 +304,7 @@ namespace Lucene.Net.Analysis
 
                             int posLength = posLengthAtt.PositionLength;
 
-                            if (!posToStartOffset.ContainsKey(pos))
+                            if (!posToStartOffset.TryGetValue(pos, out int? oldStartOffset))
                             {
                                 // First time we've seen a token leaving from this position:
                                 posToStartOffset[pos] = startOffset;
@@ -268,12 +315,12 @@ namespace Lucene.Net.Analysis
                                 // We've seen a token leaving from this position
                                 // before; verify the startOffset is the same:
                                 //System.out.println("  + vs " + pos + " -> " + startOffset);
-                                Assert.AreEqual((int)posToStartOffset[pos], startOffset, "pos=" + pos + " posLen=" + posLength + " token=" + termAtt);
+                                Assert.AreEqual(oldStartOffset.GetValueOrDefault(), startOffset, "pos=" + pos + " posLen=" + posLength + " token=" + termAtt);
                             }
 
                             int endPos = pos + posLength;
 
-                            if (!posToEndOffset.ContainsKey(endPos))
+                            if (!posToEndOffset.TryGetValue(endPos, out int? oldEndOffset))
                             {
                                 // First time we've seen a token arriving to this position:
                                 posToEndOffset[endPos] = endOffset;
@@ -284,7 +331,7 @@ namespace Lucene.Net.Analysis
                                 // We've seen a token arriving to this position
                                 // before; verify the endOffset is the same:
                                 //System.out.println("  + ve " + endPos + " -> " + endOffset);
-                                Assert.AreEqual((int)posToEndOffset[endPos], endOffset, "pos=" + pos + " posLen=" + posLength + " token=" + termAtt);
+                                Assert.AreEqual(oldEndOffset.GetValueOrDefault(), endOffset, "pos=" + pos + " posLen=" + posLength + " token=" + termAtt);
                             }
                         }
                     }
@@ -333,10 +380,10 @@ namespace Lucene.Net.Analysis
                     posLengthAtt.PositionLength = 45987653;
                 }
 
-                var reset_ = checkClearAtt.AndResetClearCalled; // reset it, because we called clearAttribute() before
+                var reset_ = checkClearAtt.GetAndResetClearCalled(); // reset it, because we called clearAttribute() before
 
                 ts.End();
-                Assert.IsTrue(checkClearAtt.AndResetClearCalled, "super.End()/ClearAttributes() was not called correctly in End()");
+                Assert.IsTrue(checkClearAtt.GetAndResetClearCalled(), "base.End()/ClearAttributes() was not called correctly in End()");
 
                 if (finalOffset != null)
                 {
@@ -351,21 +398,24 @@ namespace Lucene.Net.Analysis
                     Assert.AreEqual((int)finalPosInc, posIncrAtt.PositionIncrement, "finalPosInc");
                 }
 
-                ts.Dispose();
+                //ts.Dispose();
             }
             catch (Exception)
             {
                 //ts.Reset();
                 ts.ClearAttributes();
                 ts.End();
-                ts.Dispose();
                 throw;
+            }
+            finally
+            {
+                ts.Dispose();
             }
         }
 
         public static void AssertTokenStreamContents(TokenStream ts, string[] output, int[] startOffsets, int[] endOffsets, string[] types, int[] posIncrements, int[] posLengths, int? finalOffset, bool[] keywordAtts, bool offsetsAreCorrect)
         {
-            AssertTokenStreamContents(ts, output, startOffsets, endOffsets, types, posIncrements, posLengths, finalOffset, null, null, offsetsAreCorrect);
+            AssertTokenStreamContents(ts, output, startOffsets, endOffsets, types, posIncrements, posLengths, finalOffset, null, null, offsetsAreCorrect, null);
         }
 
         public static void AssertTokenStreamContents(TokenStream ts, string[] output, int[] startOffsets, int[] endOffsets, string[] types, int[] posIncrements, int[] posLengths, int? finalOffset, bool offsetsAreCorrect)
@@ -446,6 +496,13 @@ namespace Lucene.Net.Analysis
             AssertTokenStreamContents(a.GetTokenStream("dummy", new StringReader(input)), output, startOffsets, endOffsets, types, posIncrements, posLengths, input.Length, offsetsAreCorrect);
         }
 
+        // LUCENENET: Overload from Lucene 8.2.0
+        public static void AssertAnalyzesTo(Analyzer a, string input, string[] output, int[] startOffsets, int[] endOffsets, string[] types, int[] posIncrements, int[] posLengths, bool graphOffsetsAreCorrect, byte[][] payloads)
+        {
+            CheckResetException(a, input);
+            AssertTokenStreamContents(a.GetTokenStream("dummy", input), output, startOffsets, endOffsets, types, posIncrements, posLengths, input.Length, null, null, graphOffsetsAreCorrect, payloads);
+        }
+
         public static void AssertAnalyzesTo(Analyzer a, string input, string[] output)
         {
             AssertAnalyzesTo(a, input, output, null, null, null, null, null);
@@ -493,7 +550,7 @@ namespace Lucene.Net.Analysis
             {
                 //ok
             }
-            catch (AssertionException expected)
+            catch (AssertionError expected) // LUCENENET: Actual AssertionError type is Lucene.Net.Diagnostics.AssertionException
             {
                 // ok: MockTokenizer
                 Assert.IsTrue(expected.Message != null && expected.Message.Contains("wrong state"), expected.Message);
@@ -502,7 +559,7 @@ namespace Lucene.Net.Analysis
             {
                 //unexpected.printStackTrace(System.err);
                 Console.Error.WriteLine(unexpected.StackTrace);
-                Assert.Fail("got wrong exception when reset() not called: " + unexpected);
+                Assert.Fail("Got wrong exception when Reset() not called: " + unexpected);
             }
             finally
             {
@@ -525,7 +582,7 @@ namespace Lucene.Net.Analysis
             try
             {
                 ts = a.GetTokenStream("bogus", new StringReader(input));
-                Assert.Fail("didn't get expected exception when Close() not called");
+                Assert.Fail("Didn't get expected exception when Dispose() not called");
             }
             catch (Exception)
             {
@@ -537,16 +594,43 @@ namespace Lucene.Net.Analysis
             }
         }
 
-        // simple utility method for testing stemmers
-
+        /// <summary>
+        /// Simple utility method for testing stemmers
+        /// </summary>
         public static void CheckOneTerm(Analyzer a, string input, string expected)
         {
             AssertAnalyzesTo(a, input, new string[] { expected });
         }
 
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
         /// <summary>
-        /// utility method for blasting tokenstreams with data to make sure they don't do anything crazy
-        ///
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// </summary>
+        public static void CheckRandomData(Random random, Analyzer a, int iterations)
+        {
+            CheckRandomData(random, a, iterations, 20, false, true);
+        }
+
+        /// <summary>
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// </summary>
+        public static void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength)
+        {
+            CheckRandomData(random, a, iterations, maxWordLength, false, true);
+        }
+
+        /// <summary>
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// </summary>
+        /// <param name="simple"> true if only ascii strings will be used (try to avoid)</param>
+        public static void CheckRandomData(Random random, Analyzer a, int iterations, bool simple)
+        {
+            CheckRandomData(random, a, iterations, 20, simple, true);
+        }
+#else
+        /// <summary>
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// <para/>
         /// LUCENENET specific
         /// Non-static to reduce the inter-class dependencies due to use of
         /// static variables
@@ -557,9 +641,9 @@ namespace Lucene.Net.Analysis
         }
 
         /// <summary>
-        /// utility method for blasting tokenstreams with data to make sure they don't do anything crazy
-        ///
-        /// LUCENENET specific
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// <para/>
+        /// LUCENENET specific:
         /// Non-static to reduce the inter-class dependencies due to use of
         /// static variables
         /// </summary>
@@ -569,9 +653,9 @@ namespace Lucene.Net.Analysis
         }
 
         /// <summary>
-        /// utility method for blasting tokenstreams with data to make sure they don't do anything crazy
-        /// 
-        /// LUCENENET specific
+        /// Utility method for blasting tokenstreams with data to make sure they don't do anything crazy
+        /// <para/>
+        /// LUCENENET specific:
         /// Non-static to reduce the inter-class dependencies due to use of
         /// static variables
         /// </summary>
@@ -580,44 +664,38 @@ namespace Lucene.Net.Analysis
         {
             CheckRandomData(random, a, iterations, 20, simple, true);
         }
+#endif
 
-        internal class AnalysisThread : ThreadClass
+        internal class AnalysisThread : ThreadJob
         {
-            private readonly BaseTokenStreamTestCase OuterInstance;
-            internal readonly int Iterations;
-            internal readonly int MaxWordLength;
-            internal readonly long Seed;
+            internal readonly int iterations;
+            internal readonly int maxWordLength;
+            internal readonly long seed;
             internal readonly Analyzer a;
-            internal readonly bool UseCharFilter;
-            internal readonly bool Simple;
-            internal readonly bool OffsetsAreCorrect;
-            internal readonly RandomIndexWriter Iw;
-            private readonly CountdownEvent _latch;
+            internal readonly bool useCharFilter;
+            internal readonly bool simple;
+            internal readonly bool offsetsAreCorrect;
+            internal readonly RandomIndexWriter iw;
+            private readonly CountdownEvent latch;
 
             // NOTE: not volatile because we don't want the tests to
             // add memory barriers (ie alter how threads
             // interact)... so this is just "best effort":
-            public bool Failed;
-            public Exception firstException = null;
+            public bool Failed { get; set; }
+            public Exception FirstException { get; set; } = null;
 
-            /// <summary>
-            /// <param name="outerInstance">
-            /// LUCENENET specific
-            /// Added to remove a call to the then-static BaseTokenStreamTestCase methods</param>
-            /// </summary>
             internal AnalysisThread(long seed, CountdownEvent latch, Analyzer a, int iterations, int maxWordLength, 
-                bool useCharFilter, bool simple, bool offsetsAreCorrect, RandomIndexWriter iw, BaseTokenStreamTestCase outerInstance)
+                bool useCharFilter, bool simple, bool offsetsAreCorrect, RandomIndexWriter iw)
             {
-                this.Seed = seed;
+                this.seed = seed;
                 this.a = a;
-                this.Iterations = iterations;
-                this.MaxWordLength = maxWordLength;
-                this.UseCharFilter = useCharFilter;
-                this.Simple = simple;
-                this.OffsetsAreCorrect = offsetsAreCorrect;
-                this.Iw = iw;
-                this._latch = latch;
-                this.OuterInstance = outerInstance;
+                this.iterations = iterations;
+                this.maxWordLength = maxWordLength;
+                this.useCharFilter = useCharFilter;
+                this.simple = simple;
+                this.offsetsAreCorrect = offsetsAreCorrect;
+                this.iw = iw;
+                this.latch = latch;
             }
 
             public override void Run()
@@ -625,10 +703,10 @@ namespace Lucene.Net.Analysis
                 bool success = false;
                 try
                 {
-                    if (_latch != null) _latch.Wait();
+                    if (latch != null) latch.Wait();
                     // see the part in checkRandomData where it replays the same text again
                     // to verify reproducability/reuse: hopefully this would catch thread hazards.
-                    OuterInstance.CheckRandomData(new Random((int)Seed), a, Iterations, MaxWordLength, UseCharFilter, Simple, OffsetsAreCorrect, Iw);
+                    CheckRandomData(new Random((int)seed), a, iterations, maxWordLength, useCharFilter, simple, offsetsAreCorrect, iw);
                     success = true;
                 }
                 catch (Exception e)
@@ -638,9 +716,9 @@ namespace Lucene.Net.Analysis
                     // LUCENENET: Throwing an exception on another thread
                     // is pointless, so we set it to a variable so we can read
                     // it from our main thread (for debugging).
-                    if (firstException == null)
+                    if (FirstException == null)
                     {
-                        firstException = e;
+                        FirstException = e;
                     }
                 }
                 finally
@@ -650,12 +728,21 @@ namespace Lucene.Net.Analysis
             }
         }
 
+#if !FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+        public static void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool simple)
+        {
+            CheckRandomData(random, a, iterations, maxWordLength, simple, true);
+        }
+
+        public static void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool simple, bool offsetsAreCorrect)
+#else
         public void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool simple)
         {
             CheckRandomData(random, a, iterations, maxWordLength, simple, true);
         }
 
         public void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool simple, bool offsetsAreCorrect)
+#endif
         {
             CheckResetException(a, "best effort");
             long seed = random.Next();
@@ -669,7 +756,11 @@ namespace Lucene.Net.Analysis
             if (Rarely(random) && codecOk)
             {
                 dir = NewFSDirectory(CreateTempDir("bttc"));
-                iw = new RandomIndexWriter(new Random((int)seed), dir, a, ClassEnvRule.similarity, ClassEnvRule.timeZone);
+                iw = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                    this,
+#endif
+                    new Random((int)seed), dir, a);
             }
 
             bool success = false;
@@ -678,12 +769,12 @@ namespace Lucene.Net.Analysis
                 CheckRandomData(new Random((int)seed), a, iterations, maxWordLength, useCharFilter, simple, offsetsAreCorrect, iw);
                 // now test with multiple threads: note we do the EXACT same thing we did before in each thread,
                 // so this should only really fail from another thread if its an actual thread problem
-                int numThreads = TestUtil.NextInt(random, 2, 4);
+                int numThreads = TestUtil.NextInt32(random, 2, 4);
                 var startingGun = new CountdownEvent(1);
                 var threads = new AnalysisThread[numThreads];
                 for (int i = 0; i < threads.Length; i++)
                 {
-                    threads[i] = new AnalysisThread(seed, startingGun, a, iterations, maxWordLength, useCharFilter, simple, offsetsAreCorrect, iw, this);
+                    threads[i] = new AnalysisThread(seed, startingGun, a, iterations, maxWordLength, useCharFilter, simple, offsetsAreCorrect, iw);
                 }
                 
                 foreach (AnalysisThread thread in threads)
@@ -705,7 +796,7 @@ namespace Lucene.Net.Analysis
                     catch (ThreadInterruptedException e)
 #pragma warning restore 168
                     {
-                        Fail("Thread interrupted");
+                        fail("Thread interrupted");
                     }
 #endif
                 }
@@ -716,7 +807,7 @@ namespace Lucene.Net.Analysis
                 {
                     if (t.Failed)
                     {
-                        fail("Thread threw exception: " + t.firstException.ToString());
+                        fail("Thread threw exception: " + t.FirstException.ToString());
                     }
                 }
 
@@ -735,7 +826,7 @@ namespace Lucene.Net.Analysis
             }
         }
 
-        private void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool useCharFilter, bool simple, bool offsetsAreCorrect, RandomIndexWriter iw)
+        private static void CheckRandomData(Random random, Analyzer a, int iterations, int maxWordLength, bool useCharFilter, bool simple, bool offsetsAreCorrect, RandomIndexWriter iw)
         {
             LineFileDocs docs = new LineFileDocs(random);
             Document doc = null;
@@ -750,7 +841,7 @@ namespace Lucene.Net.Analysis
                     ft.StoreTermVectors = true;
                     ft.StoreTermVectorOffsets = random.NextBoolean();
                     ft.StoreTermVectorPositions = random.NextBoolean();
-                    if (ft.StoreTermVectorPositions && !OLD_FORMAT_IMPERSONATION_IS_ACTIVE)
+                    if (ft.StoreTermVectorPositions && !OldFormatImpersonationIsActive)
                     {
                         ft.StoreTermVectorPayloads = random.NextBoolean();
                     }
@@ -940,26 +1031,18 @@ namespace Lucene.Net.Analysis
             IList<int> endOffsets = new List<int>();
 
             int remainder = random.Next(10);
-            StringReader reader = new StringReader(text);
+            TextReader reader = new StringReader(text);
 
             TokenStream ts;
-            using (ts = a.GetTokenStream("dummy", useCharFilter ? (TextReader) new MockCharFilter(reader, remainder) : reader))
+            using (ts = a.GetTokenStream("dummy", useCharFilter ? new MockCharFilter(reader, remainder) : reader))
             {
                 bool isReset = false;
                 try
                 {
-                    termAtt = ts.HasAttribute<ICharTermAttribute>()
-                       ? ts.GetAttribute<ICharTermAttribute>()
-                       : null;
-                    offsetAtt = ts.HasAttribute<IOffsetAttribute>()
-                        ? ts.GetAttribute<IOffsetAttribute>()
-                        : null;
-                    posIncAtt = ts.HasAttribute<IPositionIncrementAttribute>()
-                        ? ts.GetAttribute<IPositionIncrementAttribute>()
-                        : null;
-                    posLengthAtt = ts.HasAttribute<IPositionLengthAttribute>()
-                        ? ts.GetAttribute<IPositionLengthAttribute>()
-                        : null;
+                    termAtt = ts.HasAttribute<ICharTermAttribute>() ? ts.GetAttribute<ICharTermAttribute>() : null;
+                    offsetAtt = ts.HasAttribute<IOffsetAttribute>() ? ts.GetAttribute<IOffsetAttribute>() : null;
+                    posIncAtt = ts.HasAttribute<IPositionIncrementAttribute>() ? ts.GetAttribute<IPositionIncrementAttribute>() : null;
+                    posLengthAtt = ts.HasAttribute<IPositionLengthAttribute>() ? ts.GetAttribute<IPositionLengthAttribute>() : null;
                     typeAtt = ts.HasAttribute<ITypeAttribute>() ? ts.GetAttribute<ITypeAttribute>() : null;
 
                     ts.Reset();
@@ -988,7 +1071,10 @@ namespace Lucene.Net.Analysis
                             endOffsets.Add(offsetAtt.EndOffset);
                         }
                     }
-                    ts.End();
+                    // LUCENENET: We are doing this in the finally block to ensure it happens
+                    // when there are exeptions thrown (such as when the assert fails).
+                    //ts.End();
+                    //ts.Dispose();
                 }
                 finally
                 {
@@ -996,7 +1082,11 @@ namespace Lucene.Net.Analysis
                     {
                         try
                         {
+                            // consume correctly
                             ts.Reset();
+                            while (ts.IncrementToken());
+                            //ts.End();
+                            //ts.Dispose();
                         }
 #pragma warning disable 168
                         catch (Exception ex)
@@ -1005,9 +1095,9 @@ namespace Lucene.Net.Analysis
                             // ignore
                         }
                     }
-                    ts.End();
+                    ts.End(); // ts.end();
                 }
-            }
+            } // ts.close();
 
             // verify reusing is "reproducable" and also get the normal tokenstream sanity checks
             if (tokens.Count > 0)
@@ -1026,8 +1116,8 @@ namespace Lucene.Net.Analysis
                         }
                         // Throw an errant exception from the Reader:
 
-                        MockReaderWrapper evilReader = new MockReaderWrapper(random, text);
-                        evilReader.ThrowExcAfterChar(random.Next(text.Length));
+                        MockReaderWrapper evilReader = new MockReaderWrapper(random, new StringReader(text));
+                        evilReader.ThrowExcAfterChar(random.Next(text.Length)); // LUCENENET note, Next() is exclusive, so we don't need +1
                         reader = evilReader;
 
                         try
@@ -1055,18 +1145,12 @@ namespace Lucene.Net.Analysis
                         {
                             ts.End();
                         }
-                        catch (InvalidOperationException ae)
+                        // LUCENENET: Actual AssertionError type is Lucene.Net.Diagnostics.AssertionException
+                        catch (AssertionError ae) when (ae.Message.Contains("End() called before IncrementToken() returned false!"))
                         {
                             // Catch & ignore MockTokenizer's
                             // anger...
-                            if ("End() called before IncrementToken() returned false!".Equals(ae.Message, StringComparison.Ordinal))
-                            {
-                                // OK
-                            }
-                            else
-                            {
-                                throw; // LUCENENET: CA2200: Rethrow to preserve stack details (https://docs.microsoft.com/en-us/visualstudio/code-quality/ca2200-rethrow-to-preserve-stack-details)
-                            }
+                            // OK
                         }
                         finally
                         {
@@ -1094,18 +1178,12 @@ namespace Lucene.Net.Analysis
                         {
                             ts.End();
                         }
-                        catch (InvalidOperationException ae)
+                        // LUCENENET: Actual AssertionError type is Lucene.Net.Diagnostics.AssertionException
+                        catch (AssertionError ae) when (ae.Message.Contains("End() called before IncrementToken() returned false!"))
                         {
                             // Catch & ignore MockTokenizer's
                             // anger...
-                            if ("End() called before IncrementToken() returned false!".Equals(ae.Message, StringComparison.Ordinal))
-                            {
-                                // OK
-                            }
-                            else
-                            {
-                                throw; // LUCENENET: CA2200: Rethrow to preserve stack details (https://docs.microsoft.com/en-us/visualstudio/code-quality/ca2200-rethrow-to-preserve-stack-details)
-                            }
+                            // OK
                         }
                         finally
                         {
@@ -1133,7 +1211,7 @@ namespace Lucene.Net.Analysis
                     Console.WriteLine(Thread.CurrentThread.Name + ": NOTE: baseTokenStreamTestCase: using spoon-feed reader");
                 }
 
-                reader = new MockReaderWrapper(random, text);
+                reader = new MockReaderWrapper(random, reader);
             }
 
             ts = a.GetTokenStream("dummy", useCharFilter ? (TextReader)new MockCharFilter(reader, remainder) : reader);
@@ -1179,7 +1257,7 @@ namespace Lucene.Net.Analysis
                         Console.WriteLine(Thread.CurrentThread.Name + ": NOTE: baseTokenStreamTestCase: indexing using spoon-feed reader");
                     }
 
-                    reader = new MockReaderWrapper(random, text);
+                    reader = new MockReaderWrapper(random, reader);
                 }
 
                 field.SetReaderValue(useCharFilter ? (TextReader)new MockCharFilter(reader, remainder) : reader);
@@ -1205,6 +1283,7 @@ namespace Lucene.Net.Analysis
             }
         }
 
+        [ExceptionToNetNumericConvention] // LUCENENET: Private API, keeping as-is
         internal static int[] ToIntArray(IList<int> list)
         {
             int[] ret = new int[list.Count];
@@ -1215,5 +1294,41 @@ namespace Lucene.Net.Analysis
             }
             return ret;
         }
+
+        // *********** From Lucene 8.2.0 **************
+
+        /// <summary>Returns a random <see cref="AttributeFactory"/> impl</summary>
+        public static AttributeFactory NewAttributeFactory(Random random)
+        {
+            switch (random.nextInt(2))
+            {
+                case 0:
+                    return Token.TOKEN_ATTRIBUTE_FACTORY;
+                case 1:
+                    return AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY;
+                default:
+                    throw new AssertionError("Please fix the Random.nextInt() call above");
+            }
+
+            //switch (random.nextInt(3))
+            //{
+            //    case 0:
+            //        return TokenStream.DEFAULT_TOKEN_ATTRIBUTE_FACTORY;
+            //    case 1:
+            //        return Token.TOKEN_ATTRIBUTE_FACTORY;
+            //    case 2:
+            //        return AttributeFactory.DEFAULT_ATTRIBUTE_FACTORY;
+            //    default:
+            //        throw new AssertionError("Please fix the Random.nextInt() call above");
+            //}
+        }
+
+        /// <summary>Returns a random <see cref="AttributeFactory"/> impl</summary>
+        public static AttributeFactory NewAttributeFactory()
+        {
+            return NewAttributeFactory(Random);
+        }
+
+        // *********** End From Lucene 8.2.0 **************
     }
 }

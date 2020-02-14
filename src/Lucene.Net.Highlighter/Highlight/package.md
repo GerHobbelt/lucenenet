@@ -1,4 +1,8 @@
-﻿
+﻿---
+uid: Lucene.Net.Search.Highlight
+summary: *content
+---
+
 <!--
  Licensed to the Apache Software Foundation (ASF) under one or more
  contributor license agreements.  See the NOTICE file distributed with
@@ -15,6 +19,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
+
 
 The highlight package contains classes to provide "keyword in context" features
 typically used to highlight search terms in the text of results pages.
@@ -50,6 +55,7 @@ Fragmenter, fragment Scorer, and Formatter classes.
 
 ## New features 06/02/2005
 
+
 This release adds options for encoding (thanks to Nicko Cadell).
 An "Encoder" implementation such as the new SimpleHTMLEncoder class can be passed to the highlighter to encode
 all those non-xhtml standard characters such as & into legal values. This simple class may not suffice for
@@ -58,10 +64,13 @@ http://svn.apache.org/viewcvs.cgi/jakarta/commons/proper/lang/trunk/src/java/org
 
 ## New features 22/12/2004
 
+
 This release adds some new capabilities:
 
 1.  Faster highlighting using Term vector support
+
 2.  New formatting options to use color intensity to show informational value
+
 3.  Options for better summarization by using term IDF scores to influence fragment selection
 
  The highlighter takes a TokenStream as input. Until now these streams have typically been produced using an Analyzer but the new class TokenSources provides helper methods for obtaining TokenStreams from the new TermVector position support (see latest CVS version).

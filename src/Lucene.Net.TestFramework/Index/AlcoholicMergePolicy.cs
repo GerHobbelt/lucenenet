@@ -1,3 +1,4 @@
+using Lucene.Net.Util;
 using System;
 using System.Linq;
 
@@ -20,34 +21,33 @@ namespace Lucene.Net.Index
      * limitations under the License.
      */
 
-    using TestUtil = Lucene.Net.Util.TestUtil;
-
     /// <summary>
-    /// <p>
+    /// <para>
     /// Merge policy for testing, it is like an alcoholic.
     /// It drinks (merges) at night, and randomly decides what to drink.
     /// During the daytime it sleeps.
-    /// </p>
-    /// <p>
-    /// if tests pass with this, then they are likely to pass with any
+    /// </para>
+    /// <para>
+    /// If tests pass with this, then they are likely to pass with any
     /// bizarro merge policy users might write.
-    /// </p>
-    /// <p>
+    /// </para>
+    /// <para>
     /// It is a fine bottle of champagne (Ordered by Martijn).
-    /// </p>
+    /// </para>
     /// </summary>
     public class AlcoholicMergePolicy : LogMergePolicy
     {
         private readonly Random random;
         private readonly DateTime calendar;
 
-        public AlcoholicMergePolicy(Random random)
+        public AlcoholicMergePolicy(TimeZoneInfo timeZone, Random random)
         {
             // LUCENENET NOTE: All we care about here is that we have a random distribution of "Hour", picking any valid
             // date at random achives this. We have no actual need to create a Calendar object in .NET.
-            this.calendar = new DateTime(TestUtil.NextLong(random, DateTime.MinValue.Ticks, DateTime.MaxValue.Ticks));
+            var randomTime = new DateTime(TestUtil.NextInt64(random, DateTime.MinValue.Ticks, DateTime.MaxValue.Ticks));
+            this.calendar = TimeZoneInfo.ConvertTime(randomTime, TimeZoneInfo.Local, timeZone);
             this.random = random;
-            m_maxMergeSize = TestUtil.NextInt(random, 1024 * 1024, int.MaxValue);
+            m_maxMergeSize = TestUtil.NextInt32(random, 1024 * 1024, int.MaxValue);
         }
 
         protected override long Size(SegmentCommitInfo info)

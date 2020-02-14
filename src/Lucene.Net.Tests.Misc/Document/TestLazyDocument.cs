@@ -28,7 +28,8 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Documents
 {
@@ -63,7 +64,7 @@ namespace Lucene.Net.Documents
         {
             base.BeforeClass();
 
-            Analyzer analyzer = new MockAnalyzer(Random());
+            Analyzer analyzer = new MockAnalyzer(Random);
             IndexWriter writer = new IndexWriter
               (dir, NewIndexWriterConfig(TEST_VERSION_CURRENT, analyzer));
             try
@@ -93,7 +94,7 @@ namespace Lucene.Net.Documents
         [Test]
         public void TestLazy()
         {
-            int id = Random().nextInt(NUM_DOCS);
+            int id = Random.nextInt(NUM_DOCS);
             IndexReader reader = DirectoryReader.Open(dir);
             try
             {
@@ -108,7 +109,7 @@ namespace Lucene.Net.Documents
                 Document d = visitor.doc;
 
                 int numFieldValues = 0;
-                IDictionary<string, int> fieldValueCounts = new HashMap<string, int>();
+                IDictionary<string, int> fieldValueCounts = new JCG.Dictionary<string, int>();
 
                 // at this point, all FIELDS should be Lazy and unrealized
                 foreach (IIndexableField f in d)
@@ -128,8 +129,8 @@ namespace Lucene.Net.Documents
                     }
                     else
                     {
-                        int count = fieldValueCounts.ContainsKey(f.Name) ?
-                          fieldValueCounts[f.Name] : 0;
+                        if (!fieldValueCounts.TryGetValue(f.Name, out int count))
+                            count = 0;
                         count++;
                         fieldValueCounts.Put(f.Name, count);
                         assertTrue(f.Name + " is " + f.GetType(),
@@ -149,11 +150,11 @@ namespace Lucene.Net.Documents
                 }
 
                 // pick a single field name to load a single value
-                string fieldName = FIELDS[Random().nextInt(FIELDS.Length)];
+                string fieldName = FIELDS[Random.nextInt(FIELDS.Length)];
                 IIndexableField[] fieldValues = d.GetFields(fieldName);
                 assertEquals("#vals in field: " + fieldName,
                              NUM_VALUES, fieldValues.Length);
-                int valNum = Random().nextInt(fieldValues.Length);
+                int valNum = Random.nextInt(fieldValues.Length);
                 assertEquals(id + "_" + fieldName + "_" + valNum,
                              fieldValues[valNum].GetStringValue());
 
@@ -231,7 +232,7 @@ namespace Lucene.Net.Documents
             internal LazyTestingStoredFieldVisitor(LazyDocument l, params string[] fields)
             {
                 lazyDoc = l;
-                lazyFieldNames = new HashSet<string>(Arrays.AsList(fields));
+                lazyFieldNames = new JCG.HashSet<string>(fields);
             }
 
 

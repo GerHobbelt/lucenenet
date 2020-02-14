@@ -1,8 +1,9 @@
 ﻿// Lucene version compatibility level < 7.1.0
 using ICU4N.Globalization;
+using J2N.Threading;
 using Lucene.Net.Analysis.Icu.TokenAttributes;
 using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
@@ -323,14 +324,14 @@ namespace Lucene.Net.Analysis.Icu.Segmentation
         [Test]
         public void TestRandomStrings()
         {
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
         }
 
         /** blast some random large strings through the analyzer */
         [Test]
         public void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             CheckRandomData(random, a, 100 * RANDOM_MULTIPLIER, 8192);
         }
 
@@ -352,7 +353,7 @@ namespace Lucene.Net.Analysis.Icu.Segmentation
             }
         }
 
-        private class ThreadAnonymousHelper : ThreadClass
+        private class ThreadAnonymousHelper : ThreadJob
         {
             private readonly CountdownEvent startingGun;
 

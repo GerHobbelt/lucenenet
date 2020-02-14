@@ -4,27 +4,27 @@ using System.Collections.Generic;
 namespace Lucene.Net.Support
 {
     /*
-	 * Licensed to the Apache Software Foundation (ASF) under one or more
-	 * contributor license agreements.  See the NOTICE file distributed with
-	 * this work for additional information regarding copyright ownership.
-	 * The ASF licenses this file to You under the Apache License, Version 2.0
-	 * (the "License"); you may not use this file except in compliance with
-	 * the License.  You may obtain a copy of the License at
-	 *
-	 *     http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
-	 */
+     * Licensed to the Apache Software Foundation (ASF) under one or more
+     * contributor license agreements.  See the NOTICE file distributed with
+     * this work for additional information regarding copyright ownership.
+     * The ASF licenses this file to You under the Apache License, Version 2.0
+     * (the "License"); you may not use this file except in compliance with
+     * the License.  You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
 
     /// <summary>
     /// .NET Specific Helper Extensions for IEnumerable
     /// </summary>
     //Note: LUCENENET specific
-    public static class EnumerableExtensions
+    internal static class EnumerableExtensions
     {
         /// <summary>
         /// Enumerates a sequence in pairs  
@@ -41,9 +41,9 @@ namespace Lucene.Net.Support
         public static IEnumerable<TOut> InPairs<T, TOut>(this IEnumerable<T> source, Func<T, T, TOut> join)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
             if (join == null)
-                throw new ArgumentNullException("join");
+                throw new ArgumentNullException(nameof(join));
 
             using (IEnumerator<T> enumerator = source.GetEnumerator())
             {
@@ -54,9 +54,70 @@ namespace Lucene.Net.Support
 
                     T x = enumerator.Current;
                     if (!enumerator.MoveNext())
-                        yield return join(x, default(T));
+                        yield return join(x, default);
                     yield return join(x, enumerator.Current);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Take all but the last element of the sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source" />.</typeparam>
+        /// <param name="source">This <see cref="IEnumerable{T}"/>.</param>
+        /// <returns>The resulting <see cref="IEnumerable{T}"/>.</returns>
+        public static IEnumerable<T> TakeAllButLast<T>(this IEnumerable<T> source)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+
+            return TakeAllButLastImpl(source);
+        }
+
+        private static IEnumerable<T> TakeAllButLastImpl<T>(IEnumerable<T> source)
+        {
+            T buffer = default;
+            bool buffered = false;
+
+            foreach (T x in source)
+            {
+                if (buffered)
+                    yield return buffer;
+
+                buffer = x;
+                buffered = true;
+            }
+        }
+
+        /// <summary>
+        /// Take all but the last <paramref name="n"/> elements of the sequence.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source" />.</typeparam>
+        /// <param name="source">This <see cref="IEnumerable{T}"/>.</param>
+        /// <param name="n">The number of elements at the end of the sequence to exclude.</param>
+        /// <returns>The resulting <see cref="IEnumerable{T}"/>.</returns>
+        public static IEnumerable<T> TakeAllButLast<T>(this IEnumerable<T> source, int n)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+
+            if (n < 0)
+                throw new ArgumentOutOfRangeException("n",
+                    "Argument n should be non-negative.");
+
+            return TakeAllButLastImpl(source, n);
+        }
+
+        private static IEnumerable<T> TakeAllButLastImpl<T>(IEnumerable<T> source, int n)
+        {
+            Queue<T> buffer = new Queue<T>(n + 1);
+
+            foreach (T x in source)
+            {
+                buffer.Enqueue(x);
+
+                if (buffer.Count == n + 1)
+                    yield return buffer.Dequeue();
             }
         }
     }

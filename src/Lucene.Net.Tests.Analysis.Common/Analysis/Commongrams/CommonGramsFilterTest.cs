@@ -1,7 +1,6 @@
 ﻿using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Analysis.Util;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using System.IO;
 
@@ -29,7 +28,7 @@ namespace Lucene.Net.Analysis.CommonGrams
     /// </summary>
     public class CommonGramsFilterTest : BaseTokenStreamTestCase
     {
-        private static readonly CharArraySet commonWords = new CharArraySet(TEST_VERSION_CURRENT, Arrays.AsList("s", "a", "b", "c", "d", "the", "of"), false);
+        private static readonly CharArraySet commonWords = new CharArraySet(TEST_VERSION_CURRENT, new string[] { "s", "a", "b", "c", "d", "the", "of" }, false);
 
         [Test]
         public virtual void TestReset()
@@ -140,7 +139,7 @@ namespace Lucene.Net.Analysis.CommonGrams
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new CommonGramsQueryFilter(new CommonGramsFilter(TEST_VERSION_CURRENT, tokenizer, commonWords)));
@@ -198,7 +197,7 @@ namespace Lucene.Net.Analysis.CommonGrams
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new CommonGramsFilter(TEST_VERSION_CURRENT, tokenizer, commonWords));
@@ -289,11 +288,11 @@ namespace Lucene.Net.Analysis.CommonGrams
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper3(this);
 
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
 
             Analyzer b = new AnalyzerAnonymousInnerClassHelper4(this);
 
-            CheckRandomData(Random(), b, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, b, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper3 : Analyzer
@@ -306,7 +305,7 @@ namespace Lucene.Net.Analysis.CommonGrams
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer t = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 CommonGramsFilter cgf = new CommonGramsFilter(TEST_VERSION_CURRENT, t, commonWords);
@@ -324,7 +323,7 @@ namespace Lucene.Net.Analysis.CommonGrams
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer t = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 CommonGramsFilter cgf = new CommonGramsFilter(TEST_VERSION_CURRENT, t, commonWords);

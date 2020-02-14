@@ -1,6 +1,7 @@
-﻿using Lucene.Net.Support.IO;
+﻿using J2N.IO;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 /*
                     Egothor Software License version 1.00
@@ -64,9 +65,7 @@ namespace Egothor.Stemmer
     /// </summary>
     public class Row
     {
-        // LUCENENET NOTE: This was TreeMap in Java, which allows duplicate keys, but
-        // SortedDictionary does not. If there are issues with Stempel, check this!!
-        internal SortedDictionary<char, Cell> cells = new SortedDictionary<char, Cell>();
+        internal IDictionary<char, Cell> cells = new JCG.SortedDictionary<char, Cell>();
         internal int uniformCnt = 0;
         internal int uniformSkip = 0;
 
@@ -325,7 +324,8 @@ namespace Egothor.Stemmer
 
         internal Cell At(char index)
         {
-            return cells.ContainsKey(index) ? cells[index] : null;
+            cells.TryGetValue(index, out Cell value);
+            return value;
         }
     }
 }

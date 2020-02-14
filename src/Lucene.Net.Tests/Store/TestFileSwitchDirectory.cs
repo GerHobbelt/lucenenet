@@ -1,8 +1,10 @@
-using Lucene.Net.Index;
+using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Store
 {
@@ -44,20 +46,20 @@ namespace Lucene.Net.Store
         [Test]
         public virtual void TestBasic()
         {
-            HashSet<string> fileExtensions = new HashSet<string>();
+            ISet<string> fileExtensions = new JCG.HashSet<string>();
             fileExtensions.Add(Lucene40StoredFieldsWriter.FIELDS_EXTENSION);
             fileExtensions.Add(Lucene40StoredFieldsWriter.FIELDS_INDEX_EXTENSION);
 
-            MockDirectoryWrapper primaryDir = new MockDirectoryWrapper(Random(), new RAMDirectory());
-            primaryDir.CheckIndexOnClose = false; // only part of an index
-            MockDirectoryWrapper secondaryDir = new MockDirectoryWrapper(Random(), new RAMDirectory());
-            secondaryDir.CheckIndexOnClose = false; // only part of an index
+            MockDirectoryWrapper primaryDir = new MockDirectoryWrapper(Random, new RAMDirectory());
+            primaryDir.CheckIndexOnDispose = false; // only part of an index
+            MockDirectoryWrapper secondaryDir = new MockDirectoryWrapper(Random, new RAMDirectory());
+            secondaryDir.CheckIndexOnDispose = false; // only part of an index
 
             FileSwitchDirectory fsd = new FileSwitchDirectory(fileExtensions, primaryDir, secondaryDir, true);
             // for now we wire Lucene40Codec because we rely upon its specific impl
-            bool oldValue = OLD_FORMAT_IMPERSONATION_IS_ACTIVE;
-            OLD_FORMAT_IMPERSONATION_IS_ACTIVE = true;
-            IndexWriter writer = new IndexWriter(fsd, (new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random()))).SetMergePolicy(NewLogMergePolicy(false)).SetCodec(Codec.ForName("Lucene40")).SetUseCompoundFile(false));
+            bool oldValue = OldFormatImpersonationIsActive;
+            OldFormatImpersonationIsActive = true;
+            IndexWriter writer = new IndexWriter(fsd, (new IndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random))).SetMergePolicy(NewLogMergePolicy(false)).SetCodec(Codec.ForName("Lucene40")).SetUseCompoundFile(false));
             TestIndexWriterReader.CreateIndexNoClose(true, "ram", writer);
             IndexReader reader = DirectoryReader.Open(writer, true);
             Assert.AreEqual(100, reader.MaxDoc);
@@ -87,7 +89,7 @@ namespace Lucene.Net.Store
                 Assert.IsNotNull(files[i]);
             }
             fsd.Dispose();
-            OLD_FORMAT_IMPERSONATION_IS_ACTIVE = oldValue;
+            OldFormatImpersonationIsActive = oldValue;
         }
 
         private Directory NewFSSwitchDirectory(ISet<string> primaryExtensions)
@@ -102,7 +104,7 @@ namespace Lucene.Net.Store
             Directory a = new SimpleFSDirectory(aDir);
             Directory b = new SimpleFSDirectory(bDir);
             FileSwitchDirectory switchDir = new FileSwitchDirectory(primaryExtensions, a, b, true);
-            return new MockDirectoryWrapper(Random(), switchDir);
+            return new MockDirectoryWrapper(Random, switchDir);
         }
 
         // LUCENE-3380 -- make sure we get exception if the directory really does not exist.
@@ -113,7 +115,7 @@ namespace Lucene.Net.Store
             DirectoryInfo secondDir = CreateTempDir("bar");
             System.IO.Directory.Delete(primDir.FullName, true);
             System.IO.Directory.Delete(secondDir.FullName, true);
-            using (Directory dir = NewFSSwitchDirectory(primDir, secondDir, new HashSet<string>()))
+            using (Directory dir = NewFSSwitchDirectory(primDir, secondDir, new JCG.HashSet<string>()))
             {
                 try
                 {
@@ -127,17 +129,22 @@ namespace Lucene.Net.Store
             }
         }
 
+        private static bool ContainsFile(Directory directory, string file) // LUCENENET specific method to prevent having to use Arrays.AsList(), which creates unnecessary memory allocations
+        {
+            return Array.IndexOf(directory.ListAll(), file) > -1;
+        }
+
         // LUCENE-3380 test that we can add a file, and then when we call list() we get it back
         [Test]
         public virtual void TestDirectoryFilter()
         {
-            Directory dir = NewFSSwitchDirectory(new HashSet<string>());
+            Directory dir = NewFSSwitchDirectory(new JCG.HashSet<string>());
             string name = "file";
             try
             {
-                dir.CreateOutput(name, NewIOContext(Random())).Dispose();
+                dir.CreateOutput(name, NewIOContext(Random)).Dispose();
                 Assert.IsTrue(SlowFileExists(dir, name));
-                Assert.IsTrue(Arrays.AsList(dir.ListAll()).Contains(name));
+                Assert.IsTrue(ContainsFile(dir, name));
             }
             finally
             {
@@ -149,10 +156,10 @@ namespace Lucene.Net.Store
         [Test]
         public virtual void TestCompoundFileAppendTwice()
         {
-            Directory newDir = NewFSSwitchDirectory(Collections.Singleton("cfs"));
-            var csw = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random()), true);
+            Directory newDir = NewFSSwitchDirectory(new JCG.HashSet<string> { "cfs" });
+            var csw = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random), true);
             CreateSequenceFile(newDir, "d1", (sbyte)0, 15);
-            IndexOutput @out = csw.CreateOutput("d.xyz", NewIOContext(Random()));
+            IndexOutput @out = csw.CreateOutput("d.xyz", NewIOContext(Random));
             @out.WriteInt32(0);
             @out.Dispose();
             Assert.AreEqual(1, csw.ListAll().Length);
@@ -160,7 +167,7 @@ namespace Lucene.Net.Store
 
             csw.Dispose();
 
-            CompoundFileDirectory cfr = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random()), false);
+            CompoundFileDirectory cfr = new CompoundFileDirectory(newDir, "d.cfs", NewIOContext(Random), false);
             Assert.AreEqual(1, cfr.ListAll().Length);
             Assert.AreEqual("d.xyz", cfr.ListAll()[0]);
             cfr.Dispose();
@@ -174,7 +181,7 @@ namespace Lucene.Net.Store
         /// </summary>
         private void CreateSequenceFile(Directory dir, string name, sbyte start, int size)
         {
-            IndexOutput os = dir.CreateOutput(name, NewIOContext(Random()));
+            IndexOutput os = dir.CreateOutput(name, NewIOContext(Random));
             for (int i = 0; i < size; i++)
             {
                 os.WriteByte((byte)start);

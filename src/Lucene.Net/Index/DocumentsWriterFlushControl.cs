@@ -1,8 +1,10 @@
-using Lucene.Net.Support;
+using J2N.Runtime.CompilerServices;
+using J2N.Threading.Atomic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Index
 {
@@ -52,7 +54,7 @@ namespace Lucene.Net.Index
         // only for safety reasons if a DWPT is close to the RAM limit
         private readonly LinkedList<BlockedFlush> blockedFlushes = new LinkedList<BlockedFlush>();
 
-        private readonly IdentityHashMap<DocumentsWriterPerThread, long?> flushingWriters = new IdentityHashMap<DocumentsWriterPerThread, long?>();
+        private readonly IDictionary<DocumentsWriterPerThread, long?> flushingWriters = new JCG.Dictionary<DocumentsWriterPerThread, long?>(IdentityEqualityComparer<DocumentsWriterPerThread>.Default);
 
         internal double maxConfiguredRamBuffer = 0;
         internal long peakActiveBytes = 0; // only with assert
@@ -417,7 +419,7 @@ namespace Lucene.Net.Index
                             dwpt = perThreadPool.Reset(perThread, closed);
                             Debug.Assert(!flushingWriters.ContainsKey(dwpt), "DWPT is already flushing");
                             // Record the flushing DWPT to reduce flushBytes in doAfterFlush
-                            flushingWriters[dwpt] = Convert.ToInt64(bytes);
+                            flushingWriters[dwpt] = bytes;
                             numPending--; // write access synced
                             return dwpt;
                         }
@@ -591,7 +593,7 @@ namespace Lucene.Net.Index
 
         public void SetApplyAllDeletes()
         {
-            flushDeletes.Set(true);
+            flushDeletes.Value = true;
         }
 
         internal int NumActiveDWPT
@@ -753,7 +755,7 @@ namespace Lucene.Net.Index
                     blockedFlushes.Remove(node);
                     Debug.Assert(!flushingWriters.ContainsKey(blockedFlush.Dwpt), "DWPT is already flushing");
                     // Record the flushing DWPT to reduce flushBytes in doAfterFlush
-                    flushingWriters[blockedFlush.Dwpt] = Convert.ToInt64(blockedFlush.Bytes);
+                    flushingWriters[blockedFlush.Dwpt] = blockedFlush.Bytes;
                     // don't decr pending here - its already done when DWPT is blocked
                     flushQueue.Enqueue(blockedFlush.Dwpt);
                 }
@@ -835,7 +837,7 @@ namespace Lucene.Net.Index
                     {
                         try
                         {
-                            flushingWriters[blockedFlush.Dwpt] = Convert.ToInt64(blockedFlush.Bytes);
+                            flushingWriters[blockedFlush.Dwpt] = blockedFlush.Bytes;
                             documentsWriter.SubtractFlushedNumDocs(blockedFlush.Dwpt.NumDocsInRAM);
                             blockedFlush.Dwpt.Abort(newFiles);
                         }

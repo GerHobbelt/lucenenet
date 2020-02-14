@@ -1,19 +1,16 @@
+using Lucene.Net.Documents;
 using System;
 using System.Text;
-using Lucene.Net.Documents;
 
 namespace Lucene.Net.Search
 {
-    using Lucene.Net.Randomized.Generators;
     using Lucene.Net.Support;
     using NUnit.Framework;
     using System.Collections.Generic;
     using System.IO;
     using AtomicReaderContext = Lucene.Net.Index.AtomicReaderContext;
-    using IBits = Lucene.Net.Util.IBits;
     using DefaultSimilarity = Lucene.Net.Search.Similarities.DefaultSimilarity;
     using Directory = Lucene.Net.Store.Directory;
-
     /*
          * Licensed to the Apache Software Foundation (ASF) under one or more
          * contributor license agreements.  See the NOTICE file distributed with
@@ -33,6 +30,7 @@ namespace Lucene.Net.Search
 
     using Document = Documents.Document;
     using Field = Field;
+    using IBits = Lucene.Net.Util.IBits;
     using IndexReader = Lucene.Net.Index.IndexReader;
     using LuceneTestCase = Lucene.Net.Util.LuceneTestCase;
     using NumericDocValuesField = NumericDocValuesField;
@@ -61,7 +59,11 @@ namespace Lucene.Net.Search
         public virtual void TestBasic()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(NewStringField("id", "0", Field.Store.YES));
@@ -72,7 +74,7 @@ namespace Lucene.Net.Search
             // 1 extra token, but wizard and oz are close;
             doc.Add(NewTextField("field", "wizard oz the the the the the the", Field.Store.NO));
             w.AddDocument(doc);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             // Do ordinary BooleanQuery:
@@ -120,7 +122,11 @@ namespace Lucene.Net.Search
         public virtual void TestCustomCombine()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(NewStringField("id", "0", Field.Store.YES));
@@ -131,7 +137,7 @@ namespace Lucene.Net.Search
             // 1 extra token, but wizard and oz are close;
             doc.Add(NewTextField("field", "wizard oz the the the the the the", Field.Store.NO));
             w.AddDocument(doc);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             // Do ordinary BooleanQuery:
@@ -189,7 +195,11 @@ namespace Lucene.Net.Search
         public virtual void TestExplain()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(NewStringField("id", "0", Field.Store.YES));
@@ -200,7 +210,7 @@ namespace Lucene.Net.Search
             // 1 extra token, but wizard and oz are close;
             doc.Add(NewTextField("field", "wizard oz the the the the the the", Field.Store.NO));
             w.AddDocument(doc);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             // Do ordinary BooleanQuery:
@@ -277,7 +287,11 @@ namespace Lucene.Net.Search
         public virtual void TestMissingSecondPassScore()
         {
             Directory dir = NewDirectory();
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             Document doc = new Document();
             doc.Add(NewStringField("id", "0", Field.Store.YES));
@@ -288,7 +302,7 @@ namespace Lucene.Net.Search
             // 1 extra token, but wizard and oz are close;
             doc.Add(NewTextField("field", "wizard oz the the the the the the", Field.Store.NO));
             w.AddDocument(doc);
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             // Do ordinary BooleanQuery:
@@ -335,31 +349,35 @@ namespace Lucene.Net.Search
         {
             Directory dir = NewDirectory();
             int numDocs = AtLeast(1000);
-            RandomIndexWriter w = new RandomIndexWriter(Random(), dir, Similarity, TimeZone);
+            RandomIndexWriter w = new RandomIndexWriter(
+#if FEATURE_INSTANCE_TESTDATA_INITIALIZATION
+                this,
+#endif
+                Random, dir);
 
             int[] idToNum = new int[numDocs];
-            int maxValue = TestUtil.NextInt(Random(), 10, 1000000);
+            int maxValue = TestUtil.NextInt32(Random, 10, 1000000);
             for (int i = 0; i < numDocs; i++)
             {
                 Document doc = new Document();
                 doc.Add(NewStringField("id", "" + i, Field.Store.YES));
-                int numTokens = TestUtil.NextInt(Random(), 1, 10);
+                int numTokens = TestUtil.NextInt32(Random, 1, 10);
                 StringBuilder b = new StringBuilder();
                 for (int j = 0; j < numTokens; j++)
                 {
                     b.Append("a ");
                 }
                 doc.Add(NewTextField("field", b.ToString(), Field.Store.NO));
-                idToNum[i] = Random().Next(maxValue);
+                idToNum[i] = Random.Next(maxValue);
                 doc.Add(new NumericDocValuesField("num", idToNum[i]));
                 w.AddDocument(doc);
             }
-            IndexReader r = w.Reader;
+            IndexReader r = w.GetReader();
             w.Dispose();
 
             IndexSearcher s = NewSearcher(r);
-            int numHits = TestUtil.NextInt(Random(), 1, numDocs);
-            bool reverse = Random().NextBoolean();
+            int numHits = TestUtil.NextInt32(Random, 1, numDocs);
+            bool reverse = Random.NextBoolean();
 
             //System.out.println("numHits=" + numHits + " reverse=" + reverse);
             TopDocs hits = s.Search(new TermQuery(new Term("field", "a")), numHits);
@@ -586,7 +604,7 @@ namespace Lucene.Net.Search
                     return false;
                 }
                 FixedScoreQuery other = (FixedScoreQuery)o;
-                return Number.SingleToInt32Bits(Boost) == Number.SingleToInt32Bits(other.Boost) && Reverse == other.Reverse && Arrays.Equals(IdToNum, other.IdToNum);
+                return J2N.BitConversion.SingleToInt32Bits(Boost) == J2N.BitConversion.SingleToInt32Bits(other.Boost) && Reverse == other.Reverse && Arrays.Equals(IdToNum, other.IdToNum);
             }
 
             public override object Clone()

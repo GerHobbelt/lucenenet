@@ -1,6 +1,9 @@
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
+using Lucene.Net.Store;
+using Lucene.Net.Util;
 using System;
-using System.Diagnostics;
+using Debug = Lucene.Net.Diagnostics.Debug; // LUCENENET NOTE: We cannot use System.Diagnostics.Debug because those calls will be optimized out of the release!
 
 namespace Lucene.Net.Codecs.Lucene3x
 {
@@ -20,17 +23,6 @@ namespace Lucene.Net.Codecs.Lucene3x
      * See the License for the specific language governing permissions and
      * limitations under the License.
      */
-
-    using Lucene.Net.Support;
-    using BytesRef = Lucene.Net.Util.BytesRef;
-    using Directory = Lucene.Net.Store.Directory;
-    using FieldInfo = Lucene.Net.Index.FieldInfo;
-    using FieldInfos = Lucene.Net.Index.FieldInfos;
-    using IIndexableField = Lucene.Net.Index.IIndexableField;
-    using IndexFileNames = Lucene.Net.Index.IndexFileNames;
-    using IndexOutput = Lucene.Net.Store.IndexOutput;
-    using IOContext = Lucene.Net.Store.IOContext;
-    using IOUtils = Lucene.Net.Util.IOUtils;
 
     /// <summary>
     /// @lucene.experimental </summary>
@@ -104,7 +96,9 @@ namespace Lucene.Net.Codecs.Lucene3x
 #pragma warning restore 168
             {
             }
-            IOUtils.DeleteFilesIgnoringExceptions(directory, IndexFileNames.SegmentFileName(segment, "", Lucene3xStoredFieldsReader.FIELDS_EXTENSION), IndexFileNames.SegmentFileName(segment, "", Lucene3xStoredFieldsReader.FIELDS_INDEX_EXTENSION));
+            IOUtils.DeleteFilesIgnoringExceptions(directory, 
+                IndexFileNames.SegmentFileName(segment, "", Lucene3xStoredFieldsReader.FIELDS_EXTENSION), 
+                IndexFileNames.SegmentFileName(segment, "", Lucene3xStoredFieldsReader.FIELDS_INDEX_EXTENSION));
         }
 
         public override void WriteField(FieldInfo info, IIndexableField field)
@@ -188,10 +182,10 @@ namespace Lucene.Net.Codecs.Lucene3x
                         fieldsStream.WriteInt64(field.GetInt64Value().Value);
                         break;
                     case NumericFieldType.SINGLE:
-                        fieldsStream.WriteInt32(Number.SingleToInt32Bits(field.GetSingleValue().Value));
+                        fieldsStream.WriteInt32(J2N.BitConversion.SingleToInt32Bits(field.GetSingleValue().Value));
                         break;
                     case NumericFieldType.DOUBLE:
-                        fieldsStream.WriteInt64(BitConverter.DoubleToInt64Bits(field.GetDoubleValue().Value));
+                        fieldsStream.WriteInt64(J2N.BitConversion.DoubleToInt64Bits(field.GetDoubleValue().Value));
                         break;
                     default:
                         Debug.Assert(false);

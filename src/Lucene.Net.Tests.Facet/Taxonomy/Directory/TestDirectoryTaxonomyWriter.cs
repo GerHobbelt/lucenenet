@@ -1,17 +1,14 @@
-﻿using Lucene.Net.Support;
-using Lucene.Net.Support.Threading;
+﻿using J2N.Threading;
+using J2N.Threading.Atomic;
 using NUnit.Framework;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet.Taxonomy.Directory
 {
-
-
     using Cl2oTaxonomyWriterCache = Lucene.Net.Facet.Taxonomy.WriterCache.Cl2oTaxonomyWriterCache;
     using Directory = Lucene.Net.Store.Directory;
     using DirectoryReader = Lucene.Net.Index.DirectoryReader;
@@ -152,7 +149,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             try
             {
                 dtw.AddCategory(new FacetLabel("a"));
-                Fail("should not have succeeded to add a category following rollback.");
+                fail("should not have succeeded to add a category following rollback.");
             }
             catch (ObjectDisposedException)
             {
@@ -185,7 +182,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             try
             {
                 dtw.AddCategory(new FacetLabel("a"));
-                Fail("should not have succeeded to add a category following close.");
+                fail("should not have succeeded to add a category following close.");
             }
             catch (ObjectDisposedException)
             {
@@ -272,7 +269,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             AtomicInt32 numCats = new AtomicInt32(ncats);
             Directory dir = NewDirectory();
             var values = new ConcurrentDictionary<string, string>();
-            double d = Random().NextDouble();
+            double d = Random.NextDouble();
             ITaxonomyWriterCache cache;
             if (d < 0.7)
             {
@@ -295,7 +292,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                 Console.WriteLine("TEST: use cache=" + cache);
             }
             var tw = new DirectoryTaxonomyWriter(dir, OpenMode.CREATE, cache);
-            ThreadClass[] addThreads = new ThreadClass[AtLeast(4)];
+            ThreadJob[] addThreads = new ThreadJob[AtLeast(4)];
             for (int z = 0; z < addThreads.Length; z++)
             {
                 addThreads[z] = new ThreadAnonymousInnerClassHelper(this, range, numCats, values, tw);
@@ -323,7 +320,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
                         Console.WriteLine("FAIL: path=" + label + " not recognized");
                     }
                 }
-                Fail("mismatch number of categories");
+                fail("mismatch number of categories");
             }
 
             int[] parents = dtr.ParallelTaxonomyArrays.Parents;
@@ -346,7 +343,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             IOUtils.Dispose(dtr, dir);
         }
 
-        private class ThreadAnonymousInnerClassHelper : ThreadClass
+        private class ThreadAnonymousInnerClassHelper : ThreadJob
         {
             private readonly TestDirectoryTaxonomyWriter outerInstance;
 
@@ -366,7 +363,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
 
             public override void Run()
             {
-                Random random = Random();
+                Random random = Random;
                 while (numCats.DecrementAndGet() > 0)
                 {
                     try
@@ -512,7 +509,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
         public virtual void TestHugeLabel()
         {
             Directory indexDir = NewDirectory(), taxoDir = NewDirectory();
-            IndexWriter indexWriter = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())));
+            IndexWriter indexWriter = new IndexWriter(indexDir, NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)));
             DirectoryTaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir, OpenMode.CREATE, new Cl2oTaxonomyWriterCache(2, 1f, 1));
             FacetsConfig config = new FacetsConfig();
 
@@ -521,7 +518,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             int ordinal = -1;
 
             int len = FacetLabel.MAX_CATEGORY_PATH_LENGTH - 4; // for the dimension and separator
-            bigs = TestUtil.RandomSimpleString(Random(), len, len);
+            bigs = TestUtil.RandomSimpleString(Random, len, len);
             FacetField ff = new FacetField("dim", bigs);
             FacetLabel cp = new FacetLabel("dim", bigs);
             ordinal = taxoWriter.AddCategory(cp);
@@ -532,7 +529,7 @@ namespace Lucene.Net.Facet.Taxonomy.Directory
             // Add tiny ones to cause a re-hash
             for (int i = 0; i < 3; i++)
             {
-                string s = TestUtil.RandomSimpleString(Random(), 1, 10);
+                string s = TestUtil.RandomSimpleString(Random, 1, 10);
                 taxoWriter.AddCategory(new FacetLabel("dim", s));
                 doc = new Document();
                 doc.Add(new FacetField("dim", s));

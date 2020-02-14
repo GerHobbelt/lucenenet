@@ -1,8 +1,8 @@
-﻿using Lucene.Net.Benchmarks.ByTask.Feeds;
+﻿using J2N.Text;
+using Lucene.Net.Benchmarks.ByTask.Feeds;
 using Lucene.Net.Benchmarks.ByTask.Utils;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.Support;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,6 +10,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Benchmarks.ByTask.Tasks
 {
@@ -88,6 +89,8 @@ namespace Lucene.Net.Benchmarks.ByTask.Tasks
         private readonly bool[] sufficientFields;
         private readonly bool checkSufficientFields;
 
+        private readonly object lineFileLock = new object(); // LUCENENET specific - lock to ensure writes don't collide for this instance
+
 
         public WriteLineDocTask(PerfRunData runData)
             : base(runData)
@@ -127,7 +130,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Tasks
             else
             {
                 checkSufficientFields = true;
-                HashSet<string> sf = new HashSet<string>(suff.Split(',').TrimEnd());
+                ISet<string> sf = new JCG.HashSet<string>(suff.Split(',').TrimEnd());
                 for (int i = 0; i < fieldsToWrite.Length; i++)
                 {
                     if (sf.Contains(fieldsToWrite[i]))
@@ -157,7 +160,10 @@ namespace Lucene.Net.Benchmarks.ByTask.Tasks
             {
                 sb.Append(SEP).Append(f);
             }
-            @out.WriteLine(sb.ToString());
+            lock (lineFileLock) // LUCENENET specific - lock to ensure writes don't collide for this instance
+            {
+                @out.WriteLine(sb.ToString());
+            }
         }
 
         protected override string GetLogMessage(int recsCount)
@@ -194,9 +200,12 @@ namespace Lucene.Net.Benchmarks.ByTask.Tasks
             }
             if (sufficient)
             {
-                sb.Length = sb.Length - 1; // remove redundant last separator
-                                           // lineFileOut is a PrintWriter, which synchronizes internally in println.
-                LineFileOut(doc).WriteLine(sb.ToString());
+                sb.Length--; // remove redundant last separator
+                // lineFileOut is a PrintWriter, which synchronizes internally in println.
+                lock (lineFileLock) // LUCENENET specific - lock to ensure writes don't collide for this instance
+                {
+                    LineFileOut(doc).WriteLine(sb.ToString());
+                }
             }
 
             return 1;
@@ -215,6 +224,8 @@ namespace Lucene.Net.Benchmarks.ByTask.Tasks
         {
             if (disposing)
             {
+                threadBuffer.Dispose(); // LUCENENET specific: ThreadLocal is disposable
+                threadNormalizer.Dispose(); // LUCENENET specific: ThreadLocal is disposable
                 lineFileOut.Dispose();
             }
             base.Dispose(disposing);

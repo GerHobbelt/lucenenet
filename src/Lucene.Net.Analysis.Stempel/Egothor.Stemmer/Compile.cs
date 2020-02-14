@@ -1,10 +1,11 @@
-﻿using Lucene.Net.Support;
-using Lucene.Net.Support.IO;
+﻿using J2N.IO;
+using J2N.Text;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 /*
                     Egothor Software License version 1.00
@@ -157,15 +158,16 @@ namespace Egothor.Stemmer
                         {
                             line = line.ToLowerInvariant();
                             StringTokenizer st = new StringTokenizer(line);
-                            string stem = st.NextToken();
+                            st.MoveNext();
+                            string stem = st.Current;
                             if (storeorig)
                             {
                                 trie.Add(stem, "-a");
                                 words++;
                             }
-                            while (st.HasMoreTokens())
+                            while (st.MoveNext())
                             {
-                                string token = st.NextToken();
+                                string token = st.Current;
                                 if (token.Equals(stem, StringComparison.Ordinal) == false)
                                 {
                                     trie.Add(token, diff.Exec(token, stem));

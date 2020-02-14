@@ -512,7 +512,7 @@ namespace Lucene.Net.Analysis.Shingle
         public virtual void TestRandomStrings()
         {
             Analyzer a = new AnalyzerAnonymousInnerClassHelper(this);
-            CheckRandomData(Random(), a, 1000 * RANDOM_MULTIPLIER);
+            CheckRandomData(Random, a, 1000 * RANDOM_MULTIPLIER);
         }
 
         private class AnalyzerAnonymousInnerClassHelper : Analyzer
@@ -524,7 +524,7 @@ namespace Lucene.Net.Analysis.Shingle
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new ShingleFilter(tokenizer));
@@ -536,7 +536,7 @@ namespace Lucene.Net.Analysis.Shingle
         [Test, LongRunningTest]
         public virtual void TestRandomHugeStrings()
         {
-            Random random = Random();
+            Random random = Random;
             Analyzer a = new AnalyzerAnonymousInnerClassHelper2(this);
             CheckRandomData(random, a, 100 * RANDOM_MULTIPLIER, 8192);
         }
@@ -550,7 +550,7 @@ namespace Lucene.Net.Analysis.Shingle
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new ShingleFilter(tokenizer));
@@ -573,7 +573,7 @@ namespace Lucene.Net.Analysis.Shingle
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new ShingleFilter(tokenizer));

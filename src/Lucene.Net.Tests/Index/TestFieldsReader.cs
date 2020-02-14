@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
+using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System.IO;
 
@@ -62,7 +62,7 @@ namespace Lucene.Net.Index
                 FieldInfos.AddOrUpdate(field.Name, field.IndexableFieldType);
             }
             Dir = NewDirectory();
-            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetMergePolicy(NewLogMergePolicy());
+            IndexWriterConfig conf = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetMergePolicy(NewLogMergePolicy());
             conf.MergePolicy.NoCFSRatio = 0.0;
             IndexWriter writer = new IndexWriter(Dir, conf);
             writer.AddDocument(TestDoc);
@@ -243,7 +243,7 @@ namespace Lucene.Net.Index
             try
             {
                 Directory dir = new FaultyFSDirectory(indexDir);
-                IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random())).SetOpenMode(OpenMode.CREATE);
+                IndexWriterConfig iwc = NewIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(Random)).SetOpenMode(OpenMode.CREATE);
                 IndexWriter writer = new IndexWriter(dir, iwc);
                 for (int i = 0; i < 2; i++)
                 {

@@ -1,6 +1,7 @@
-using Lucene.Net.Support;
+using J2N;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 /*
@@ -77,7 +78,7 @@ namespace Lucene.Net.Util.Automaton
             State s = new State();
             a.initial = s;
             s.accept = true;
-            s.AddTransition(new Transition(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT, s));
+            s.AddTransition(new Transition(Character.MinCodePoint, Character.MaxCodePoint, s));
             a.deterministic = true;
             return a;
         }
@@ -87,7 +88,7 @@ namespace Lucene.Net.Util.Automaton
         /// </summary>
         public static Automaton MakeAnyChar()
         {
-            return MakeCharRange(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT);
+            return MakeCharRange(Character.MinCodePoint, Character.MaxCodePoint);
         }
 
         /// <summary>
@@ -246,8 +247,8 @@ namespace Lucene.Net.Util.Automaton
         public static Automaton MakeInterval(int min, int max, int digits)
         {
             Automaton a = new Automaton();
-            string x = Convert.ToString(min);
-            string y = Convert.ToString(max);
+            string x = Convert.ToString(min, CultureInfo.InvariantCulture);
+            string y = Convert.ToString(max, CultureInfo.InvariantCulture);
             if (min > max || (digits > 0 && y.Length > digits))
             {
                 throw new System.ArgumentException();
