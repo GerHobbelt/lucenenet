@@ -226,7 +226,7 @@ namespace Lucene.Net.Util
         /// <summary>
         /// This is the Lucene version for display purposes.
         /// </summary>
-        public static readonly string LUCENE_VERSION = "4.8.0";
+        public static readonly string LUCENE_VERSION = "4.8.0-ci";
 
         /// <summary>
         /// Returns a LUCENE_MAIN_VERSION without any ALPHA/BETA qualifier
