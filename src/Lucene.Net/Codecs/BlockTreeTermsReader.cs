@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Codecs
 {
@@ -99,7 +100,7 @@ namespace Lucene.Net.Codecs
         private readonly PostingsReaderBase postingsReader;
 
         // LUCENENET specific: Use StringComparer.Ordinal to get the same ordering as Java
-        private readonly SortedDictionary<string, FieldReader> fields = new SortedDictionary<string, FieldReader>(StringComparer.Ordinal);
+        private readonly IDictionary<string, FieldReader> fields = new JCG.SortedDictionary<string, FieldReader>(StringComparer.Ordinal);
 
         /// <summary>
         /// File offset where the directory starts in the terms file. </summary>
@@ -219,7 +220,7 @@ namespace Lucene.Net.Codecs
 
         /// <summary>
         /// Reads terms file header. </summary>
-        protected internal virtual int ReadHeader(IndexInput input)
+        protected virtual int ReadHeader(IndexInput input)
         {
             int version = CodecUtil.CheckHeader(input, BlockTreeTermsWriter.TERMS_CODEC_NAME, BlockTreeTermsWriter.VERSION_START, BlockTreeTermsWriter.VERSION_CURRENT);
             if (version < BlockTreeTermsWriter.VERSION_APPEND_ONLY)
@@ -231,7 +232,7 @@ namespace Lucene.Net.Codecs
 
         /// <summary>
         /// Reads index file header. </summary>
-        protected internal virtual int ReadIndexHeader(IndexInput input)
+        protected virtual int ReadIndexHeader(IndexInput input)
         {
             int version = CodecUtil.CheckHeader(input, BlockTreeTermsWriter.TERMS_INDEX_CODEC_NAME, BlockTreeTermsWriter.VERSION_START, BlockTreeTermsWriter.VERSION_CURRENT);
             if (version < BlockTreeTermsWriter.VERSION_APPEND_ONLY)
@@ -243,7 +244,7 @@ namespace Lucene.Net.Codecs
 
         /// <summary>
         /// Seek <paramref name="input"/> to the directory offset. </summary>
-        protected internal virtual void SeekDir(IndexInput input, long dirOffset)
+        protected virtual void SeekDir(IndexInput input, long dirOffset)
         {
             if (version >= BlockTreeTermsWriter.VERSION_CHECKSUM)
             {

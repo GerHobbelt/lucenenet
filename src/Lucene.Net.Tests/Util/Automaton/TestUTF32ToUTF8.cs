@@ -1,11 +1,10 @@
-using Lucene.Net.Attributes;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
+using J2N;
+using J2N.Text;
 using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Util.Automaton
 {

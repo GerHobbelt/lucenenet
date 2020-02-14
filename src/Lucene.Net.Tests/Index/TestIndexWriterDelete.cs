@@ -1,3 +1,4 @@
+using J2N.Collections.Generic.Extensions;
 using J2N.Threading;
 using J2N.Threading.Atomic;
 using Lucene.Net.Analysis;
@@ -15,7 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -1122,14 +1123,14 @@ namespace Lucene.Net.Index
             {
                 ids.Add(id);
             }
-            Collections.Shuffle(ids);
+            ids.Shuffle(Random);
             foreach (int id in ids)
             {
                 Document doc = new Document();
                 doc.Add(NewStringField("id", "" + id, Field.Store.NO));
                 w.AddDocument(doc);
             }
-            Collections.Shuffle(ids);
+            ids.Shuffle(Random);
             int upto = 0;
             while (upto < ids.Count)
             {

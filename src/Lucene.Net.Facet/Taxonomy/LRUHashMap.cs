@@ -1,4 +1,4 @@
-﻿using Lucene.Net.Support;
+﻿using J2N.Collections.Concurrent;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace Lucene.Net.Facet.Taxonomy
     /// </summary>
     public class LRUHashMap<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        private LurchTable<TKey, TValue> cache;
+        private readonly LurchTable<TKey, TValue> cache;
 
         /// <summary>
         /// Create a new hash map with a bounded size and with least recently
@@ -52,7 +52,7 @@ namespace Lucene.Net.Facet.Taxonomy
         /// <para/>
         /// Setting <paramref name="limit"/> to a very large value, like <see cref="int.MaxValue"/>
         /// is allowed, but is less efficient than
-        /// using <see cref="Support.HashMap{TKey, TValue}"/> or 
+        /// using <see cref="J2N.Collections.Generic.Dictionary{TKey, TValue}"/> or 
         /// <see cref="Dictionary{TKey, TValue}"/> because our class needs
         /// to keep track of the use order (via an additional doubly-linked
         /// list) which is not used when the map's size is always below the
@@ -76,7 +76,7 @@ namespace Lucene.Net.Facet.Taxonomy
         /// <para/>
         /// Setting <paramref name="limit"/> to a very large value, like <see cref="int.MaxValue"/>
         /// is allowed, but is less efficient than
-        /// using <see cref="Support.HashMap{TKey, TValue}"/> or 
+        /// using <see cref="J2N.Collections.Generic.Dictionary{TKey, TValue}"/> or 
         /// <see cref="Dictionary{TKey, TValue}"/> because our class needs
         /// to keep track of the use order (via an additional doubly-linked
         /// list) which is not used when the map's size is always below the
@@ -104,10 +104,7 @@ namespace Lucene.Net.Facet.Taxonomy
         /// </summary>
         public virtual int Limit
         {
-            get
-            {
-                return cache.Limit;
-            }
+            get => cache.Limit;
             set
             {
                 if (value < 1)
@@ -120,7 +117,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public TValue Put(TKey key, TValue value)
         {
-            TValue oldValue = default(TValue);
+            TValue oldValue = default;
             cache.AddOrUpdate(key, value, (k, v) =>
             {
                 oldValue = cache[key];
@@ -131,10 +128,9 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public TValue Get(TKey key)
         {
-            TValue result;
-            if (!cache.TryGetValue(key, out result))
+            if (!cache.TryGetValue(key, out TValue result))
             {
-                return default(TValue);
+                return default;
             }
             return result;
         }
@@ -143,51 +139,21 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public TValue this[TKey key]
         {
-            get
-            {
-                return cache[key];
-            }
-            set
-            {
-                cache[key] = value;
-            }
+            get => cache[key];
+            set => cache[key] = value;
         }
 
-        public int Count
-        {
-            get
-            {
-                return cache.Count;
-            }
-        }
+        public int Count => cache.Count;
 
-        public bool IsReadOnly
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public bool IsReadOnly => false;
 
-        public ICollection<TKey> Keys
-        {
-            get
-            {
-                return cache.Keys;
-            }
-        }
+        public ICollection<TKey> Keys => cache.Keys;
 
-        public ICollection<TValue> Values
-        {
-            get
-            {
-                return cache.Values;
-            }
-        }
+        public ICollection<TValue> Values => cache.Values;
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
-            throw new NotSupportedException();
+            cache.Add(item.Key, item.Value);
         }
 
         public void Add(TKey key, TValue value)
@@ -202,7 +168,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public bool Contains(KeyValuePair<TKey, TValue> item)
         {
-            throw new NotSupportedException();
+            return ((ICollection<KeyValuePair<TKey, TValue>>)cache).Contains(item);
         }
 
         public bool ContainsKey(TKey key)
@@ -210,9 +176,9 @@ namespace Lucene.Net.Facet.Taxonomy
             return cache.ContainsKey(key);
         }
 
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
         {
-            throw new NotSupportedException();
+            cache.CopyTo(array, index);
         }
 
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
@@ -222,7 +188,7 @@ namespace Lucene.Net.Facet.Taxonomy
 
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            throw new NotSupportedException();
+            return cache.TryRemove(item);
         }
 
         public bool Remove(TKey key)

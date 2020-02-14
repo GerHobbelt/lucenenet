@@ -1,11 +1,15 @@
 ﻿// commons-codec version compatibility level: 1.9
+using J2N;
+using J2N.Collections.Generic.Extensions;
+using J2N.Text;
 using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 {
@@ -84,9 +88,9 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
     /// </remarks>
     public class Rule
     {
-        private static Regex PIPE = new Regex("[|]", RegexOptions.Compiled);
-        private static Regex WHITESPACE = new Regex("\\s+", RegexOptions.Compiled);
-        private static Regex PLUS = new Regex("[+]", RegexOptions.Compiled);
+        private static readonly Regex PIPE = new Regex("[|]", RegexOptions.Compiled);
+        private static readonly Regex WHITESPACE = new Regex("\\s+", RegexOptions.Compiled);
+        private static readonly Regex PLUS = new Regex("[+]", RegexOptions.Compiled);
 
         private class AllStringsRMatcher : IRPattern
         {
@@ -109,11 +113,11 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         public static readonly IRPattern ALL_STRINGS_RMATCHER = new AllStringsRMatcher();
 
 
-        public static readonly string ALL = "ALL";
+        public const string ALL = "ALL";
 
-        private static readonly string DOUBLE_QUOTE = "\"";
+        private const string DOUBLE_QUOTE = "\"";
 
-        private static readonly string HASH_INCLUDE = "#include";
+        private const string HASH_INCLUDE = "#include";
 
         private static readonly IDictionary<NameType, IDictionary<RuleType, IDictionary<string, IDictionary<string, IList<Rule>>>>> RULES = LoadRules();
 
@@ -146,10 +150,10 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
                         rs["common"] = ParseRules(CreateScanner(s, rt, "common"), CreateResourceName(s, rt, "common"));
                     }
 
-                    rts[rt] = Collections.UnmodifiableMap(rs);
+                    rts[rt] = rs.AsReadOnly();
                 }
 
-                rules[s] = Collections.UnmodifiableMap(rts);
+                rules[s] = rts.AsReadOnly();
             }
             return rules;
         }
@@ -197,7 +201,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         private static TextReader CreateScanner(NameType nameType, RuleType rt, string lang)
         {
             string resName = CreateResourceName(nameType, rt, lang);
-            Stream rulesIS = typeof(Languages).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(Languages), resName);
+            Stream rulesIS = typeof(Languages).FindAndGetManifestResourceStream(resName);
 
             if (rulesIS == null)
             {
@@ -210,7 +214,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         private static TextReader CreateScanner(string lang)
         {
             string resName = string.Format("{0}.txt", lang); 
-            Stream rulesIS = typeof(Languages).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(Languages), resName);
+            Stream rulesIS = typeof(Languages).FindAndGetManifestResourceStream(resName);
 
             if (rulesIS == null)
             {
@@ -296,7 +300,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         /// <returns>A list of <see cref="Rule"/>s that apply.</returns>
         public static IList<Rule> GetInstance(NameType nameType, RuleType rt, string lang)
         {
-            return GetInstance(nameType, rt, LanguageSet.From(new HashSet<string>() { lang }));
+            return GetInstance(nameType, rt, LanguageSet.From(new JCG.HashSet<string>() { lang }));
         }
 
         /// <summary>
@@ -356,7 +360,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
                 }
                 string before = ph.Substring(0, open - 0);
                 string input = ph.Substring(open + 1, (ph.Length - 1) - (open + 1));
-                ISet<string> langs = new HashSet<string>(PLUS.Split(input).TrimEnd());
+                ISet<string> langs = new JCG.HashSet<string>(PLUS.Split(input).TrimEnd());
 
                 return new Phoneme(before, LanguageSet.From(langs));
             }
@@ -419,7 +423,7 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 
         private static IDictionary<string, IList<Rule>> ParseRules(TextReader reader, string location)
         {
-            IDictionary<string, IList<Rule>> lines = new HashMap<string, IList<Rule>>();
+            IDictionary<string, IList<Rule>> lines = new JCG.Dictionary<string, IList<Rule>>();
             int currentLine = 0;
 
             bool inMultilineComment = false;
@@ -803,34 +807,22 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
         /// <summary>
         /// Gets the left context pattern. This is a regular expression that must match to the left of the pattern.
         /// </summary>
-        public virtual IRPattern LContext
-        {
-            get { return this.lContext; }
-        }
+        public virtual IRPattern LContext => lContext;
 
         /// <summary>
         /// Gets the pattern. This is a string-literal that must exactly match.
         /// </summary>
-        public virtual string Pattern
-        {
-            get { return this.pattern; }
-        }
+        public virtual string Pattern => pattern;
 
         /// <summary>
         /// Gets the phoneme. If the rule matches, this is the phoneme associated with the pattern match.
         /// </summary>
-        public virtual IPhonemeExpr Phoneme
-        {
-            get { return this.phoneme; }
-        }
+        public virtual IPhonemeExpr Phoneme => phoneme;
 
         /// <summary>
         /// Gets the right context pattern. This is a regular expression that must match to the right of the pattern.
         /// </summary>
-        public virtual IRPattern RContext
-        {
-            get { return this.rContext; }
-        }
+        public virtual IRPattern RContext => rContext;
 
         /// <summary>
         /// Decides if the pattern and context match the input starting at a position. It is a match if the
@@ -858,15 +850,15 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 
             // evaluate the pattern, left context and right context
             // fail early if any of the evaluations is not successful
-            if (!input.SubSequence(i, ipl).Equals(this.pattern))
+            if (!input.Subsequence(i, ipl - i).Equals(this.pattern)) // LUCENENET: Corrected 2nd Subseqence parameter
             {
                 return false;
             }
-            else if (!this.rContext.IsMatch(input.SubSequence(ipl, input.Length)))
+            else if (!this.rContext.IsMatch(input.Subsequence(ipl, input.Length - ipl))) // LUCENENET: Corrected 2nd Subseqence parameter
             {
                 return false;
             }
-            return this.lContext.IsMatch(input.SubSequence(0, i));
+            return this.lContext.IsMatch(input.Subsequence(0, i - 0)); // LUCENENET: Corrected 2nd Subseqence parameter
         }
 
         /// <summary>
@@ -1015,15 +1007,9 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
             return this;
         }
 
-        public LanguageSet Languages
-        {
-            get { return this.languages; }
-        }
+        public LanguageSet Languages => languages;
 
-        public IList<Phoneme> Phonemes
-        {
-            get { return new Phoneme[] { this }; }
-        }
+        public IList<Phoneme> Phonemes => new Phoneme[] { this };
 
         public string GetPhonemeText()
         {
@@ -1045,17 +1031,12 @@ namespace Lucene.Net.Analysis.Phonetic.Language.Bm
 
     public sealed class PhonemeList : IPhonemeExpr
     {
-        private readonly IList<Phoneme> phonemes;
-
         public PhonemeList(IList<Phoneme> phonemes)
         {
-            this.phonemes = phonemes;
+            this.Phonemes = phonemes;
         }
 
-        public IList<Phoneme> Phonemes
-        {
-            get { return this.phonemes; }
-        }
+        public IList<Phoneme> Phonemes { get; private set; }
     }
 
     /// <summary>

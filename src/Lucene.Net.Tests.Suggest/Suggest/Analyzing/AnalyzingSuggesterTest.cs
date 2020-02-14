@@ -1,7 +1,8 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Collections.Generic.Extensions;
+using J2N.Text;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -11,7 +12,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Suggest.Analyzing
 {
@@ -142,7 +144,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
         public void TestRandomRealisticKeys()
         {
             LineFileDocs lineFile = new LineFileDocs(Random);
-            IDictionary<string, long> mapping = new HashMap<string, long>();
+            IDictionary<string, long> mapping = new JCG.Dictionary<string, long>();
             List<Input> keys = new List<Input>();
 
             int howMany = AtLeast(100); // this might bring up duplicates
@@ -311,7 +313,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -324,7 +326,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestGraphDupsTokenStreamComponents(outerInstance, tokenizer);
@@ -394,7 +396,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -408,7 +410,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestInputPathRequiredTokenStreamComponents(outerInstance, tokenizer);
@@ -504,7 +506,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -516,7 +518,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new UsualTokenStreamComponents(outerInstance, tokenizer);
@@ -735,7 +737,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.numStopChars = numStopChars;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 MockTokenizer tokenizer = new MockTokenizer(factory, reader, MockTokenizer.WHITESPACE, false, MockTokenizer.DEFAULT_MAX_TOKEN_LENGTH);
                 tokenizer.EnableChecks = (true);
@@ -777,8 +779,8 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             int numQueries = AtLeast(1000);
 
             List<TermFreq2> slowCompletor = new List<TermFreq2>();
-            ISet<string> allPrefixes = new SortedSet<string>(StringComparer.Ordinal); //new TreeSet<>();
-            ISet<string> seen = new HashSet<string>();
+            ISet<string> allPrefixes = new JCG.SortedSet<string>(StringComparer.Ordinal);
+            ISet<string> seen = new JCG.HashSet<string>();
 
             bool doPayloads = Random.nextBoolean();
 
@@ -1193,7 +1195,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -1205,7 +1207,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             {
                 this.outerInstance = outerInstance;
             }
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestDupSurfaceFormsMissingResultsTokenStreamComponents(outerInstance, tokenizer);
@@ -1281,14 +1283,14 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
 
         internal class TestDupSurfaceFormsMissingResults2Analyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestDupSurfaceFormsMissingResults2TokenStreamComponents(tokenizer);
@@ -1368,14 +1370,14 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
 
         internal class Test0ByteKeysAnalyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new Test0ByteKeysTokenStreamComponents(tokenizer);
@@ -1441,13 +1443,13 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
         internal class TestTooManyExpressionsAnalyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestTooManyExpressionsTokenStreamComponents(tokenizer);
@@ -1500,7 +1502,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             {
                 asList.Add(value);
             }
-            Collections.Shuffle(asList);
+            asList.Shuffle(Random);
             return asList;
         }
     }

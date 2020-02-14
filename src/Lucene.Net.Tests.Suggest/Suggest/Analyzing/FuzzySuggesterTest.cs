@@ -1,4 +1,7 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N;
+using J2N.Text;
+using J2N.Collections.Generic.Extensions;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
 using Lucene.Net.Support;
@@ -12,7 +15,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search.Suggest.Analyzing
 {
@@ -262,7 +266,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -275,7 +279,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestGraphDupsTokenStreamComponents(outerInstance, tokenizer);
@@ -353,7 +357,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -367,7 +371,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new TestInputPathRequiredTokenStreamComponents(outerInstance, tokenizer);
@@ -458,7 +462,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 }
             }
 
-            protected override void SetReader(TextReader reader)
+            protected internal override void SetReader(TextReader reader)
             {
             }
         }
@@ -470,7 +474,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.SIMPLE, true);
                 return new UsualTokenStreamComponents(outerInstance, tokenizer);
@@ -680,7 +684,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 this.numStopChars = numStopChars;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 MockTokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false, MockTokenizer.DEFAULT_MAX_TOKEN_LENGTH);
                 tokenizer.EnableChecks = (true);
@@ -720,8 +724,8 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             int numQueries = AtLeast(100);
 
             List<TermFreqPayload2> slowCompletor = new List<TermFreqPayload2>();
-            SortedSet<string> allPrefixes = new SortedSet<string>(StringComparer.Ordinal);
-            ISet<string> seen = new HashSet<string>();
+            JCG.SortedSet<string> allPrefixes = new JCG.SortedSet<string>(StringComparer.Ordinal);
+            ISet<string> seen = new JCG.HashSet<string>();
 
             Input[] keys = new Input[numQueries];
 
@@ -985,21 +989,21 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             Analyzer a = new MockAnalyzer(Random);
             FuzzySuggester suggester = new FuzzySuggester(a, a, 0, 2, -1, true, 1, true, 1, 3, false);
 
-            IList<Input> keys = Arrays.AsList(new Input[] {
+            IList<Input> keys = new Input[] {
                 new Input("a", 40),
                 new Input("a ", 50),
                 new Input(" a", 60),
-            });
+            };
 
-            Collections.Shuffle(keys, Random);
+            keys.Shuffle(Random);
             suggester.Build(new InputArrayIterator(keys));
 
             IList<Lookup.LookupResult> results = suggester.DoLookup("a", false, 5);
-            assertEquals(2, results.size());
-            assertEquals(" a", results.ElementAt(0).Key);
-            assertEquals(60, results.ElementAt(0).Value);
-            assertEquals("a ", results.ElementAt(1).Key);
-            assertEquals(50, results.ElementAt(1).Value);
+            assertEquals(2, results.Count);
+            assertEquals(" a", results[0].Key);
+            assertEquals(60, results[0].Value);
+            assertEquals("a ", results[1].Key);
+            assertEquals(50, results[1].Value);
         }
 
         [Test]
@@ -1008,14 +1012,14 @@ namespace Lucene.Net.Search.Suggest.Analyzing
             Analyzer a = new MockAnalyzer(Random);
             FuzzySuggester suggester = new FuzzySuggester(a, a, SuggesterOptions.PRESERVE_SEP, 2, -1, true, 2, true, 1, 3, false);
 
-            IList<Input> keys = Arrays.AsList(new Input[] {
+            IList<Input> keys = new Input[] {
                 new Input("foo bar", 40),
                 new Input("foo bar baz", 50),
                 new Input("barbaz", 60),
                 new Input("barbazfoo", 10),
-            });
+            };
 
-            Collections.Shuffle(keys, Random);
+            keys.Shuffle(Random);
             suggester.Build(new InputArrayIterator(keys));
 
             assertEquals("[foo bar baz/50, foo bar/40]", suggester.DoLookup("foobar", false, 5).toString());
@@ -1115,7 +1119,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
         {
             int NUM = AtLeast(200);
             List<Input> answers = new List<Input>();
-            ISet<string> seen = new HashSet<string>();
+            ISet<string> seen = new JCG.HashSet<string>();
             for (int i = 0; i < NUM; i++)
             {
                 string s = RandomSimpleString(8);
@@ -1150,7 +1154,7 @@ namespace Lucene.Net.Search.Suggest.Analyzing
                 Console.WriteLine("TEST: maxEdits=" + maxEdits + " prefixLen=" + prefixLen + " transpositions=" + transpositions + " num=" + NUM);
             }
 
-            Collections.Shuffle(answers);
+            answers.Shuffle(Random);
             suggest.Build(new InputArrayIterator(answers.ToArray()));
 
             int ITERS = AtLeast(100);

@@ -3,7 +3,8 @@ using Lucene.Net.Index.Extensions;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -84,7 +85,7 @@ namespace Lucene.Net.Index
             }
 
             // Random delete half the docs:
-            HashSet<int?> deleted = new HashSet<int?>();
+            ISet<int?> deleted = new JCG.HashSet<int?>();
             while (deleted.Count < NUM_DOCS / 2)
             {
                 int? toDelete = Random.Next(NUM_DOCS);

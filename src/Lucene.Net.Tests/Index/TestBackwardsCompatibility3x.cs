@@ -1,3 +1,4 @@
+using J2N;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
 using NUnit.Framework;
@@ -5,9 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -134,14 +134,14 @@ namespace Lucene.Net.Index
             base.BeforeClass();
 
             assertFalse("test infra is broken!", OldFormatImpersonationIsActive);
-            IList<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
-            names.AddRange(Arrays.AsList(OldNames));
-            names.AddRange(Arrays.AsList(OldSingleSegmentNames));
+            List<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
+            names.AddRange(OldNames);
+            names.AddRange(OldSingleSegmentNames);
             OldIndexDirs = new Dictionary<string, Directory>();
             foreach (string name in names)
             {
                 DirectoryInfo dir = CreateTempDir(name);
-                using (Stream zipFileStream = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), "index." + name + ".zip"))
+                using (Stream zipFileStream = this.GetType().FindAndGetManifestResourceStream("index." + name + ".zip"))
                 {
                     TestUtil.Unzip(zipFileStream, dir);
                 }
@@ -172,7 +172,7 @@ namespace Lucene.Net.Index
                     Console.WriteLine("TEST: index " + UnsupportedNames[i]);
                 }
                 DirectoryInfo oldIndexDir = CreateTempDir(UnsupportedNames[i]);
-                using (Stream dataFile = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), "unsupported." + UnsupportedNames[i] + ".zip"))
+                using (Stream dataFile = this.GetType().FindAndGetManifestResourceStream("unsupported." + UnsupportedNames[i] + ".zip"))
                 {
                     TestUtil.Unzip(dataFile, oldIndexDir);
                 }
@@ -888,9 +888,9 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestUpgradeOldIndex()
         {
-            IList<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
-            names.AddRange(Arrays.AsList(OldNames));
-            names.AddRange(Arrays.AsList(OldSingleSegmentNames));
+            List<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
+            names.AddRange(OldNames);
+            names.AddRange(OldSingleSegmentNames);
             foreach (string name in names)
             {
                 if (VERBOSE)
@@ -963,7 +963,7 @@ namespace Lucene.Net.Index
         public virtual void TestSurrogates()
         {
             DirectoryInfo oldIndexDir = CreateTempDir("surrogates");
-            using (Stream dataFile = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), SurrogatesIndexName))
+            using (Stream dataFile = this.GetType().FindAndGetManifestResourceStream(SurrogatesIndexName))
             {
                 TestUtil.Unzip(dataFile, oldIndexDir);
             }
@@ -1025,7 +1025,7 @@ namespace Lucene.Net.Index
         public virtual void TestNegativePositions()
         {
             DirectoryInfo oldIndexDir = CreateTempDir("negatives");
-            using (Stream dataFile = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), Bogus24IndexName))
+            using (Stream dataFile = this.GetType().FindAndGetManifestResourceStream(Bogus24IndexName))
             {
                 TestUtil.Unzip(dataFile, oldIndexDir);
             }

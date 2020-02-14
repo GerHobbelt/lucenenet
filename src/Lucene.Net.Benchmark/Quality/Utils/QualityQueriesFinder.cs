@@ -2,7 +2,7 @@
 using Lucene.Net.Store;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Benchmarks.Quality.Utils
 {
@@ -145,7 +145,7 @@ namespace Lucene.Net.Benchmarks.Quality.Utils
             {
             }
 
-            protected override bool LessThan(TermDf tf1, TermDf tf2)
+            protected internal override bool LessThan(TermDf tf1, TermDf tf2)
             {
                 return tf1.df < tf2.df;
             }

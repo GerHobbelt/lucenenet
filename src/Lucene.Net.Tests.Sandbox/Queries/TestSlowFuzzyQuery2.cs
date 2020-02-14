@@ -1,11 +1,11 @@
 ﻿using J2N;
+using J2N.Text;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Search;
 using Lucene.Net.Search.Similarities;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -14,7 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Sandbox.Queries
 {

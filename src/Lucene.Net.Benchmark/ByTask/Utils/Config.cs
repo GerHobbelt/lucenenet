@@ -1,11 +1,12 @@
-﻿using J2N.Text;
-using Lucene.Net.Support;
+﻿using J2N;
+using J2N.Text;
+using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Benchmarks.ByTask.Utils
 {
@@ -49,10 +50,10 @@ namespace Lucene.Net.Benchmarks.ByTask.Utils
         private static readonly string NEW_LINE = Environment.NewLine;
 
         private int roundNumber = 0;
-        private IDictionary<string, string> props;
-        private IDictionary<string, object> valByRound = new Dictionary<string, object>();
-        private IDictionary<string, string> colForValByRound = new Dictionary<string, string>();
-        private string algorithmText;
+        private readonly IDictionary<string, string> props;
+        private readonly IDictionary<string, object> valByRound = new Dictionary<string, object>();
+        private readonly IDictionary<string, string> colForValByRound = new Dictionary<string, string>();
+        private readonly string algorithmText;
 
         /// <summary>
         /// Read both algorithm and config properties.
@@ -85,7 +86,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Utils
             this.props = new Dictionary<string, string>();
             writer.Flush();
             ms.Position = 0;
-            props.Load(ms); 
+            props.LoadProperties(ms); 
 
             // make sure work dir is set properly 
             string temp;

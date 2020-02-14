@@ -1,13 +1,16 @@
 using System.Linq;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Support;
+using Lucene.Net.Util;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
+using JCG = J2N.Collections.Generic;
+using J2N.Collections.Generic.Extensions;
 
 namespace Lucene.Net.Search
 {
-    using Lucene.Net.Support;
-    using NUnit.Framework;
     using AtomicReader = Lucene.Net.Index.AtomicReader;
     using BooleanWeight = Lucene.Net.Search.BooleanQuery.BooleanWeight;
     using BytesRef = Lucene.Net.Util.BytesRef;
@@ -131,8 +134,8 @@ namespace Lucene.Net.Search
 
         private static void AddSome(Document doc, string[] values)
         {
-            IList<string> list = Arrays.AsList(values);
-            Collections.Shuffle(list);
+            IList<string> list = values.ToArray();
+            list.Shuffle(Random);
             int howMany = TestUtil.NextInt32(Random, 1, list.Count);
             for (int i = 0; i < howMany; i++)
             {
@@ -248,10 +251,10 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestNextAllTerms()
         {
-            IList<string> termsList = new List<string>();
-            termsList.AddRange(Arrays.AsList(CommonTerms));
-            termsList.AddRange(Arrays.AsList(MediumTerms));
-            termsList.AddRange(Arrays.AsList(RareTerms));
+            IList<string> termsList = new List<string>(CommonTerms.Length + MediumTerms.Length + RareTerms.Length);
+            termsList.AddRange(CommonTerms);
+            termsList.AddRange(MediumTerms);
+            termsList.AddRange(RareTerms);
             string[] terms = termsList.ToArray();
 
             for (int minNrShouldMatch = 1; minNrShouldMatch <= terms.Length; minNrShouldMatch++)
@@ -267,10 +270,10 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestAdvanceAllTerms()
         {
-            IList<string> termsList = new List<string>();
-            termsList.AddRange(Arrays.AsList(CommonTerms));
-            termsList.AddRange(Arrays.AsList(MediumTerms));
-            termsList.AddRange(Arrays.AsList(RareTerms));
+            IList<string> termsList = new List<string>(CommonTerms.Length + MediumTerms.Length + RareTerms.Length);
+            termsList.AddRange(CommonTerms);
+            termsList.AddRange(MediumTerms);
+            termsList.AddRange(RareTerms);
             string[] terms = termsList.ToArray();
 
             for (int amount = 25; amount < 200; amount += 25)
@@ -289,11 +292,11 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestNextVaryingNumberOfTerms()
         {
-            IList<string> termsList = new List<string>();
-            termsList.AddRange(Arrays.AsList(CommonTerms));
-            termsList.AddRange(Arrays.AsList(MediumTerms));
-            termsList.AddRange(Arrays.AsList(RareTerms));
-            Collections.Shuffle(termsList);
+            IList<string> termsList = new List<string>(CommonTerms.Length + MediumTerms.Length + RareTerms.Length);
+            termsList.AddRange(CommonTerms);
+            termsList.AddRange(MediumTerms);
+            termsList.AddRange(RareTerms);
+            termsList.Shuffle(Random);
 
             for (int numTerms = 2; numTerms <= termsList.Count; numTerms++)
             {
@@ -312,11 +315,11 @@ namespace Lucene.Net.Search
         [Test]
         public virtual void TestAdvanceVaryingNumberOfTerms()
         {
-            IList<string> termsList = new List<string>();
-            termsList.AddRange(Arrays.AsList(CommonTerms));
-            termsList.AddRange(Arrays.AsList(MediumTerms));
-            termsList.AddRange(Arrays.AsList(RareTerms));
-            Collections.Shuffle(termsList);
+            IList<string> termsList = new List<string>(CommonTerms.Length + MediumTerms.Length + RareTerms.Length);
+            termsList.AddRange(CommonTerms);
+            termsList.AddRange(MediumTerms);
+            termsList.AddRange(RareTerms);
+            termsList.Shuffle(Random);
 
             for (int amount = 25; amount < 200; amount += 25)
             {
@@ -346,7 +349,7 @@ namespace Lucene.Net.Search
             internal readonly SortedSetDocValues Dv;
             internal readonly int MaxDoc;
 
-            internal readonly HashSet<long?> Ords = new HashSet<long?>();
+            internal readonly ISet<long?> Ords = new JCG.HashSet<long?>();
             internal readonly SimScorer[] Sims;
             internal readonly int MinNrShouldMatch;
 

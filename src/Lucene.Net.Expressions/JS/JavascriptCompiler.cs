@@ -1,3 +1,5 @@
+using J2N.Collections.Generic.Extensions;
+using J2N.Text;
 using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using Lucene.Net.Queries.Function;
@@ -8,6 +10,8 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using JCG = J2N.Collections.Generic;
+using J2N;
 
 #if NETSTANDARD
 using System.IO;
@@ -91,7 +95,7 @@ namespace Lucene.Net.Expressions.JS
 
         private readonly string sourceText;
 
-        private readonly IDictionary<string, int> externalsMap = new LinkedHashMap<string, int>();
+        private readonly IDictionary<string, int> externalsMap = new JCG.LinkedDictionary<string, int>();
 
         private TypeBuilder dynamicType;
 
@@ -636,7 +640,7 @@ namespace Lucene.Net.Expressions.JS
             {
                 throw new Exception("Cannot resolve function", e);
             }
-            return Collections.UnmodifiableMap(map);
+            return map.AsReadOnly();
         }
 
         private static Type GetType(string typeName)
@@ -656,8 +660,7 @@ namespace Lucene.Net.Expressions.JS
 #if NETSTANDARD
             var settings = new Dictionary<string, string>();
             var type = typeof(JavascriptCompiler);
-            var assembly = type.GetTypeInfo().Assembly;
-            using (var reader = new StreamReader(assembly.FindAndGetManifestResourceStream(type, type.GetTypeInfo().Name + ".properties")))
+            using (var reader = new StreamReader(type.FindAndGetManifestResourceStream(type.GetTypeInfo().Name + ".properties")))
             {
                 string line;
                 while(!string.IsNullOrWhiteSpace(line = reader.ReadLine()))

@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Morfologik
 {
@@ -52,7 +53,7 @@ namespace Lucene.Net.Analysis.Morfologik
         public void TestDefaultDictionary()
         {
             StringReader reader = new StringReader("rowery bilety");
-            MorfologikFilterFactory factory = new MorfologikFilterFactory(Collections.EmptyMap<String, String>());
+            MorfologikFilterFactory factory = new MorfologikFilterFactory(new Dictionary<string, string>());
             factory.Inform(new ForbidResourcesLoader());
             TokenStream stream = new MockTokenizer(reader); //whitespaceMockTokenizer(reader);
             stream = factory.Create(stream);
@@ -65,7 +66,7 @@ namespace Lucene.Net.Analysis.Morfologik
             IResourceLoader loader = new ClasspathResourceLoader(typeof(TestMorfologikFilterFactory));
 
             StringReader reader = new StringReader("inflected1 inflected2");
-            IDictionary<String, String> @params = new HashMap<string, string>();
+            IDictionary<String, String> @params = new JCG.Dictionary<string, string>();
             @params[MorfologikFilterFactory.DICTIONARY_ATTRIBUTE] = "custom-dictionary.dict";
             MorfologikFilterFactory factory = new MorfologikFilterFactory(@params);
             factory.Inform(loader);
@@ -81,7 +82,7 @@ namespace Lucene.Net.Analysis.Morfologik
 
             IOException expected = NUnit.Framework.Assert.Throws<IOException>(() =>
             {
-                IDictionary<String, String> @params = new HashMap<String, String>();
+                IDictionary<String, String> @params = new JCG.Dictionary<String, String>();
                 @params[MorfologikFilterFactory.DICTIONARY_ATTRIBUTE] = "missing-dictionary-resource.dict";
                 MorfologikFilterFactory factory = new MorfologikFilterFactory(@params);
                 factory.Inform(loader);
@@ -96,7 +97,7 @@ namespace Lucene.Net.Analysis.Morfologik
         {
             ArgumentException expected = NUnit.Framework.Assert.Throws<ArgumentException>(() =>
             {
-                HashMap<String, String> @params = new HashMap<String, String>();
+                JCG.Dictionary<String, String> @params = new JCG.Dictionary<String, String>();
                 @params["bogusArg"] = "bogusValue";
                 new MorfologikFilterFactory(@params);
             });

@@ -2,7 +2,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Util.Automaton
 {
@@ -116,7 +117,7 @@ namespace Lucene.Net.Util.Automaton
                 Console.WriteLine("Testing with {0} terms", numTerms);
             }
 
-            ISet<string> terms = new HashSet<string>();
+            ISet<string> terms = new JCG.HashSet<string>();
             while (terms.Count < numTerms)
             {
                 terms.Add(RandomString());

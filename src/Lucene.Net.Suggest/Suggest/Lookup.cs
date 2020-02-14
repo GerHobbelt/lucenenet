@@ -94,7 +94,7 @@ namespace Lucene.Net.Search.Suggest
             /// <summary>
             /// Create a new result from a key+weight+contexts triple.
             /// </summary>
-            public LookupResult(string key, long value, HashSet<BytesRef> contexts)
+            public LookupResult(string key, long value, ISet<BytesRef> contexts)
                 : this(key, null, value, null, contexts)
             {
             }
@@ -166,7 +166,7 @@ namespace Lucene.Net.Search.Suggest
             {
             }
 
-            protected override bool LessThan(LookupResult a, LookupResult b)
+            protected internal override bool LessThan(LookupResult a, LookupResult b)
             {
                 return a.Value < b.Value;
             }

@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.CharFilters
 {
@@ -227,13 +228,13 @@ namespace Lucene.Net.Analysis.CharFilters
             }
 
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(outerInstance.normMap, reader);
             }
@@ -268,13 +269,13 @@ namespace Lucene.Net.Analysis.CharFilters
                 this.map = map;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(map, reader);
             }
@@ -306,13 +307,13 @@ namespace Lucene.Net.Analysis.CharFilters
                 this.map = map;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, tokenizer);
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MappingCharFilter(map, reader);
             }
@@ -323,7 +324,7 @@ namespace Lucene.Net.Analysis.CharFilters
             Random random = Random;
             NormalizeCharMap.Builder builder = new NormalizeCharMap.Builder();
             // we can't add duplicate keys, or NormalizeCharMap gets angry
-            ISet<string> keys = new HashSet<string>();
+            ISet<string> keys = new JCG.HashSet<string>();
             int num = random.Next(5);
             //System.out.println("NormalizeCharMap=");
             for (int i = 0; i < num; i++)

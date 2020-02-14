@@ -1,15 +1,14 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N;
+using Lucene.Net.Analysis;
 using Lucene.Net.Benchmarks.ByTask.Tasks;
 using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Benchmarks.ByTask.Feeds
 {
@@ -76,7 +75,7 @@ namespace Lucene.Net.Benchmarks.ByTask.Feeds
                 else
                 {
                     //see if we can find it as a resource
-                    Stream asStream = typeof(FileBasedQueryMaker).GetTypeInfo().Assembly.FindAndGetManifestResourceStream(typeof(FileBasedQueryMaker), fileName);
+                    Stream asStream = typeof(FileBasedQueryMaker).FindAndGetManifestResourceStream(fileName);
                     if (asStream != null)
                     {
                         reader = IOUtils.GetDecodingReader(asStream, Encoding.UTF8);

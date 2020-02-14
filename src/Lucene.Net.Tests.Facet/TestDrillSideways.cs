@@ -1,10 +1,11 @@
-﻿using System;
+﻿using J2N.Text;
+using Lucene.Net.Support;
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
-using Lucene.Net.Randomized.Generators;
-using Lucene.Net.Support;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet
 {
@@ -474,7 +475,7 @@ namespace Lucene.Net.Facet
 
             for (int dim = 0; dim < numDims; dim++)
             {
-                var values = new HashSet<string>();
+                var values = new JCG.HashSet<string>();
                 while (values.Count < valueCount)
                 {
                     var str = TestUtil.RandomRealisticUnicodeString(Random);

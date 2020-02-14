@@ -209,7 +209,7 @@ namespace Lucene.Net.Search.VectorHighlight
 
         internal sealed class BigramAnalyzer : Analyzer
         {
-            protected override TokenStreamComponents CreateComponents(String fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(String fieldName, TextReader reader)
             {
                 return new TokenStreamComponents(new BasicNGramTokenizer(reader));
             }
@@ -277,7 +277,7 @@ namespace Lucene.Net.Search.VectorHighlight
                 if (!GetNextPartialSnippet())
                     return false;
                 ClearAttributes();
-                termAtt.SetEmpty().Append(snippet, startTerm, startTerm + lenTerm);
+                termAtt.SetEmpty().Append(snippet, startTerm, lenTerm); // LUCENENET: Corrected 3rd parameter
                 offsetAtt.SetOffset(CorrectOffset(startOffset), CorrectOffset(startOffset + lenTerm));
                 return true;
             }

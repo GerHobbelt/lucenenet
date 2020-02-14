@@ -1,12 +1,12 @@
-﻿using Lucene.Net.Index;
+﻿using J2N.Text;
+using Lucene.Net.Index;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Misc
 {

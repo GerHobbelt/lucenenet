@@ -7,7 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -254,7 +255,7 @@ namespace Lucene.Net.Index
             DirectoryReader reader = firstReader;
 
             ReaderThread[] threads = new ReaderThread[n];
-            ISet<DirectoryReader> readersToClose = new ConcurrentHashSet<DirectoryReader>(new HashSet<DirectoryReader>());
+            ISet<DirectoryReader> readersToClose = new JCG.HashSet<DirectoryReader>().AsConcurrent();
 
             for (int i = 0; i < n; i++)
             {

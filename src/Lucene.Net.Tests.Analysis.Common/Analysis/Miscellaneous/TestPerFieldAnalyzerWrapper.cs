@@ -7,6 +7,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Miscellaneous
 {
@@ -79,7 +80,7 @@ namespace Lucene.Net.Analysis.Miscellaneous
 
             var whitespace = new WhitespaceAnalyzer(Lucene.Net.Util.LuceneVersion.LUCENE_48);
 
-            var pf = new PerFieldAnalyzerWrapper(english, new Lucene.Net.Support.HashMap<string, Analyzer>() { { "foo", whitespace } });
+            var pf = new PerFieldAnalyzerWrapper(english, new JCG.Dictionary<string, Analyzer>() { { "foo", whitespace } });
 
             var test1 = english.GetTokenStream(null, "test"); // Does not throw
 
@@ -109,12 +110,12 @@ namespace Lucene.Net.Analysis.Miscellaneous
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 return new TokenStreamComponents(new MockTokenizer(reader));
             }
 
-            protected override TextReader InitReader(string fieldName, TextReader reader)
+            protected internal override TextReader InitReader(string fieldName, TextReader reader)
             {
                 return new MockCharFilter(reader, 7);
             }

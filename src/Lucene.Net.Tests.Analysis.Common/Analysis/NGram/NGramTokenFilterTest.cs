@@ -1,8 +1,8 @@
-﻿using Lucene.Net.Analysis.Core;
+﻿using J2N;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Miscellaneous;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
@@ -143,7 +143,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 TokenFilter filters = new ASCIIFoldingFilter(tokenizer);
@@ -180,7 +180,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.max = max;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new MockTokenizer(reader, MockTokenizer.WHITESPACE, false);
                 return new TokenStreamComponents(tokenizer, new NGramTokenFilter(TEST_VERSION_CURRENT, tokenizer, min, max));
@@ -204,7 +204,7 @@ namespace Lucene.Net.Analysis.NGram
                 this.outerInstance = outerInstance;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer tokenizer = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(tokenizer, new NGramTokenFilter(TEST_VERSION_CURRENT, tokenizer, 2, 15));

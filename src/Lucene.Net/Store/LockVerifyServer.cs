@@ -1,12 +1,12 @@
 using J2N.Threading;
-using Lucene.Net.Support;
+using Lucene.Net.Util;
 using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Store
 {

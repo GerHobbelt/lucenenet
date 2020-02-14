@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Lucene.Net.Documents;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Search
 {
@@ -262,7 +262,7 @@ namespace Lucene.Net.Search
                 {
                     Console.WriteLine("iter=" + iter);
                 }
-                IList<string> terms = new List<string>(Arrays.AsList("a", "b", "c", "d", "e", "f"));
+                IList<string> terms = new List<string> { "a", "b", "c", "d", "e", "f" };
                 int numTerms = TestUtil.NextInt32(Random, 1, terms.Count);
                 while (terms.Count > numTerms)
                 {

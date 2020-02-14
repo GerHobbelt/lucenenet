@@ -7,7 +7,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
+using J2N.Collections.Generic.Extensions;
+using System.Globalization;
 
 namespace Lucene.Net.Index
 {
@@ -71,13 +74,13 @@ namespace Lucene.Net.Index
 
             for (int i = 0; i < numTerms; i++)
             {
-                string term = Convert.ToString(i);
+                string term = Convert.ToString(i, CultureInfo.InvariantCulture);
                 for (int j = 0; j < i; j++)
                 {
                     postingsList.Add(term);
                 }
             }
-            Collections.Shuffle(postingsList);
+            postingsList.Shuffle(Random);
 
             ConcurrentQueue<string> postings = new ConcurrentQueue<string>(postingsList);
 
@@ -122,7 +125,7 @@ namespace Lucene.Net.Index
             BytesRef term_;
             while ((term_ = termsEnum.Next()) != null)
             {
-                int value = Convert.ToInt32(term_.Utf8ToString());
+                int value = Convert.ToInt32(term_.Utf8ToString(), CultureInfo.InvariantCulture);
                 Assert.AreEqual(value, termsEnum.DocFreq);
                 // don't really need to check more than this, as CheckIndex
                 // will verify that docFreq == actual number of documents seen
@@ -162,7 +165,7 @@ namespace Lucene.Net.Index
                     while (!(Postings.Count == 0))
                     {
                         StringBuilder text = new StringBuilder();
-                        HashSet<string> visited = new HashSet<string>();
+                        ISet<string> visited = new JCG.HashSet<string>();
                         for (int i = 0; i < MaxTermsPerDoc; i++)
                         {
                             string token;

@@ -1,4 +1,5 @@
-﻿using Lucene.Net.Analysis;
+﻿using J2N.Collections.Generic.Extensions;
+using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Documents;
 using Lucene.Net.Index.Extensions;
@@ -12,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index.Sorter
 {
@@ -181,7 +182,7 @@ namespace Lucene.Net.Index.Sorter
                 ids.Add(i * 10);
             }
             // shuffle them for indexing
-            Collections.Shuffle(ids);
+            ids.Shuffle(Random);
 
             if (VERBOSE)
             {

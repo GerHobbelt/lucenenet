@@ -1,3 +1,4 @@
+using J2N.Text;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
 using Lucene.Net.Support.IO;
@@ -8,7 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {

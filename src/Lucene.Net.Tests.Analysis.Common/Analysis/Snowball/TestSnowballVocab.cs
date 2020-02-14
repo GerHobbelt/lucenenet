@@ -4,7 +4,7 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis.Snowball
 {
@@ -89,7 +89,7 @@ namespace Lucene.Net.Analysis.Snowball
                 this.snowballLanguage = snowballLanguage;
             }
 
-            protected override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
+            protected internal override TokenStreamComponents CreateComponents(string fieldName, TextReader reader)
             {
                 Tokenizer t = new KeywordTokenizer(reader);
                 return new TokenStreamComponents(t, new SnowballFilter(t, snowballLanguage));

@@ -1,4 +1,5 @@
 ﻿// Lucene version compatibility level 8.2.0
+using J2N.Text;
 using Lucene.Net.Analysis.Miscellaneous;
 using Lucene.Net.Analysis.Morfologik.TokenAttributes;
 using Lucene.Net.Analysis.Standard;
@@ -9,6 +10,8 @@ using NUnit.Framework;
 using System;
 using System.IO;
 using System.Text;
+using JCG = J2N.Collections.Generic;
+using SCG = System.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Morfologik
 {
@@ -85,7 +88,7 @@ namespace Lucene.Net.Analysis.Morfologik
                 ICharTermAttribute charTerm = ts.GetAttribute<ICharTermAttribute>();
                 while (ts.IncrementToken())
                 {
-                    Console.WriteLine(charTerm.ToString() + " => " + Collections.ToString(attribute.Tags));
+                    Console.WriteLine(charTerm.ToString() + " => " + string.Format(StringFormatter.InvariantCulture, "{0}", attribute.Tags));
                 }
                 ts.End();
             }
@@ -140,8 +143,8 @@ namespace Lucene.Net.Analysis.Morfologik
             ts.IncrementToken();
             assertEquals(term, ts.GetAttribute<ICharTermAttribute>().ToString());
 
-            TreeSet<String> actual = new TreeSet<String>();
-            TreeSet<String> expected = new TreeSet<String>();
+            SCG.ISet<String> actual = new JCG.SortedSet<String>(StringComparer.Ordinal);
+            SCG.ISet<String> expected = new JCG.SortedSet<String>(StringComparer.Ordinal);
             foreach (StringBuilder b in ts.GetAttribute<IMorphosyntacticTagsAttribute>().Tags)
             {
                 actual.add(b.toString());

@@ -1,3 +1,4 @@
+using J2N;
 using J2N.Threading;
 using Lucene.Net.Attributes;
 using Lucene.Net.Support;
@@ -5,9 +6,8 @@ using Lucene.Net.Util;
 using NUnit.Framework;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Store
 {
@@ -301,6 +301,11 @@ namespace Lucene.Net.Store
             CheckDirectoryFilter(NewFSDirectory(CreateTempDir("test")));
         }
 
+        private static bool ContainsFile(Directory directory, string file) // LUCENENET specific method to prevent having to use Arrays.AsList(), which creates unnecessary memory allocations
+        {
+            return Array.IndexOf(directory.ListAll(), file) > -1;
+        }
+
         // LUCENE-1468
         private void CheckDirectoryFilter(Directory dir)
         {
@@ -309,7 +314,7 @@ namespace Lucene.Net.Store
             {
                 dir.CreateOutput(name, NewIOContext(Random)).Dispose();
                 Assert.IsTrue(SlowFileExists(dir, name));
-                Assert.IsTrue(Arrays.AsList(dir.ListAll()).Contains(name));
+                Assert.IsTrue(ContainsFile(dir, name));
             }
             finally
             {
@@ -480,7 +485,7 @@ namespace Lucene.Net.Store
         public void TestLUCENENET521()
         {
             var newDirectoryInfo = CreateTempDir("LUCENENET521");
-            using (var zipFileStream = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(this.GetType(), "LUCENENET521.zip"))
+            using (var zipFileStream = this.GetType().FindAndGetManifestResourceStream("LUCENENET521.zip"))
             {
                 TestUtil.Unzip(zipFileStream, newDirectoryInfo);
             }

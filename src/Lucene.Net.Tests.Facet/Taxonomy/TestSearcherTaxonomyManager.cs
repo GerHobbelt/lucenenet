@@ -8,7 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Console = Lucene.Net.Support.SystemConsole;
+using JCG = J2N.Collections.Generic;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Facet.Taxonomy
 {
@@ -69,7 +70,7 @@ namespace Lucene.Net.Facet.Taxonomy
             {
                 try
                 {
-                    var seen = new HashSet<string>();
+                    var seen = new JCG.HashSet<string>();
                     IList<string> paths = new List<string>();
                     while (true)
                     {

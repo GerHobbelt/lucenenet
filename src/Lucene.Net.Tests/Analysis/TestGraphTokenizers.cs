@@ -1,13 +1,13 @@
+using J2N.Text;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Attributes;
-using Lucene.Net.Support;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Analysis
 {
@@ -608,7 +608,7 @@ namespace Lucene.Net.Analysis
 
         private Automaton Join(params Automaton[] @as)
         {
-            return BasicOperations.Concatenate(Arrays.AsList(@as));
+            return BasicOperations.Concatenate(@as);
         }
 
         private Automaton S2a(string s)

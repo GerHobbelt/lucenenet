@@ -1,3 +1,4 @@
+using J2N;
 using Lucene.Net.Attributes;
 using Lucene.Net.Index.Extensions;
 using Lucene.Net.Support;
@@ -7,9 +8,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using Console = Lucene.Net.Support.SystemConsole;
+using Console = Lucene.Net.Util.SystemConsole;
 
 namespace Lucene.Net.Index
 {
@@ -202,14 +202,14 @@ namespace Lucene.Net.Index
             base.BeforeClass();
 
             Assert.IsFalse(OldFormatImpersonationIsActive, "test infra is broken!");
-            IList<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
-            names.AddRange(Arrays.AsList(OldNames));
-            names.AddRange(Arrays.AsList(OldSingleSegmentNames));
+            List<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
+            names.AddRange(OldNames);
+            names.AddRange(OldSingleSegmentNames);
             OldIndexDirs = new Dictionary<string, Directory>();
             foreach (string name in names)
             {
                 DirectoryInfo dir = CreateTempDir(name);
-                using (Stream zipFileStream = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), "index." + name + ".zip"))
+                using (Stream zipFileStream = this.GetType().FindAndGetManifestResourceStream("index." + name + ".zip"))
                 {
                     TestUtil.Unzip(zipFileStream, dir);
                 }
@@ -927,9 +927,9 @@ namespace Lucene.Net.Index
         [Test]
         public virtual void TestUpgradeOldIndex()
         {
-            IList<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
-            names.AddRange(Arrays.AsList(OldNames));
-            names.AddRange(Arrays.AsList(OldSingleSegmentNames));
+            List<string> names = new List<string>(OldNames.Length + OldSingleSegmentNames.Length);
+            names.AddRange(OldNames);
+            names.AddRange(OldSingleSegmentNames);
             foreach (string name in names)
             {
                 if (VERBOSE)
@@ -953,7 +953,7 @@ namespace Lucene.Net.Index
             foreach (string name in OldIndexDirs.Keys)
             {
                 DirectoryInfo dir = CreateTempDir(name);
-                using (Stream dataFile = this.GetType().GetTypeInfo().Assembly.FindAndGetManifestResourceStream(GetType(), "index." + name + ".zip"))
+                using (Stream dataFile = this.GetType().FindAndGetManifestResourceStream("index." + name + ".zip"))
                 {
                     TestUtil.Unzip(dataFile, dir);
                 }
