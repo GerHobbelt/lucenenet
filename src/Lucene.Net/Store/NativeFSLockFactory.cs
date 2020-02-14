@@ -232,7 +232,7 @@ namespace Lucene.Net.Store
 			// otherwise it may clash with MakeLock making a lock and ClearLock disposing of it in another thread.
 			lock (syncLock)
 			{
-                if (_locks.TryGetValue(path, out Lock l))
+                if (locks.TryGetValue(path, out Lock l))
 				{
 					locks.Remove(path);
 					l.Dispose();
@@ -339,7 +339,7 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						outerInstance?.ClearLock(path);
+						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);
@@ -518,7 +518,7 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						outerInstance?.ClearLock(path);
+						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);
@@ -583,6 +583,7 @@ namespace Lucene.Net.Store
         private FileStream channel;
         private readonly string path;
         private readonly DirectoryInfo lockDir;
+        private readonly object syncLock = new object(); // avoid lock(this)
 
         public NativeFSLock(DirectoryInfo lockDir, string path)
         {
@@ -686,7 +687,7 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						outerInstance?.ClearLock(path);
+						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);

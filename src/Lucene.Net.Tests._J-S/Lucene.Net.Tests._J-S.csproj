@@ -43,10 +43,6 @@
     <EmbeddedResource Include="..\Lucene.Net.Tests\Store\LUCENENET521.zip" Link="Store\LUCENENET521.zip" />
     <EmbeddedResource Include="..\Lucene.Net.Tests\Support\IO\ReadFully.txt" Link="Support\IO\ReadFully.txt" />
     <EmbeddedResource Include="..\Lucene.Net.Tests\Support\hyts_PropertiesTest.properties" Link="Support\hyts_PropertiesTest.properties" />
-    <Compile Remove="Util\JunitCompat\**\*;Util\TestMaxFailuresRule.cs" />
-    <!--<Compile Exclude="Util\TestMaxFailuresRule.cs" />-->
-    <EmbeddedResource Include="Index\bogus24.upgraded.to.36.zip;Index\index.30.cfs.zip;Index\index.30.nocfs.zip;Index\index.31.cfs.zip;Index\index.31.nocfs.zip;Index\index.31.optimized.cfs.zip;Index\index.31.optimized.nocfs.zip;Index\index.32.cfs.zip;Index\index.32.nocfs.zip;Index\index.34.cfs.zip;Index\index.34.nocfs.zip;Index\index.36.surrogates.zip;Index\index.40.cfs.zip;Index\index.40.nocfs.zip;Index\index.40.optimized.cfs.zip;Index\index.40.optimized.nocfs.zip;Index\index.41.cfs.zip;Index\index.41.nocfs.zip;Index\index.42.cfs.zip;Index\index.42.nocfs.zip;Index\index.45.cfs.zip;Index\index.45.nocfs.zip;Index\index.461.cfs.zip;Index\index.461.nocfs.zip;Index\index.48.w-binary-doc-values.zip;Index\moreterms.40.zip;Index\taxo.48.w-binary-doc-values.zip;Index\unsupported.19.cfs.zip;Index\unsupported.19.nocfs.zip;Index\unsupported.20.cfs.zip;Index\unsupported.20.nocfs.zip;Index\unsupported.21.cfs.zip;Index\unsupported.21.nocfs.zip;Index\unsupported.22.cfs.zip;Index\unsupported.22.nocfs.zip;Index\unsupported.23.cfs.zip;Index\unsupported.23.nocfs.zip;Index\unsupported.24.cfs.zip;Index\unsupported.24.nocfs.zip;Index\unsupported.29.cfs.zip;Index\unsupported.29.nocfs.zip;Store\LUCENENET521.zip;Support\IO\ReadFully.txt;Support\hyts_PropertiesTest.properties" />
-    <None Include="App.config" />
   </ItemGroup>
   
   <ItemGroup>
