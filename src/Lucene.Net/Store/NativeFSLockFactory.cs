@@ -339,7 +339,6 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);
@@ -518,7 +517,6 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);
@@ -687,7 +685,6 @@ namespace Lucene.Net.Store
                     // the lock instance from the dictionary that tracks them.
                     try
                     {
-						//outerInstance?.ClearLock(path);
                         lock (NativeFSLockFactory.syncLock)
 						{
                             NativeFSLockFactory.locks.Remove(path);

@@ -24,13 +24,13 @@ This module enables search result grouping with Lucene, where hits with the same
 
 Grouping requires a number of inputs:
 
-*   `groupField`: this is the field used for grouping.
+*     `groupField`: this is the field used for grouping.
       For example, if you use the `author` field then each
       group has all books by the same author.  Documents that don't
       have this field are grouped under a single group with
       a `null` group value.
 
-     `groupSort`: how the groups are sorted.  For sorting
+*     `groupSort`: how the groups are sorted.  For sorting
       purposes, each group is "represented" by the highest-sorted
       document according to the `groupSort` within it.  For
       example, if you specify "price" (ascending) then the first group
@@ -38,21 +38,21 @@ Grouping requires a number of inputs:
       specify relevance group sort, then the first group is the one
       containing the highest scoring book.
 
-     `topNGroups`: how many top groups to keep.  For
+*     `topNGroups`: how many top groups to keep.  For
       example, 10 means the top 10 groups are computed.
 
-     `groupOffset`: which "slice" of top groups you want to
+*     `groupOffset`: which "slice" of top groups you want to
       retrieve.  For example, 3 means you'll get 7 groups back
       (assuming `topNGroups` is 10).  This is useful for
       paging, where you might show 5 groups per page.
 
-     `withinGroupSort`: how the documents within each group
+*     `withinGroupSort`: how the documents within each group
       are sorted.  This can be different from the group sort.
 
-     `maxDocsPerGroup`: how many top documents within each
+*     `maxDocsPerGroup`: how many top documents within each
       group to keep.
 
-     `withinGroupOffset`: which "slice" of top
+*     `withinGroupOffset`: which "slice" of top
       documents you want to retrieve from each group.
 
 The implementation is two-pass: the first pass (<xref:Lucene.Net.Grouping.Term.TermFirstPassGroupingCollector>) gathers the top groups, and the second pass (<xref:Lucene.Net.Grouping.Term.TermSecondPassGroupingCollector>) gathers documents within those groups. If the search is costly to run you may want to use the <xref:Lucene.Net.Search.CachingCollector> class, which caches hits and can (quickly) replay them for the second pass. This way you only run the query once, but you pay a RAM cost to (briefly) hold all hits. Results are returned as a <xref:Lucene.Net.Grouping.TopGroups> instance.
