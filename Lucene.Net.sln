@@ -38,11 +38,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{4DF7EACE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apidocs", "apidocs", "{58FD6E39-F30F-4566-90E5-B7C9D6BC0660}"
 	ProjectSection(SolutionItems) = preProject
-		apidocs\docfx.filter.yml = apidocs\docfx.filter.yml
-		apidocs\docfx.json = apidocs\docfx.json
-		apidocs\docs.ps1 = apidocs\docs.ps1
-		apidocs\index.md = apidocs\index.md
-		apidocs\toc.yml = apidocs\toc.yml
+		websites\apidocs\docfx.filter.yml = websites\apidocs\docfx.filter.yml
+		websites\apidocs\docfx.json = websites\apidocs\docfx.json
+		websites\apidocs\docs.ps1 = websites\apidocs\docs.ps1
+		websites\apidocs\index.md = websites\apidocs\index.md
+		websites\apidocs\toc.yml = websites\apidocs\toc.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "site", "site", "{58FD6E39-F30F-4566-90E5-B7C9D6BC0660}"
+	ProjectSection(SolutionItems) = preProject
+		websites\site\docs.md = websites\site\docs.md
+		websites\site\docfx.json = websites\site\docfx.json
+		websites\site\site.ps1 = websites\site\site.ps1
+		websites\site\index.md = websites\site\index.md
+		websites\site\toc.yml = websites\site\toc.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4DF0A2A1-B9C7-4EE5-BAF0-BEEF53E34220}"

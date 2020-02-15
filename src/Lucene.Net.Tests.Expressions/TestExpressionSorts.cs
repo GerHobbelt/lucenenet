@@ -86,7 +86,7 @@ namespace Lucene.Net.Expressions
             base.TearDown();
         }
 
-        // LUCENENET TODO: Fails on x86, Release, net45 (but doesn't fail if any of these 3 parameters are changed)
+        // LUCENENET TODO: Fails on x86, Release, net48 (but doesn't fail if any of these 3 parameters are changed)
         [Test]
         public virtual void TestQueries()
         {
