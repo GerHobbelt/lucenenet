@@ -38,7 +38,7 @@ To map/join in the opposite direction, use <xref:Lucene.Net.Join.ToChildBlockJoi
 
 ## Query-time joins
 
- The query time joining is index term based and implemented as two pass search. The first pass collects all the terms from a fromField that match the fromQuery. The second pass returns all documents that have matching terms in a toField to the terms collected in the first pass. 
+The query time joining is index term based and implemented as two pass search. The first pass collects all the terms from a fromField that match the fromQuery. The second pass returns all documents that have matching terms in a toField to the terms collected in the first pass. 
 
 Query time joining has the following input:
 
