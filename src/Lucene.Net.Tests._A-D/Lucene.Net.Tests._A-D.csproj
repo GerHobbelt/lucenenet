@@ -63,7 +63,11 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Update="NUnit" Version="3.12.0" />
-    <PackageReference Update="NUnit3TestAdapter" Version="3.14.0" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPackageVersion)" />
+    <PackageReference Update="NUnit" Version="$(NUnitPackageVersion)" />
+    <PackageReference Update="NUnit3TestAdapter" Version="$(NUnit3TestAdapterPackageVersion)" >
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

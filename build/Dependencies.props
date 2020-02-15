@@ -39,14 +39,14 @@
     <ICU4NRegionDataPackageVersion>$(ICU4NPackageVersion)</ICU4NRegionDataPackageVersion>
     <ICU4NTransliteratorPackageVersion>$(ICU4NPackageVersion)</ICU4NTransliteratorPackageVersion>
     <J2NPackageVersion>2.0.0-beta-0002</J2NPackageVersion>
-    <MicrosoftAspNetCoreHttpAbstractionsPackageVersion>1.0.3</MicrosoftAspNetCoreHttpAbstractionsPackageVersion>
-    <MicrosoftAspNetCoreTestHostPackageVersion>1.0.3</MicrosoftAspNetCoreTestHostPackageVersion>
+    <MicrosoftAspNetCoreHttpAbstractionsPackageVersion>2.2.0</MicrosoftAspNetCoreHttpAbstractionsPackageVersion>
+    <MicrosoftAspNetCoreTestHostPackageVersion>3.1.1</MicrosoftAspNetCoreTestHostPackageVersion>
     <MicrosoftCodeAnalysisAnalyzersPackageVersion>2.9.8</MicrosoftCodeAnalysisAnalyzersPackageVersion>
     <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>3.4.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
     <MicrosoftCodeAnalysisVisualBasicWorkspacesPackageVersion>3.4.0</MicrosoftCodeAnalysisVisualBasicWorkspacesPackageVersion>
-    <MicrosoftCSharpPackageVersion>4.4.0</MicrosoftCSharpPackageVersion>
+    <MicrosoftCSharpPackageVersion>4.7.0</MicrosoftCSharpPackageVersion>
     <MicrosoftExtensionsDependencyModelPackageVersion>2.0.0</MicrosoftExtensionsDependencyModelPackageVersion>
-    <MicrosoftNETTestSdkPackageVersion>16.2.0</MicrosoftNETTestSdkPackageVersion>
+    <MicrosoftNETTestSdkPackageVersion>16.5.0</MicrosoftNETTestSdkPackageVersion>
     <MorfologikFsaPackageVersion>2.1.6-beta-0004</MorfologikFsaPackageVersion>
     <MorfologikPolishPackageVersion>$(MorfologikFsaPackageVersion)</MorfologikPolishPackageVersion>
     <MorfologikStemmingPackageVersion>$(MorfologikFsaPackageVersion)</MorfologikStemmingPackageVersion>
@@ -54,11 +54,11 @@
     <MSTestTestAdapterPackageVersion>$(MSTestTestFrameworkPackageVersion)</MSTestTestAdapterPackageVersion>
     <NETStandardLibrary16PackageVersion>1.6.1</NETStandardLibrary16PackageVersion>
     <NETStandardLibrary20PackageVersion>2.0.3</NETStandardLibrary20PackageVersion>
-    <NewtonsoftJsonPackageVersion>10.0.3</NewtonsoftJsonPackageVersion>
-    <NUnit3TestAdapterPackageVersion>3.13.0</NUnit3TestAdapterPackageVersion>
-    <NUnitPackageVersion>3.9.0</NUnitPackageVersion>
+    <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
+    <NUnit3TestAdapterPackageVersion>3.16.1</NUnit3TestAdapterPackageVersion>
+    <NUnitPackageVersion>3.12.0</NUnitPackageVersion>
     <OpenNLPNETPackageVersion>1.9.1</OpenNLPNETPackageVersion>
-    <SharpZipLibPackageVersion>1.1.0</SharpZipLibPackageVersion>
+    <SharpZipLibPackageVersion>1.2.0</SharpZipLibPackageVersion>
     <SharpZipLibNETStandardPackageVersion>0.86.0.1</SharpZipLibNETStandardPackageVersion>
     <Spatial4nCorePackageVersion>0.4.1</Spatial4nCorePackageVersion>
     <Spatial4nCoreNTSPackageVersion>$(Spatial4nCorePackageVersion)</Spatial4nCoreNTSPackageVersion>
@@ -72,13 +72,13 @@
     <SystemGlobalizationPackageVersion>4.3.0</SystemGlobalizationPackageVersion>
     <SystemIOMemoryMappedFilesPackageVersion>4.3.0</SystemIOMemoryMappedFilesPackageVersion>
     <SystemNetNameResolutionPackageVersion>4.3.0</SystemNetNameResolutionPackageVersion>
-    <SystemNetPrimitivesPackageVersion>4.3.0</SystemNetPrimitivesPackageVersion>
+    <SystemNetPrimitivesPackageVersion>4.3.1</SystemNetPrimitivesPackageVersion>
     <SystemNetSocketsPackageVersion>4.3.0</SystemNetSocketsPackageVersion>
-    <SystemReflectionEmitPackageVersion>4.3.0</SystemReflectionEmitPackageVersion>
-    <SystemReflectionEmitILGenerationPackageVersion>4.3.0</SystemReflectionEmitILGenerationPackageVersion>
-    <SystemReflectionTypeExtensionsPackageVersion>4.3.0</SystemReflectionTypeExtensionsPackageVersion>
+    <SystemReflectionEmitPackageVersion>4.7.0</SystemReflectionEmitPackageVersion>
+    <SystemReflectionEmitILGenerationPackageVersion>4.7.0</SystemReflectionEmitILGenerationPackageVersion>
+    <SystemReflectionTypeExtensionsPackageVersion>4.7.0</SystemReflectionTypeExtensionsPackageVersion>
     <SystemRuntimeInteropServicesRuntimeInformationPackageVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationPackageVersion>
-    <SystemTextEncodingCodePagesPackageVersion>4.3.0</SystemTextEncodingCodePagesPackageVersion>
+    <SystemTextEncodingCodePagesPackageVersion>4.7.0</SystemTextEncodingCodePagesPackageVersion>
     <SystemThreadingThreadPackageVersion>4.3.0</SystemThreadingThreadPackageVersion>
     <SystemThreadingThreadPoolPackageVersion>4.3.0</SystemThreadingThreadPoolPackageVersion>
     <SystemXmlXmlDocumentPackageVersion>4.3.0</SystemXmlXmlDocumentPackageVersion>
