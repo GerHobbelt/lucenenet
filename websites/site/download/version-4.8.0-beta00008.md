@@ -1,21 +1,25 @@
 ---
-uid: download/4
+uid: download/4.8.0-beta00008
 ---
 
-Download Lucene.Net
+Download Lucene.Net 4.8.0-beta00008
 ===============
 
 ---------------
 
-## Lucene 4.8.0
+## Lucene 4.8.0-beta00008
 
 _Status:_ __`Beta`__
 
-_Released:_ __`Pending...`__
+_Released:_ `2020-05-05`
 
 <div class="nuget-well" style="text-align:left;">
-    PM> Install-Package Lucene.Net -Version 4.8.0-beta00007
+    PM> Install-Package Lucene.Net -Version 4.8.0-beta00008
 </div>
+
+## Release notes
+
+[https://github.com/apache/lucenenet/releases/tag/Lucene.Net_4_8_0_beta00008](https://github.com/apache/lucenenet/releases/tag/Lucene.Net_4_8_0_beta00008)
 
 ### Source code
 
@@ -23,9 +27,15 @@ _Released:_ __`Pending...`__
 
 ### Supported Frameworks
 
+- [.NET Standard 2.1](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
 - [.NET Standard 2.0](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
-- [.NET Standard 1.6](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
 - .NET Framework 4.5
+
+### Remaining work
+
+See __[Current Status](xref:contributing/current-status)__ for more details on the remaining work
+
+This version is a direct port of the Java Lucene project at [this release](https://github.com/apache/lucene-solr/releases/tag/releases%2Flucene-solr%2F4.8.0)
 
 ### All Packages
 
@@ -58,9 +68,3 @@ _Released:_ __`Pending...`__
 - [Lucene.Net.Sandbox](https://www.nuget.org/packages/Lucene.Net.Sandbox/) - Various third party contributions and new ideas
 - [Lucene.Net.Spatial](https://www.nuget.org/packages/Lucene.Net.Spatial/) - Geospatial search
 - [Lucene.Net.Suggest](https://www.nuget.org/packages/Lucene.Net.Suggest/) - Auto-suggest and Spellchecking support
-
-### Remaining work
-
-See __[Current Status](xref:contributing/current-status)__ for more details on the remaining work
-
-This version is a direct port of the Java Lucene project at [this release](https://github.com/apache/lucene-solr/releases/tag/releases%2Flucene-solr%2F4.8.0)
