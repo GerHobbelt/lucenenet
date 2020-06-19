@@ -19,9 +19,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # specific language governing permissions and limitations
 # under the License.
 
-VisualStudioVersion = 16.0.29201.188
-VisualStudioVersion = 16.0.29728.190
-VisualStudioVersion = 15.0.26730.8
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 15.0.26730.8
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "azure-templates", "azure-templates", "{05CE3A39-40D4-452D-AFE0-E57E536A08C6}"
@@ -49,7 +46,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{4016BDAB
 		build\Release.targets = build\Release.targets
 		build\TestReferences.Common.targets = build\TestReferences.Common.targets
 		TestTargetFramework.props = TestTargetFramework.props
-		build\TestReferences.Common.targets = build\TestReferences.Common.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{4DF7EACE-2B25-43F6-B558-8520BF20BD76}"
@@ -197,10 +193,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._T-U", "src\Lucene.Net.Tests._T-U\Lucene.Net.Tests._T-U.csproj", "{DF60E276-91AD-4386-A5B5-13EB24E335E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.Tests._U-Z", "src\Lucene.Net.Tests._U-Z\Lucene.Net.Tests._U-Z.csproj", "{083EEC05-D092-4F84-8004-41F0C7192ABD}"
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4DF0A2A1-B9C7-4EE5-BAF0-BEEF53E34220}"
-	ProjectSection(SolutionItems) = preProject
-		Directory.Build.props = Directory.Build.props
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lucene.Net.TestFramework", "src\Lucene.Net.TestFramework\Lucene.Net.TestFramework.csproj", "{845F8491-348C-4242-A58A-1979E8338B5D}"
 EndProject
