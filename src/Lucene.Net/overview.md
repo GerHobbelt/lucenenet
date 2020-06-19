@@ -75,19 +75,23 @@ Tokenizers and TokenFilters are strung together and applied with an [Analyzer](x
 [StopAnalyzer](../analyzers-common/org/apache/lucene/analysis/core/StopAnalyzer.html)
 and the grammar-based [StandardAnalyzer](../analyzers-common/org/apache/lucene/analysis/standard/StandardAnalyzer.html).
 
+
 *   __<xref:Lucene.Net.Codecs>__
 provides an abstraction over the encoding and decoding of the inverted index structure,
 as well as different implementations that can be chosen depending upon application needs.
+
 
 *   __<xref:Lucene.Net.Documents>__
 provides a simple [Document](xref:Lucene.Net.Documents.Document)
 class.  A Document is simply a set of named [Field](xref:Lucene.Net.Documents.Field)s,
 whose values may be strings or instances of {@link java.io.Reader}.
 
+
 *   __<xref:Lucene.Net.Index>__
 provides two primary classes: [IndexWriter](xref:Lucene.Net.Index.IndexWriter),
 which creates and adds documents to indices; and <xref:Lucene.Net.Index.IndexReader>,
 which accesses the data in the index.
+
 
 *   __<xref:Lucene.Net.Search>__
 provides data structures to represent queries (ie [TermQuery](xref:Lucene.Net.Search.TermQuery)
@@ -98,6 +102,7 @@ which turns queries into [TopDocs](xref:Lucene.Net.Search.TopDocs).
 A number of [QueryParser](../queryparser/overview-summary.html)s are provided for producing
 query structures from strings or xml.
 
+
 *   __<xref:Lucene.Net.Store>__
 defines an abstract class for storing persistent data, the [Directory](xref:Lucene.Net.Store.Directory),
 which is a collection of named files written by an [IndexOutput](xref:Lucene.Net.Store.IndexOutput)
@@ -105,6 +110,7 @@ and read by an [IndexInput](xref:Lucene.Net.Store.IndexInput). 
 Multiple implementations are provided, including [FSDirectory](xref:Lucene.Net.Store.FSDirectory),
 which uses a file system directory to store files, and [RAMDirectory](xref:Lucene.Net.Store.RAMDirectory)
 which implements files as memory-resident data structures.
+
 
 *   __<xref:Lucene.Net.Util>__
 contains a few handy data structures and util classes, ie [OpenBitSet](xref:Lucene.Net.Util.OpenBitSet)
@@ -116,11 +122,14 @@ To use Lucene.NET, an application should:
 adding
 [Field](xref:Lucene.Net.Documents.Field)s;
 
+
 2.  Create an [IndexWriter](xref:Lucene.Net.Index.IndexWriter)
 and add documents to it with [AddDocument](xref:Lucene.Net.Index.IndexWriter#methods);
 
+
 3.  Call [QueryParser.parse()](../queryparser/org/apache/lucene/queryparser/classic/QueryParserBase.html#parse(java.lang.String))
 to build a query from a string; and
+
 
 4.  Create an [IndexSearcher](xref:Lucene.Net.Search.IndexSearcher)
 and pass the query to its [Search](xref:Lucene.Net.Search.IndexSearcher#methods)
@@ -130,6 +139,7 @@ Some simple examples of code which does this are:
 
 *    [IndexFiles.java](../demo/src-html/org/apache/lucene/demo/IndexFiles.html) creates an
 index for all the files contained in a directory.
+
 
 *    [SearchFiles.java](../demo/src-html/org/apache/lucene/demo/SearchFiles.html) prompts for
 queries and searches an index.
